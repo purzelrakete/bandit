@@ -48,11 +48,11 @@ func MonteCarlo(sims, horizon int, bandit BanditNew, arms []Arm) (Sim, error) {
 
 			// record this trial into column i
 			i := sim*horizon + trial
+			s.Sim[i] = sim + 1
+			s.Trial[i] = trial + 1
 			s.Selected[i] = selected
 			s.Reward[i] = reward
 			s.Cumulative[i] = s.Cumulative[int(math.Max(float64(i-1), 0.0))] + reward
-			s.Sim[i] = sim + 1
-			s.Trial[i] = trial + 1
 		}
 	}
 
@@ -60,7 +60,7 @@ func MonteCarlo(sims, horizon int, bandit BanditNew, arms []Arm) (Sim, error) {
 }
 
 // Sim is a matrix of simulation results. Columns represent individual trial
-// results that grow to the right with each trial simulation
+// results that grow to the right with each trial
 type Sim struct {
 	Selected   []int
 	Reward     []float64

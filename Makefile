@@ -1,6 +1,9 @@
-.PHONY: all build test clean
+.PHONY: all plot build test deps clean
 
-all: build test
+all: deps build test plot
+
+plot:
+	make -C plot
 
 build:
 	go build -v
@@ -8,5 +11,8 @@ build:
 test:
 	go test -v
 
+deps:
+	go get -v
+
 clean:
-	go clean -v
+	go clean

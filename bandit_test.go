@@ -22,7 +22,8 @@ func TestEpsilonGreedy(t *testing.T) {
 		t.Fatalf(err.Error())
 	}
 
-	if l := len(d.Selected); l != sims*horizon {
-		t.Fatalf("incorrect number of trials: %d", l)
+	expected := sims * horizon
+	if got := len(d.Selected); got != expected {
+		t.Fatalf("incorrect number of trials: %d", got)
 	}
 }
