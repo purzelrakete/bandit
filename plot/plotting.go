@@ -11,9 +11,9 @@ import (
 )
 
 var (
-	mcSims        = flag.Int("mcSims", 5000, "monte carlo simulations to run")
-	mcHorizon     = flag.Int("mcHorizon", 250, "trials per simulation")
-	mcAccuracyPng = flag.String("mcAccuracyPng", "accuracy.png", "accuracy plot")
+	mcSims    = flag.Int("mcSims", 5000, "monte carlo simulations to run")
+	mcHorizon = flag.Int("mcHorizon", 250, "trials per simulation")
+	mcPerfPng = flag.String("mcPerfPng", "performance.png", "performance plot")
 )
 
 func init() {
@@ -21,21 +21,27 @@ func init() {
 }
 
 func main() {
-	ε := 0.1
+	εs := []float64{0.1, 0.2, 0.3, 0.4, 0.5}
 	μs := []float64{0.1, 0.3, 0.2, 0.8}
-	banditNew := func() (bandit.Bandit, error) {
-		return bandit.EpsilonGreedyNew(len(μs), ε)
-	}
+	sims := make(map[float64]bandit.Sim)
 
-	s, err := bandit.MonteCarlo(*mcSims, *mcHorizon, banditNew, []bandit.Arm{
-		bandit.Bernoulli(μs[0]),
-		bandit.Bernoulli(μs[1]),
-		bandit.Bernoulli(μs[2]),
-		bandit.Bernoulli(μs[3]),
-	})
+	for _, ε := range εs {
+		banditNew := func() (bandit.Bandit, error) {
+			return bandit.EpsilonGreedyNew(len(μs), ε)
+		}
 
-	if err != nil {
-		log.Fatalf(err.Error())
+		s, err := bandit.MonteCarlo(*mcSims, *mcHorizon, banditNew, []bandit.Arm{
+			bandit.Bernoulli(μs[0]),
+			bandit.Bernoulli(μs[1]),
+			bandit.Bernoulli(μs[2]),
+			bandit.Bernoulli(μs[3]),
+		})
+
+		if err != nil {
+			log.Fatalf(err.Error())
+		}
+
+		sims[ε] = s
 	}
 
 	p, err := plot.New()
@@ -47,16 +53,18 @@ func main() {
 	p.X.Label.Text = "Time"
 	p.Y.Label.Text = "Average reward"
 
-	err = plotutil.AddLinePoints(
-		p,
-		fmt.Sprintf("%.2f", ε), accuracy(s),
-	)
+	for ε, sim := range sims {
+		err = plotutil.AddLinePoints(
+			p,
+			fmt.Sprintf("%.2f", ε), accuracy(sim),
+		)
 
-	if err != nil {
-		log.Fatalf(err.Error())
+		if err != nil {
+			log.Fatalf(err.Error())
+		}
 	}
 
-	if err := p.Save(5, 5, *mcAccuracyPng); err != nil {
+	if err := p.Save(5, 5, *mcPerfPng); err != nil {
 		log.Fatalf(err.Error())
 	}
 }
