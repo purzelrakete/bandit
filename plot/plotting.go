@@ -59,9 +59,10 @@ func draw(title, xLabel, yLabel, filename string, sims sims, summary summary) {
 }
 
 var (
-	mcSims    = flag.Int("mcSims", 5000, "monte carlo simulations to run")
-	mcHorizon = flag.Int("mcHorizon", 300, "trials per simulation")
-	mcPerfPng = flag.String("mcPerfPng", "performance.png", "performance plot")
+	mcSims           = flag.Int("mcSims", 5000, "monte carlo simulations to run")
+	mcHorizon        = flag.Int("mcHorizon", 300, "trials per simulation")
+	mcPerformancePng = flag.String("mcPerformancePng", "performance.png", "performance plot")
+	mcAccuracyPng    = flag.String("mcAccuracyPng", "accuracy.png", "accuracy plot")
 )
 
 func init() {
@@ -92,8 +93,13 @@ func main() {
 		sims[ε] = s
 	}
 
-	title, xLabel, yLabel := "εGreedy Performance", "Time", "Reward"
-	draw(title, xLabel, yLabel, *mcPerfPng, sims, func(s bandit.Sim) []float64 {
+	title, xLabel, yLabel := "εGreedy Accuracy", "Time", "P(selecting best arm)"
+	draw(title, xLabel, yLabel, *mcAccuracyPng, sims, func(s bandit.Sim) []float64 {
+		return bandit.Accuracy(s, 5)
+	})
+
+	title, xLabel, yLabel = "εGreedy Performance", "Time", "Reward"
+	draw(title, xLabel, yLabel, *mcPerformancePng, sims, func(s bandit.Sim) []float64 {
 		return bandit.Performance(s)
 	})
 }

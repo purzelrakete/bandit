@@ -73,6 +73,29 @@ type Sim struct {
 	Cumulative []float64
 }
 
+// Accuracy returns the proportion of times the best arm was pulled at each 
+// trial point.
+func Accuracy(s Sim, bestArm int) []float64 {
+	t := make([]float64, s.Trials)
+	for trial := 0; trial < s.Trials; trial++ {
+		correct := 0
+		for sim := 0; sim < s.Sims; sim++ {
+			i := sim*s.Trials + trial
+			if s.Trial[i] != trial+1 {
+				panic("impossible trial access")
+			}
+
+			if s.Selected[i] == bestArm {
+				correct = correct + 1
+			}
+		}
+
+		t[trial] = float64(correct) / float64(s.Sims)
+	}
+
+	return t
+}
+
 // Performance returns an array of average rewards at each trial point.
 // Averaged over sims
 func Performance(s Sim) []float64 {
