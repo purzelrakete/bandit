@@ -26,13 +26,15 @@ func Bernoulli(μ float64) Arm {
 type BanditNew func() (Bandit, error)
 
 // MonteCarlo runs a monte carlo experiment with the given bandit and arms.
-func MonteCarlo(sims, horizon int, bandit BanditNew, arms []Arm) (Sim, error) {
+func MonteCarlo(sims, trials int, bandit BanditNew, arms []Arm) (Sim, error) {
 	s := Sim{
-		Sim:        make([]int, sims*horizon),
-		Trial:      make([]int, sims*horizon),
-		Selected:   make([]int, sims*horizon),
-		Reward:     make([]float64, sims*horizon),
-		Cumulative: make([]float64, sims*horizon),
+		Sims:       sims,
+		Trials:     trials,
+		Sim:        make([]int, sims*trials),
+		Trial:      make([]int, sims*trials),
+		Selected:   make([]int, sims*trials),
+		Reward:     make([]float64, sims*trials),
+		Cumulative: make([]float64, sims*trials),
 	}
 
 	for sim := 0; sim < sims; sim++ {
@@ -41,13 +43,13 @@ func MonteCarlo(sims, horizon int, bandit BanditNew, arms []Arm) (Sim, error) {
 			return Sim{}, err
 		}
 
-		for trial := 0; trial < horizon; trial++ {
+		for trial := 0; trial < trials; trial++ {
 			selected := b.SelectArm()
 			reward := arms[selected-1]()
 			b.Update(selected, reward)
 
 			// record this trial into column i
-			i := sim*horizon + trial
+			i := sim*trials + trial
 			s.Sim[i] = sim + 1
 			s.Trial[i] = trial + 1
 			s.Selected[i] = selected
@@ -62,9 +64,33 @@ func MonteCarlo(sims, horizon int, bandit BanditNew, arms []Arm) (Sim, error) {
 // Sim is a matrix of simulation results. Columns represent individual trial
 // results that grow to the right with each trial
 type Sim struct {
+	Sims       int
+	Trials     int
 	Sim        []int
 	Trial      []int
 	Selected   []int
 	Reward     []float64
 	Cumulative []float64
+}
+
+// Performance returns an array of average rewards at each trial point.
+// Averaged over sims
+func Performance(s Sim) []float64 {
+	t := make([]float64, s.Trials)
+	for trial := 0; trial < s.Trials; trial++ {
+		accum, count := 0.0, 0
+		for sim := 0; sim < s.Sims; sim++ {
+			i := sim*s.Trials + trial
+			if s.Trial[i] != trial+1 {
+				panic("impossible trial access")
+			}
+
+			accum = accum + s.Reward[i]
+			count = count + 1
+		}
+
+		t[trial] = accum / float64(count)
+	}
+
+	return t
 }

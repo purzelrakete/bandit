@@ -3,7 +3,6 @@ package main
 import (
 	"code.google.com/p/plotinum/plot"
 	"code.google.com/p/plotinum/plotter"
-	"code.google.com/p/plotinum/vg"
 	"flag"
 	"fmt"
 	"github.com/purzelrakete/bandit"
@@ -13,7 +12,7 @@ import (
 
 var (
 	mcSims    = flag.Int("mcSims", 5000, "monte carlo simulations to run")
-	mcHorizon = flag.Int("mcHorizon", 250, "trials per simulation")
+	mcHorizon = flag.Int("mcHorizon", 300, "trials per simulation")
 	mcPerfPng = flag.String("mcPerfPng", "performance.png", "performance plot")
 )
 
@@ -55,15 +54,14 @@ func main() {
 	p.Y.Label.Text = "Average reward"
 
 	for ε, sim := range sims {
-		l, err := plotter.NewLine(accuracy(sim))
+		l, err := plotter.NewLine(performance(sim))
 		if err != nil {
 			log.Fatalf(err.Error())
 		}
 
-		l.LineStyle.Width = vg.Points(1)
-		l.LineStyle.Color = color.Gray{uint8(255 * ε)}
-		p.Legend.Add(fmt.Sprintf("%.2f", ε), l)
 		p.Add(l)
+		p.Legend.Add(fmt.Sprintf("%.2f", ε), l)
+		l.LineStyle.Color = color.Gray{uint8(255 * 1.9 * ε)}
 	}
 
 	if err != nil {
@@ -75,23 +73,14 @@ func main() {
 	}
 }
 
-func accuracy(s bandit.Sim) plotter.XYs {
-	pts := make(plotter.XYs, *mcHorizon)
-	for trial := 0; trial < *mcHorizon; trial++ {
-		accum, count := 0.0, 0
-		for sim := range pts {
-			i := *mcHorizon*sim + trial
-			if s.Trial[i] != trial+1 {
-				panic("impossible trial access")
-			}
-
-			accum = accum + s.Reward[i]
-			count = count + 1
-		}
-
-		pts[trial].X = float64(trial)
-		pts[trial].Y = accum / float64(count)
+// performance averaged over sims at each time point
+func performance(s bandit.Sim) plotter.XYs {
+	data := bandit.Performance(s)
+	points := make(plotter.XYs, len(data))
+	for i, datum := range data {
+		points[i].X = float64(i)
+		points[i].Y = datum
 	}
 
-	return pts
+	return points
 }
