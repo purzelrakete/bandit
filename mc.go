@@ -28,11 +28,11 @@ type BanditNew func() (Bandit, error)
 // MonteCarlo runs a monte carlo experiment with the given bandit and arms.
 func MonteCarlo(sims, horizon int, bandit BanditNew, arms []Arm) (Sim, error) {
 	s := Sim{
+		Sim:        make([]int, sims*horizon),
+		Trial:      make([]int, sims*horizon),
 		Selected:   make([]int, sims*horizon),
 		Reward:     make([]float64, sims*horizon),
 		Cumulative: make([]float64, sims*horizon),
-		Sim:        make([]int, sims*horizon),
-		Trial:      make([]int, sims*horizon),
 	}
 
 	for sim := 0; sim < sims; sim++ {
@@ -62,9 +62,9 @@ func MonteCarlo(sims, horizon int, bandit BanditNew, arms []Arm) (Sim, error) {
 // Sim is a matrix of simulation results. Columns represent individual trial
 // results that grow to the right with each trial
 type Sim struct {
+	Sim        []int
+	Trial      []int
 	Selected   []int
 	Reward     []float64
 	Cumulative []float64
-	Sim        []int
-	Trial      []int
 }

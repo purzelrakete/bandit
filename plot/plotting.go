@@ -3,10 +3,11 @@ package main
 import (
 	"code.google.com/p/plotinum/plot"
 	"code.google.com/p/plotinum/plotter"
-	"code.google.com/p/plotinum/plotutil"
+	"code.google.com/p/plotinum/vg"
 	"flag"
 	"fmt"
 	"github.com/purzelrakete/bandit"
+	"image/color"
 	"log"
 )
 
@@ -54,17 +55,22 @@ func main() {
 	p.Y.Label.Text = "Average reward"
 
 	for ε, sim := range sims {
-		err = plotutil.AddLinePoints(
-			p,
-			fmt.Sprintf("%.2f", ε), accuracy(sim),
-		)
-
+		l, err := plotter.NewLine(accuracy(sim))
 		if err != nil {
 			log.Fatalf(err.Error())
 		}
+
+		l.LineStyle.Width = vg.Points(1)
+		l.LineStyle.Color = color.Gray{uint8(255 * ε)}
+		p.Legend.Add(fmt.Sprintf("%.2f", ε), l)
+		p.Add(l)
 	}
 
-	if err := p.Save(5, 5, *mcPerfPng); err != nil {
+	if err != nil {
+		log.Fatalf(err.Error())
+	}
+
+	if err := p.Save(8, 8, *mcPerfPng); err != nil {
 		log.Fatalf(err.Error())
 	}
 }
@@ -74,7 +80,12 @@ func accuracy(s bandit.Sim) plotter.XYs {
 	for trial := 0; trial < *mcHorizon; trial++ {
 		accum, count := 0.0, 0
 		for sim := range pts {
-			accum = accum + s.Reward[*mcHorizon*sim+trial]
+			i := *mcHorizon*sim + trial
+			if s.Trial[i] != trial+1 {
+				panic("impossible trial access")
+			}
+
+			accum = accum + s.Reward[i]
 			count = count + 1
 		}
 
