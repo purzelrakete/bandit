@@ -11,10 +11,10 @@ import (
 )
 
 // sims maps model parameter such as ε to corresponding simulation results
-type sims map[float64]bandit.Sim
+type sims map[float64]bandit.Simulation
 
 // summary summarizes a Sim and returns corresponding plot points.
-type summary func(s bandit.Sim) []float64
+type summary func(s bandit.Simulation) []float64
 
 // xys turns a slice of float64 values into a plotter.XYs
 func xys(data []float64) plotter.XYs {
@@ -95,17 +95,17 @@ func main() {
 	}
 
 	title, xLabel, yLabel := "Greedy Accuracy", "Time", "P(selecting best arm)"
-	draw(title, xLabel, yLabel, *mcAccuracyPng, sims, func(s bandit.Sim) []float64 {
+	draw(title, xLabel, yLabel, *mcAccuracyPng, sims, func(s bandit.Simulation) []float64 {
 		return bandit.Accuracy(s, 4)
 	})
 
 	title, xLabel, yLabel = "Greedy Performance", "Time", "Reward"
-	draw(title, xLabel, yLabel, *mcPerformancePng, sims, func(s bandit.Sim) []float64 {
+	draw(title, xLabel, yLabel, *mcPerformancePng, sims, func(s bandit.Simulation) []float64 {
 		return bandit.Performance(s)
 	})
 
 	title, xLabel, yLabel = "Greedy Cumulative Performance", "Time", "Cumulative Reward"
-	draw(title, xLabel, yLabel, *mcCumulativePng, sims, func(s bandit.Sim) []float64 {
+	draw(title, xLabel, yLabel, *mcCumulativePng, sims, func(s bandit.Simulation) []float64 {
 		return bandit.Cumulative(s)
 	})
 }

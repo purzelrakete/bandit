@@ -25,8 +25,8 @@ func Bernoulli(μ float64) Arm {
 type BanditNew func() (Bandit, error)
 
 // MonteCarlo runs a monte carlo experiment with the given bandit and arms.
-func MonteCarlo(sims, trials int, bandit BanditNew, arms []Arm) (Sim, error) {
-	s := Sim{
+func MonteCarlo(sims, trials int, bandit BanditNew, arms []Arm) (Simulation, error) {
+	s := Simulation{
 		Sims:       sims,
 		Trials:     trials,
 		Sim:        make([]int, sims*trials),
@@ -39,7 +39,7 @@ func MonteCarlo(sims, trials int, bandit BanditNew, arms []Arm) (Sim, error) {
 	for sim := 0; sim < sims; sim++ {
 		b, err := bandit()
 		if err != nil {
-			return Sim{}, err
+			return Simulation{}, err
 		}
 
 		for trial := 0; trial < trials; trial++ {
@@ -64,9 +64,9 @@ func MonteCarlo(sims, trials int, bandit BanditNew, arms []Arm) (Sim, error) {
 	return s, nil
 }
 
-// Sim is a matrix of simulation results. Columns represent individual trial
-// results that grow to the right with each trial
-type Sim struct {
+// Simulation is a matrix of simulation results. Columns represent individual
+// trial results that grow to the right with each trial
+type Simulation struct {
 	Sims       int
 	Trials     int
 	Sim        []int
@@ -78,7 +78,7 @@ type Sim struct {
 
 // Accuracy returns the proportion of times the best arm was pulled at each 
 // trial point.
-func Accuracy(s Sim, bestArm int) []float64 {
+func Accuracy(s Simulation, bestArm int) []float64 {
 	t := make([]float64, s.Trials)
 	for trial := 0; trial < s.Trials; trial++ {
 		correct := 0
@@ -101,7 +101,7 @@ func Accuracy(s Sim, bestArm int) []float64 {
 
 // Performance returns an array of average rewards at each trial point.
 // Averaged over sims
-func Performance(s Sim) []float64 {
+func Performance(s Simulation) []float64 {
 	t := make([]float64, s.Trials)
 	for trial := 0; trial < s.Trials; trial++ {
 		accum, count := 0.0, 0
@@ -123,7 +123,7 @@ func Performance(s Sim) []float64 {
 
 // Cumulative performance returns an array of average rewards at each trial
 // point.  Averaged over sims
-func Cumulative(s Sim) []float64 {
+func Cumulative(s Simulation) []float64 {
 	t := make([]float64, s.Trials)
 	for trial := 0; trial < s.Trials; trial++ {
 		accum, count := 0.0, 0

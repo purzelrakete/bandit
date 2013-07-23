@@ -31,7 +31,7 @@ This constructs a bandit with 2 arms using EpsilonGreed with ε set to 10%.
 
 The following code runs a monte carlo simulation with the epsilon greedy
 algorithm. There are 4 arms with the probability of a reward of 1.0 defined in
-μs. Results are returned in `Sim`, which holds a full recording of the
+μs. Results are returned in `Simulation`, which holds a full recording of the
 simulation. It can be summarized with the functions Performance, Accuracy and
 Cumulative.
 
