@@ -37,6 +37,11 @@ the simulation. It can be summarized with the functions `Performance`,
 `Accuracy` and `Cumulative`.
 
 ```go
+import (
+  "github.com/purzelrakete/bandit"
+  "log"
+)
+
 sims := 1000
 trials := 400
 arms := []bandit.Arm{
