@@ -12,8 +12,8 @@ import (
 	"strings"
 )
 
-// sims maps model parameter such as ε to corresponding simulation results
-type sims map[float64]bandit.Simulation
+// simulations maps model parameter to corresponding simulation results
+type simulations map[float64]bandit.Simulation
 
 // summary summarizes a Simulation and returns corresponding plot points.
 type summary func(s bandit.Simulation) []float64
@@ -30,7 +30,7 @@ func xys(data []float64) plotter.XYs {
 }
 
 // draw is a generic plotter of simulation summaries.
-func draw(title, xLabel, yLabel, filename string, sims sims, summary summary) {
+func draw(title, xLabel, yLabel, filename string, sims simulations, summary summary) {
 	p, err := plot.New()
 	if err != nil {
 		log.Fatalf(err.Error())
@@ -70,11 +70,11 @@ func parseArms(sμ string) ([]float64, []int, error) {
 	for i, s := range strings.Split(sμ, ",") {
 		μ, err := strconv.ParseFloat(s, 64)
 		if err != nil {
-			return []float64{}, []int{}, fmt.Errorf("not parseable: %s", err.Error())
+			return []float64{}, []int{}, fmt.Errorf("NaN: %s", err.Error())
 		}
 
 		if μ < 0 || μ > 1 {
-			return []float64{}, []int{}, fmt.Errorf("μ must be in [0,1]: %.5f", μ)
+			return []float64{}, []int{}, fmt.Errorf("μ not in [0,1]: %.5f", μ)
 		}
 
 		// there may be multiple equally good (best) arms
@@ -115,7 +115,7 @@ func main() {
 		arms = append(arms, bandit.Bernoulli(μ))
 	}
 
-	sims := make(sims)
+	sims := make(simulations)
 	for _, ε := range []float64{0.1, 0.2, 0.3, 0.4, 0.5} {
 		s, err := bandit.MonteCarlo(*mcSims, *mcHorizon, arms, func() (bandit.Bandit, error) {
 			return bandit.EpsilonGreedyNew(len(μs), ε)
