@@ -69,6 +69,9 @@ func parseArms(sμ string) ([]float64, error) {
 			return []float64{}, fmt.Errorf("could not parse float: %s", err.Error())
 		}
 
+		if μ < 0 || μ > 1 {
+			return []float64{}, fmt.Errorf("μ must be in [0,1]: %.5f", μ)
+		}
 		μs = append(μs, μ)
 	}
 
