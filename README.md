@@ -90,12 +90,12 @@ $GOPATH/bin/plot -h
 
 ## Algorithms
 
-- EpsilonGreedy
+### EpsilonGreedy
 
 Randomly explores with a probability of `ε`. The rest of the time, the best
 known arm is selected.
 
-- Softmax
+### Softmax
 
 Explores arms proportionally to their success. Explore exploit is traded off
 by temperature parameter τ. As τ → ∞, the bandit explores randomly. When
