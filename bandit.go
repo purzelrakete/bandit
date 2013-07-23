@@ -2,6 +2,7 @@ package bandit
 
 import (
 	"fmt"
+	"math"
 	"math/rand"
 	"time"
 )
@@ -62,4 +63,59 @@ func (e epsilonGreedy) Update(arm int, reward float64) {
 	e.counts[arm] = e.counts[arm] + 1
 	count := e.counts[arm]
 	e.values[arm] = ((e.values[arm] * float64(count-1)) + reward) / float64(count)
+}
+
+// SoftmaxNew constructs a softmax bandit. Softmax explores non randomly
+func SoftmaxNew(arms int, τ float64) (Bandit, error) {
+	if !(τ >= 0.0) {
+		return softmax{}, fmt.Errorf("τ not in [0, ∞]")
+	}
+
+	return softmax{
+		counts: make([]int, arms),
+		values: make([]float64, arms),
+		rand:   rand.New(rand.NewSource(time.Now().UnixNano())),
+		arms:   arms,
+		tau:    τ,
+	}, nil
+}
+
+// softmax holds counts values and temperature τ 
+type softmax struct {
+	counts []int
+	values []float64
+	tau    float64
+	arms   int
+	rand   *rand.Rand
+}
+
+// SelectArm 
+func (s softmax) SelectArm() int {
+	z := 0.0
+	for _, value := range s.values {
+		z = z + math.Exp(value/s.tau)
+	}
+
+	var distribution []float64
+	for _, value := range s.values {
+		distribution = append(distribution, math.Exp(value/s.tau)/z)
+	}
+
+	accum := 0.0
+	for i, p := range distribution {
+		accum = accum + p
+		if accum > z {
+			return i
+		}
+	}
+
+	return len(distribution) - 1
+}
+
+// Update the running average
+func (s softmax) Update(arm int, reward float64) {
+	arm = arm - 1
+	s.counts[arm] = s.counts[arm] + 1
+	count := s.counts[arm]
+	s.values[arm] = ((s.values[arm] * float64(count-1)) + reward) / float64(count)
 }

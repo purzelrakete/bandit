@@ -64,7 +64,7 @@ accuracy := bandit.Accuracy(s)
 cumulative := bandit.Cumulative(s)
 ```
 
-# Plotting
+## Plotting
 
 You can run and plot a Monte Carlo simulation using the `plot` binary. It will
 display the accuracy, performance and cumulative performance over time.
@@ -87,3 +87,17 @@ View defaults and available flags:
 ```sh
 $GOPATH/bin/plot -h
 ```
+
+## Algorithms
+
+- EpsilonGreedy
+
+Randomly explores with a probability of `ε`. The rest of the time, the best
+known arm is selected.
+
+- Softmax
+
+Explores arms proportionally to their success. Explore exploit is traded off
+by temperature parameter τ. As τ → ∞, the bandit explores randomly. When
+τ = 0, the bandit will always explore the best known arm.
+
