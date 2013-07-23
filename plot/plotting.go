@@ -61,9 +61,9 @@ func draw(title, xLabel, yLabel, filename string, sims sims, summary summary) {
 var (
 	mcSims           = flag.Int("mcSims", 5000, "monte carlo simulations to run")
 	mcHorizon        = flag.Int("mcHorizon", 300, "trials per simulation")
-	mcPerformancePng = flag.String("mcPerformancePng", "performance.png", "performance plot")
-	mcAccuracyPng    = flag.String("mcAccuracyPng", "accuracy.png", "accuracy plot")
-	mcCumulativePng  = flag.String("mcCumulativePng", "cumulative.png", "cumulative plot")
+	mcPerformancePng = flag.String("mcPerformancePng", "bandit_performance.png", "performance plot")
+	mcAccuracyPng    = flag.String("mcAccuracyPng", "bandit_accuracy.png", "accuracy plot")
+	mcCumulativePng  = flag.String("mcCumulativePng", "bandit_cumulative.png", "cumulative plot")
 )
 
 func init() {
