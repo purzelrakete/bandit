@@ -25,7 +25,7 @@ func Bernoulli(μ float64) Arm {
 type BanditNew func() (Bandit, error)
 
 // MonteCarlo runs a monte carlo experiment with the given bandit and arms.
-func MonteCarlo(sims, trials int, bandit BanditNew, arms []Arm) (Simulation, error) {
+func MonteCarlo(sims, trials int, arms []Arm, bandit BanditNew) (Simulation, error) {
 	s := Simulation{
 		Sims:       sims,
 		Trials:     trials,

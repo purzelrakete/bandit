@@ -100,16 +100,15 @@ func main() {
 	εs := []float64{0.1, 0.2, 0.3, 0.4, 0.5}
 	sims := make(sims)
 	for _, ε := range εs {
-		banditNew := func() (bandit.Bandit, error) {
-			return bandit.EpsilonGreedyNew(len(μs), ε)
-		}
-
 		var arms []bandit.Arm
 		for _, μ := range μs {
 			arms = append(arms, bandit.Bernoulli(μ))
 		}
 
-		s, err := bandit.MonteCarlo(*mcSims, *mcHorizon, banditNew, arms)
+		s, err := bandit.MonteCarlo(*mcSims, *mcHorizon, arms, func() (bandit.Bandit, error) {
+			return bandit.EpsilonGreedyNew(len(μs), ε)
+		})
+
 		if err != nil {
 			log.Fatalf(err.Error())
 		}

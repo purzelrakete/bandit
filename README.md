@@ -36,18 +36,17 @@ simulation. It can be summarized with the functions Performance, Accuracy and
 Cumulative.
 
 ```go
-μs := []float64{0.1, 0.3, 0.2, 0.8}
 sims := 1000
 trials := 400
-banditNew := func() (bandit.Bandit, error) {
-  return bandit.EpsilonGreedyNew(len(μs), ε)
-}
+arms := []bandit.Arm{
+  bandit.Bernoulli(0.1),
+  bandit.Bernoulli(0.3),
+  bandit.Bernoulli(0.2),
+  bandit.Bernoulli(0.8),
+})
 
-s, err := bandit.MonteCarlo(sims, trials, banditNew, []bandit.Arm{
-  bandit.Bernoulli(μs[0]),
-  bandit.Bernoulli(μs[1]),
-  bandit.Bernoulli(μs[2]),
-  bandit.Bernoulli(μs[3]),
+s, err := bandit.MonteCarlo(sims, trials, arms, func() (bandit.Bandit, error) {
+  return bandit.EpsilonGreedyNew(len(arms), ε)
 })
 
 if err != nil {

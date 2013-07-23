@@ -8,14 +8,15 @@ func TestEpsilonGreedy(t *testing.T) {
 	ε := 0.1
 	sims := 2
 	trials := 5
-	μs := []float64{0.1, 0.3, 0.2, 0.8}
-	bandit := func() (Bandit, error) { return EpsilonGreedyNew(len(μs), ε) }
+	arms := []Arm{
+		Bernoulli(0.1),
+		Bernoulli(0.3),
+		Bernoulli(0.2),
+		Bernoulli(0.8),
+	}
 
-	d, err := MonteCarlo(sims, trials, bandit, []Arm{
-		Bernoulli(μs[0]),
-		Bernoulli(μs[1]),
-		Bernoulli(μs[2]),
-		Bernoulli(μs[3]),
+	sim, err := MonteCarlo(sims, trials, arms, func() (Bandit, error) {
+		return EpsilonGreedyNew(len(arms), ε)
 	})
 
 	if err != nil {
@@ -23,7 +24,7 @@ func TestEpsilonGreedy(t *testing.T) {
 	}
 
 	expected := sims * trials
-	if got := len(d.Selected); got != expected {
+	if got := len(sim.Selected); got != expected {
 		t.Fatalf("incorrect number of trials: %d", got)
 	}
 }
