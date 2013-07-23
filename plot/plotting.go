@@ -60,22 +60,31 @@ func draw(title, xLabel, yLabel, filename string, sims sims, summary summary) {
 	}
 }
 
-// parseArms converts command line 0.1,0.2 into a slice of floats
-func parseArms(sμ string) ([]float64, error) {
+// parseArms converts command line 0.1,0.2 into a slice of floats. Returns
+// the the best arm (1 indexed). In the case of equally good best arms the
+// last arm is returned.
+func parseArms(sμ string) ([]float64, int, error) {
 	var μs []float64
-	for _, s := range strings.Split(*mcMus, ",") {
+	max, imax := 0.0, 0
+	for i, s := range strings.Split(*mcMus, ",") {
 		μ, err := strconv.ParseFloat(s, 64)
 		if err != nil {
-			return []float64{}, fmt.Errorf("could not parse float: %s", err.Error())
+			return []float64{}, 0, fmt.Errorf("could not parse float: %s", err.Error())
 		}
 
 		if μ < 0 || μ > 1 {
-			return []float64{}, fmt.Errorf("μ must be in [0,1]: %.5f", μ)
+			return []float64{}, 0, fmt.Errorf("μ must be in [0,1]: %.5f", μ)
 		}
+
+		if μ > max {
+			max = μ
+			imax = i
+		}
+
 		μs = append(μs, μ)
 	}
 
-	return μs, nil
+	return μs, imax + 1, nil
 }
 
 var (
@@ -92,7 +101,7 @@ func init() {
 }
 
 func main() {
-	μs, err := parseArms(*mcMus)
+	μs, bestArm, err := parseArms(*mcMus)
 	if err != nil {
 		log.Fatalf(err.Error())
 	}
@@ -118,7 +127,7 @@ func main() {
 
 	title, xLabel, yLabel := "Greedy Accuracy", "Time", "P(selecting best arm)"
 	draw(title, xLabel, yLabel, *mcAccuracyPng, sims, func(s bandit.Simulation) []float64 {
-		return bandit.Accuracy(s, 4)
+		return bandit.Accuracy(s, bestArm)
 	})
 
 	title, xLabel, yLabel = "Greedy Performance", "Time", "Reward"
