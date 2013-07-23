@@ -1,12 +1,15 @@
-.PHONY: plot build deps clean
+.PHONY: plot deps build install clean
 
-plot: deps build
+plot: deps build install
+
+deps:
+	go get -v
 
 build:
 	go build -v
 
-deps:
-	go get -v
+install:
+	go install -v
 
 clean:
 	go clean
