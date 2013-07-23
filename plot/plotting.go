@@ -61,30 +61,34 @@ func draw(title, xLabel, yLabel, filename string, sims sims, summary summary) {
 }
 
 // parseArms converts command line 0.1,0.2 into a slice of floats. Returns
-// the the best arm (1 indexed). In the case of equally good best arms the
-// last arm is returned.
-func parseArms(sμ string) ([]float64, int, error) {
+// the the best arm (1 indexed). In the case of equally good best arms there
+// will be multiple indices in the returned slice.
+func parseArms(sμ string) ([]float64, []int, error) {
 	var μs []float64
-	max, imax := 0.0, 0
-	for i, s := range strings.Split(*mcMus, ",") {
+	var imax []int
+	max := 0.0
+	for i, s := range strings.Split(sμ, ",") {
 		μ, err := strconv.ParseFloat(s, 64)
 		if err != nil {
-			return []float64{}, 0, fmt.Errorf("could not parse float: %s", err.Error())
+			return []float64{}, []int{}, fmt.Errorf("not parseable: %s", err.Error())
 		}
 
 		if μ < 0 || μ > 1 {
-			return []float64{}, 0, fmt.Errorf("μ must be in [0,1]: %.5f", μ)
+			return []float64{}, []int{}, fmt.Errorf("μ must be in [0,1]: %.5f", μ)
 		}
 
+		// there may be multiple equally good (best) arms
 		if μ > max {
 			max = μ
-			imax = i
+			imax = []int{i + 1}
+		} else if μ == max {
+			imax = append(imax, i+1)
 		}
 
 		μs = append(μs, μ)
 	}
 
-	return μs, imax + 1, nil
+	return μs, imax, nil
 }
 
 var (
@@ -101,19 +105,18 @@ func init() {
 }
 
 func main() {
-	μs, bestArm, err := parseArms(*mcMus)
+	μs, bestArms, err := parseArms(*mcMus)
 	if err != nil {
 		log.Fatalf(err.Error())
 	}
 
-	εs := []float64{0.1, 0.2, 0.3, 0.4, 0.5}
-	sims := make(sims)
-	for _, ε := range εs {
-		var arms []bandit.Arm
-		for _, μ := range μs {
-			arms = append(arms, bandit.Bernoulli(μ))
-		}
+	var arms []bandit.Arm
+	for _, μ := range μs {
+		arms = append(arms, bandit.Bernoulli(μ))
+	}
 
+	sims := make(sims)
+	for _, ε := range []float64{0.1, 0.2, 0.3, 0.4, 0.5} {
 		s, err := bandit.MonteCarlo(*mcSims, *mcHorizon, arms, func() (bandit.Bandit, error) {
 			return bandit.EpsilonGreedyNew(len(μs), ε)
 		})
@@ -125,18 +128,18 @@ func main() {
 		sims[ε] = s
 	}
 
-	title, xLabel, yLabel := "Greedy Accuracy", "Time", "P(selecting best arm)"
-	draw(title, xLabel, yLabel, *mcAccuracyPng, sims, func(s bandit.Simulation) []float64 {
-		return bandit.Accuracy(s, bestArm)
+	title, x, y := "Greedy Accuracy", "Time", "P(selecting best arm)"
+	draw(title, x, y, *mcAccuracyPng, sims, func(s bandit.Simulation) []float64 {
+		return bandit.Accuracy(s, bestArms)
 	})
 
-	title, xLabel, yLabel = "Greedy Performance", "Time", "Reward"
-	draw(title, xLabel, yLabel, *mcPerformancePng, sims, func(s bandit.Simulation) []float64 {
+	title, x, y = "Greedy Performance", "Time", "Reward"
+	draw(title, x, y, *mcPerformancePng, sims, func(s bandit.Simulation) []float64 {
 		return bandit.Performance(s)
 	})
 
-	title, xLabel, yLabel = "Greedy Cumulative Performance", "Time", "Cumulative Reward"
-	draw(title, xLabel, yLabel, *mcCumulativePng, sims, func(s bandit.Simulation) []float64 {
+	title, x, y = "Greedy Cumulative Performance", "Time", "Cumulative Reward"
+	draw(title, x, y, *mcCumulativePng, sims, func(s bandit.Simulation) []float64 {
 		return bandit.Cumulative(s)
 	})
 }

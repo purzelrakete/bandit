@@ -77,8 +77,8 @@ type Simulation struct {
 }
 
 // Accuracy returns the proportion of times the best arm was pulled at each 
-// trial point.
-func Accuracy(s Simulation, bestArm int) []float64 {
+// trial point. Takes a slice of best arms since n arms may be equally good.
+func Accuracy(s Simulation, bestArms []int) []float64 {
 	t := make([]float64, s.Trials)
 	for trial := 0; trial < s.Trials; trial++ {
 		correct := 0
@@ -88,8 +88,10 @@ func Accuracy(s Simulation, bestArm int) []float64 {
 				panic("impossible trial access")
 			}
 
-			if s.Selected[i] == bestArm {
-				correct = correct + 1
+			for _, best := range bestArms {
+				if s.Selected[i] == best {
+					correct = correct + 1
+				}
 			}
 		}
 
