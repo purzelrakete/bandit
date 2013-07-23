@@ -25,15 +25,16 @@ You should construct a concrete bandit like this:
 b := bandit.EpsilonGreedyNew(2, 0.1)
 ```
 
-This constructs a bandit with 2 arms using EpsilonGreed with ε set to 10%.
+This constructs a bandit with 2 arms using `EpsilonGreedy` with `ε` set to
+10%.
 
 ## Simulation
 
 The following code runs a monte carlo simulation with the epsilon greedy
 algorithm. There are 4 arms with the probability of a reward of 1.0 defined in
-μs. Results are returned in `Simulation`, which holds a full recording of the
-simulation. It can be summarized with the functions Performance, Accuracy and
-Cumulative.
+`arms`. Results are returned in `Simulation`, which holds a full recording of
+the simulation. It can be summarized with the functions `Performance`,
+`Accuracy` and `Cumulative`.
 
 ```go
 sims := 1000
