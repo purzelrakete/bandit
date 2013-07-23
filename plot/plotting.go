@@ -27,7 +27,7 @@ func xys(data []float64) plotter.XYs {
 	return points
 }
 
-// draw is a generic plotter of Sim summaries.
+// draw is a generic plotter of simulation summaries.
 func draw(title, xLabel, yLabel, filename string, sims sims, summary summary) {
 	p, err := plot.New()
 	if err != nil {
@@ -63,6 +63,7 @@ var (
 	mcHorizon        = flag.Int("mcHorizon", 300, "trials per simulation")
 	mcPerformancePng = flag.String("mcPerformancePng", "performance.png", "performance plot")
 	mcAccuracyPng    = flag.String("mcAccuracyPng", "accuracy.png", "accuracy plot")
+	mcCumulativePng  = flag.String("mcCumulativePng", "cumulative.png", "cumulative plot")
 )
 
 func init() {
@@ -93,13 +94,18 @@ func main() {
 		sims[ε] = s
 	}
 
-	title, xLabel, yLabel := "εGreedy Accuracy", "Time", "P(selecting best arm)"
+	title, xLabel, yLabel := "Greedy Accuracy", "Time", "P(selecting best arm)"
 	draw(title, xLabel, yLabel, *mcAccuracyPng, sims, func(s bandit.Sim) []float64 {
-		return bandit.Accuracy(s, 5)
+		return bandit.Accuracy(s, 4)
 	})
 
-	title, xLabel, yLabel = "εGreedy Performance", "Time", "Reward"
+	title, xLabel, yLabel = "Greedy Performance", "Time", "Reward"
 	draw(title, xLabel, yLabel, *mcPerformancePng, sims, func(s bandit.Sim) []float64 {
 		return bandit.Performance(s)
+	})
+
+	title, xLabel, yLabel = "Greedy Cumulative Performance", "Time", "Cumulative Reward"
+	draw(title, xLabel, yLabel, *mcCumulativePng, sims, func(s bandit.Sim) []float64 {
+		return bandit.Cumulative(s)
 	})
 }

@@ -1,7 +1,6 @@
 package bandit
 
 import (
-	"math"
 	"math/rand"
 	"time"
 )
@@ -54,7 +53,11 @@ func MonteCarlo(sims, trials int, bandit BanditNew, arms []Arm) (Sim, error) {
 			s.Trial[i] = trial + 1
 			s.Selected[i] = selected
 			s.Reward[i] = reward
-			s.Cumulative[i] = s.Cumulative[int(math.Max(float64(i-1), 0.0))] + reward
+			if trial == 0 {
+				s.Cumulative[i] = 0.0
+			} else {
+				s.Cumulative[i] = s.Cumulative[i-1] + reward
+			}
 		}
 	}
 
@@ -109,6 +112,28 @@ func Performance(s Sim) []float64 {
 			}
 
 			accum = accum + s.Reward[i]
+			count = count + 1
+		}
+
+		t[trial] = accum / float64(count)
+	}
+
+	return t
+}
+
+// Cumulative performance returns an array of average rewards at each trial
+// point.  Averaged over sims
+func Cumulative(s Sim) []float64 {
+	t := make([]float64, s.Trials)
+	for trial := 0; trial < s.Trials; trial++ {
+		accum, count := 0.0, 0
+		for sim := 0; sim < s.Sims; sim++ {
+			i := sim*s.Trials + trial
+			if s.Trial[i] != trial+1 {
+				panic("impossible trial access")
+			}
+
+			accum = accum + s.Cumulative[i]
 			count = count + 1
 		}
 
