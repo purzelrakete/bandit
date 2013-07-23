@@ -8,12 +8,14 @@ import (
 	"github.com/purzelrakete/bandit"
 	"image/color"
 	"log"
+	"strconv"
+	"strings"
 )
 
 // sims maps model parameter such as ε to corresponding simulation results
 type sims map[float64]bandit.Simulation
 
-// summary summarizes a Sim and returns corresponding plot points.
+// summary summarizes a Simulation and returns corresponding plot points.
 type summary func(s bandit.Simulation) []float64
 
 // xys turns a slice of float64 values into a plotter.XYs
@@ -58,9 +60,25 @@ func draw(title, xLabel, yLabel, filename string, sims sims, summary summary) {
 	}
 }
 
+// parseArms converts command line 0.1,0.2 into a slice of floats
+func parseArms(sμ string) ([]float64, error) {
+	var μs []float64
+	for _, s := range strings.Split(*mcMus, ",") {
+		μ, err := strconv.ParseFloat(s, 64)
+		if err != nil {
+			return []float64{}, fmt.Errorf("could not parse float: %s", err.Error())
+		}
+
+		μs = append(μs, μ)
+	}
+
+	return μs, nil
+}
+
 var (
 	mcSims           = flag.Int("mcSims", 5000, "monte carlo simulations to run")
 	mcHorizon        = flag.Int("mcHorizon", 300, "trials per simulation")
+	mcMus            = flag.String("mcMus", "0.1,0.3,0.2,0.8", "bernoulli arm μ parameters")
 	mcPerformancePng = flag.String("mcPerformancePng", "bandit_performance.png", "performance plot")
 	mcAccuracyPng    = flag.String("mcAccuracyPng", "bandit_accuracy.png", "accuracy plot")
 	mcCumulativePng  = flag.String("mcCumulativePng", "bandit_cumulative.png", "cumulative plot")
@@ -71,22 +89,24 @@ func init() {
 }
 
 func main() {
-	εs := []float64{0.1, 0.2, 0.3, 0.4, 0.5}
-	μs := []float64{0.1, 0.3, 0.2, 0.8}
-	sims := make(sims)
+	μs, err := parseArms(*mcMus)
+	if err != nil {
+		log.Fatalf(err.Error())
+	}
 
+	εs := []float64{0.1, 0.2, 0.3, 0.4, 0.5}
+	sims := make(sims)
 	for _, ε := range εs {
 		banditNew := func() (bandit.Bandit, error) {
 			return bandit.EpsilonGreedyNew(len(μs), ε)
 		}
 
-		s, err := bandit.MonteCarlo(*mcSims, *mcHorizon, banditNew, []bandit.Arm{
-			bandit.Bernoulli(μs[0]),
-			bandit.Bernoulli(μs[1]),
-			bandit.Bernoulli(μs[2]),
-			bandit.Bernoulli(μs[3]),
-		})
+		var arms []bandit.Arm
+		for _, μ := range μs {
+			arms = append(arms, bandit.Bernoulli(μ))
+		}
 
+		s, err := bandit.MonteCarlo(*mcSims, *mcHorizon, banditNew, arms)
 		if err != nil {
 			log.Fatalf(err.Error())
 		}

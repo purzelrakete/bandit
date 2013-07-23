@@ -69,3 +69,16 @@ $GOPATH/bin/plot
 open bandit*.png
 ```
 
+You can change the default number and parameterization of bernoulli arms like
+this:
+
+```sh
+$GOPATH/bin/plot -mus 0.22,0.1,0.7
+open bandit*.png
+```
+
+View defaults and available flags:
+
+```sh
+$GOPATH/bin/plot -h
+```
