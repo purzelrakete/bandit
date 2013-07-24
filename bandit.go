@@ -68,7 +68,7 @@ func (e epsilonGreedy) Update(arm int, reward float64) {
 
 // Version returns information on this bandit
 func (e epsilonGreedy) Version() string {
-	return fmt.Sprintf("EpsilonGreedy(ε=%.5f)", e.epsilon)
+	return fmt.Sprintf("EpsilonGreedy(epsilon=%.2f)", e.epsilon)
 }
 
 // SoftmaxNew constructs a softmax bandit. Softmax explores non randomly
@@ -128,5 +128,5 @@ func (s softmax) Update(arm int, reward float64) {
 
 // Version returns information on this bandit
 func (s softmax) Version() string {
-	return fmt.Sprintf("Softmax(τ=%.5f)", s.tau)
+	return fmt.Sprintf("Softmax(tau=%.2f)", s.tau)
 }
