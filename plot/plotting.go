@@ -29,35 +29,43 @@ func xys(data []float64) plotter.XYs {
 	return points
 }
 
-// draw is a generic plotter of simulation summaries.
-func draw(title, xLabel, yLabel, filename string, sims simulations, summary summary) {
+// plotLine represents labelled plot lines
+type plotLines map[string][]float64
+
+// draw is a generic plotter of labelled lines.
+func draw(lines plotLines, title, xLabel, yLabel string) error {
 	p, err := plot.New()
 	if err != nil {
-		log.Fatalf(err.Error())
+		return fmt.Errorf(err.Error())
 	}
 
 	p.Title.Text = title
 	p.X.Label.Text = xLabel
 	p.Y.Label.Text = yLabel
 
-	for ε, sim := range sims {
-		l, err := plotter.NewLine(xys(summary(sim)))
+	i := 0
+	for legend, data := range lines {
+		i = i + 1
+		l, err := plotter.NewLine(xys(data))
 		if err != nil {
-			log.Fatalf(err.Error())
+			return fmt.Errorf(err.Error())
 		}
 
 		p.Add(l)
-		p.Legend.Add(fmt.Sprintf("%.2f", ε), l)
-		l.LineStyle.Color = color.Gray{uint8(255 * 1.9 * ε)}
+		p.Legend.Add(legend, l)
+		l.LineStyle.Color = color.Gray{uint8(48 * float64(i))}
 	}
 
 	if err != nil {
-		log.Fatalf(err.Error())
+		return fmt.Errorf(err.Error())
 	}
 
+	filename := fmt.Sprintf("bandit_%s.png", strings.ToLower(title))
 	if err := p.Save(8, 8, filename); err != nil {
-		log.Fatalf(err.Error())
+		return fmt.Errorf(err.Error())
 	}
+
+	return nil
 }
 
 // parseArms converts command line 0.1,0.2 into a slice of floats. Returns
@@ -92,12 +100,9 @@ func parseArms(sμ string) ([]float64, []int, error) {
 }
 
 var (
-	mcSims           = flag.Int("mcSims", 5000, "monte carlo simulations to run")
-	mcHorizon        = flag.Int("mcHorizon", 300, "trials per simulation")
-	mcMus            = flag.String("mcMus", "0.1,0.3,0.2,0.8", "bernoulli arm μ parameters")
-	mcPerformancePng = flag.String("mcPerformancePng", "bandit_performance.png", "performance plot")
-	mcAccuracyPng    = flag.String("mcAccuracyPng", "bandit_accuracy.png", "accuracy plot")
-	mcCumulativePng  = flag.String("mcCumulativePng", "bandit_cumulative.png", "cumulative plot")
+	mcSims    = flag.Int("mcSims", 5000, "monte carlo simulations to run")
+	mcHorizon = flag.Int("mcHorizon", 300, "trials per simulation")
+	mcMus     = flag.String("mcMus", "0.1,0.3,0.2,0.8", "bernoulli arm μ parameters")
 )
 
 func init() {
@@ -115,7 +120,7 @@ func main() {
 		arms = append(arms, bandit.Bernoulli(μ))
 	}
 
-	sims := make(simulations)
+	lines := make(plotLines)
 	for _, ε := range []float64{0.1, 0.2, 0.3, 0.4, 0.5} {
 		s, err := bandit.MonteCarlo(*mcSims, *mcHorizon, arms, func() (bandit.Bandit, error) {
 			return bandit.EpsilonGreedyNew(len(μs), ε)
@@ -125,21 +130,38 @@ func main() {
 			log.Fatalf(err.Error())
 		}
 
-		sims[ε] = s
+		lines[fmt.Sprintf("EpsilonGreedy(%.2f)", ε)] = bandit.Accuracy(s, bestArms)
 	}
 
-	title, x, y := "Greedy Accuracy", "Time", "P(selecting best arm)"
-	draw(title, x, y, *mcAccuracyPng, sims, func(s bandit.Simulation) []float64 {
-		return bandit.Accuracy(s, bestArms)
-	})
+	draw(lines, "Accuracy", "Time", "P(selecting best arm)")
 
-	title, x, y = "Greedy Performance", "Time", "Reward"
-	draw(title, x, y, *mcPerformancePng, sims, func(s bandit.Simulation) []float64 {
-		return bandit.Performance(s)
-	})
+	lines = make(plotLines)
+	for _, ε := range []float64{0.1, 0.2, 0.3, 0.4, 0.5} {
+		s, err := bandit.MonteCarlo(*mcSims, *mcHorizon, arms, func() (bandit.Bandit, error) {
+			return bandit.EpsilonGreedyNew(len(μs), ε)
+		})
 
-	title, x, y = "Greedy Cumulative Performance", "Time", "Cumulative Reward"
-	draw(title, x, y, *mcCumulativePng, sims, func(s bandit.Simulation) []float64 {
-		return bandit.Cumulative(s)
-	})
+		if err != nil {
+			log.Fatalf(err.Error())
+		}
+
+		lines[fmt.Sprintf("EpsilonGreedy(%.2f)", ε)] = bandit.Performance(s)
+	}
+
+	draw(lines, "Performance", "Time", "P(selecting best arm)")
+
+	lines = make(plotLines)
+	for _, ε := range []float64{0.1, 0.2, 0.3, 0.4, 0.5} {
+		s, err := bandit.MonteCarlo(*mcSims, *mcHorizon, arms, func() (bandit.Bandit, error) {
+			return bandit.EpsilonGreedyNew(len(μs), ε)
+		})
+
+		if err != nil {
+			log.Fatalf(err.Error())
+		}
+
+		lines[fmt.Sprintf("EpsilonGreedy(%.2f)", ε)] = bandit.Cumulative(s)
+	}
+
+	draw(lines, "Cumulative", "Time", "P(selecting best arm)")
 }
