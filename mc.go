@@ -42,6 +42,8 @@ func MonteCarlo(sims, trials int, arms []Arm, bandit BanditNew) (Simulation, err
 			return Simulation{}, err
 		}
 
+		s.Description = b.Version()
+
 		for trial := 0; trial < trials; trial++ {
 			selected := b.SelectArm()
 			reward := arms[selected-1]()
@@ -67,13 +69,14 @@ func MonteCarlo(sims, trials int, arms []Arm, bandit BanditNew) (Simulation, err
 // Simulation is a matrix of simulation results. Columns represent individual
 // trial results that grow to the right with each trial
 type Simulation struct {
-	Sims       int
-	Trials     int
-	Sim        []int
-	Trial      []int
-	Selected   []int
-	Reward     []float64
-	Cumulative []float64
+	Sims        int
+	Trials      int
+	Description string
+	Sim         []int
+	Trial       []int
+	Selected    []int
+	Reward      []float64
+	Cumulative  []float64
 }
 
 // Accuracy returns the proportion of times the best arm was pulled at each 

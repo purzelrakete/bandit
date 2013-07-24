@@ -120,47 +120,46 @@ func main() {
 		arms = append(arms, bandit.Bernoulli(μ))
 	}
 
+	banditNew := func(ε float64) bandit.BanditNew {
+		return func() (bandit.Bandit, error) {
+			return bandit.EpsilonGreedyNew(len(μs), ε)
+		}
+	}
+
+	sims, horizon := *mcSims, *mcHorizon
+
 	lines := make(plotLines)
 	for _, ε := range []float64{0.1, 0.2, 0.3, 0.4, 0.5} {
-		s, err := bandit.MonteCarlo(*mcSims, *mcHorizon, arms, func() (bandit.Bandit, error) {
-			return bandit.EpsilonGreedyNew(len(μs), ε)
-		})
-
+		s, err := bandit.MonteCarlo(sims, horizon, arms, banditNew(ε))
 		if err != nil {
 			log.Fatalf(err.Error())
 		}
 
-		lines[fmt.Sprintf("EpsilonGreedy(%.2f)", ε)] = bandit.Accuracy(s, bestArms)
+		lines[s.Description] = bandit.Accuracy(s, bestArms)
 	}
 
 	draw(lines, "Accuracy", "Time", "P(selecting best arm)")
 
 	lines = make(plotLines)
 	for _, ε := range []float64{0.1, 0.2, 0.3, 0.4, 0.5} {
-		s, err := bandit.MonteCarlo(*mcSims, *mcHorizon, arms, func() (bandit.Bandit, error) {
-			return bandit.EpsilonGreedyNew(len(μs), ε)
-		})
-
+		s, err := bandit.MonteCarlo(sims, horizon, arms, banditNew(ε))
 		if err != nil {
 			log.Fatalf(err.Error())
 		}
 
-		lines[fmt.Sprintf("EpsilonGreedy(%.2f)", ε)] = bandit.Performance(s)
+		lines[s.Description] = bandit.Performance(s)
 	}
 
 	draw(lines, "Performance", "Time", "P(selecting best arm)")
 
 	lines = make(plotLines)
 	for _, ε := range []float64{0.1, 0.2, 0.3, 0.4, 0.5} {
-		s, err := bandit.MonteCarlo(*mcSims, *mcHorizon, arms, func() (bandit.Bandit, error) {
-			return bandit.EpsilonGreedyNew(len(μs), ε)
-		})
-
+		s, err := bandit.MonteCarlo(sims, horizon, arms, banditNew(ε))
 		if err != nil {
 			log.Fatalf(err.Error())
 		}
 
-		lines[fmt.Sprintf("EpsilonGreedy(%.2f)", ε)] = bandit.Cumulative(s)
+		lines[s.Description] = bandit.Cumulative(s)
 	}
 
 	draw(lines, "Cumulative", "Time", "P(selecting best arm)")

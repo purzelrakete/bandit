@@ -11,6 +11,7 @@ import (
 type Bandit interface {
 	SelectArm() int
 	Update(arm int, reward float64)
+	Version() string
 }
 
 // EpsilonGreedyNew constructs an epsilon greedy bandit.
@@ -63,6 +64,11 @@ func (e epsilonGreedy) Update(arm int, reward float64) {
 	e.counts[arm] = e.counts[arm] + 1
 	count := e.counts[arm]
 	e.values[arm] = ((e.values[arm] * float64(count-1)) + reward) / float64(count)
+}
+
+// Version returns information on this bandit
+func (e epsilonGreedy) Version() string {
+	return fmt.Sprintf("EpsilonGreedy(ε=%.5f)", e.epsilon)
 }
 
 // SoftmaxNew constructs a softmax bandit. Softmax explores non randomly
@@ -118,4 +124,9 @@ func (s softmax) Update(arm int, reward float64) {
 	s.counts[arm] = s.counts[arm] + 1
 	count := s.counts[arm]
 	s.values[arm] = ((s.values[arm] * float64(count-1)) + reward) / float64(count)
+}
+
+// Version returns information on this bandit
+func (s softmax) Version() string {
+	return fmt.Sprintf("Softmax(τ=%.5f)", s.tau)
 }
