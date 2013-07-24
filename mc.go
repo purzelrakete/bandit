@@ -79,29 +79,34 @@ type Simulation struct {
 	Cumulative  []float64
 }
 
+// Summary summarizes a Simulation and returns corresponding plot points.
+type Summary func(s Simulation) []float64
+
 // Accuracy returns the proportion of times the best arm was pulled at each 
 // trial point. Takes a slice of best arms since n arms may be equally good.
-func Accuracy(s Simulation, bestArms []int) []float64 {
-	t := make([]float64, s.Trials)
-	for trial := 0; trial < s.Trials; trial++ {
-		correct := 0
-		for sim := 0; sim < s.Sims; sim++ {
-			i := sim*s.Trials + trial
-			if s.Trial[i] != trial+1 {
-				panic("impossible trial access")
-			}
+func Accuracy(bestArms []int) Summary {
+	return func(s Simulation) []float64 {
+		t := make([]float64, s.Trials)
+		for trial := 0; trial < s.Trials; trial++ {
+			correct := 0
+			for sim := 0; sim < s.Sims; sim++ {
+				i := sim*s.Trials + trial
+				if s.Trial[i] != trial+1 {
+					panic("impossible trial access")
+				}
 
-			for _, best := range bestArms {
-				if s.Selected[i] == best {
-					correct = correct + 1
+				for _, best := range bestArms {
+					if s.Selected[i] == best {
+						correct = correct + 1
+					}
 				}
 			}
+
+			t[trial] = float64(correct) / float64(s.Sims)
 		}
 
-		t[trial] = float64(correct) / float64(s.Sims)
+		return t
 	}
-
-	return t
 }
 
 // Performance returns an array of average rewards at each trial point.

@@ -15,9 +15,6 @@ import (
 // simulations maps model parameter to corresponding simulation results
 type simulations map[float64]bandit.Simulation
 
-// summary summarizes a Simulation and returns corresponding plot points.
-type summary func(s bandit.Simulation) []float64
-
 // xys turns a slice of float64 values into a plotter.XYs
 func xys(data []float64) plotter.XYs {
 	points := make(plotter.XYs, len(data))
@@ -99,6 +96,34 @@ func parseArms(sμ string) ([]float64, []int, error) {
 	return μs, imax, nil
 }
 
+// lines summarizes simulations and coverts the to plotLines
+func lines(sims []bandit.Simulation, summary bandit.Summary) plotLines {
+	lines := make(plotLines)
+	for _, sim := range sims {
+		lines[sim.Description] = summary(sim)
+	}
+
+	return lines
+}
+
+// banditNew
+type banditNew func(x float64) bandit.BanditNew
+
+// sims runs a Monte Carlo simulation with given arms and bandits
+func sims(b banditNew, arms []bandit.Arm, sims, horizon int) ([]bandit.Simulation, error) {
+	ret := []bandit.Simulation{}
+	for _, x := range []float64{0.1, 0.2, 0.3, 0.4, 0.5} {
+		s, err := bandit.MonteCarlo(sims, horizon, arms, b(x))
+		if err != nil {
+			return []bandit.Simulation{}, fmt.Errorf(err.Error())
+		}
+
+		ret = append(ret, s)
+	}
+
+	return ret, nil
+}
+
 var (
 	mcSims    = flag.Int("mcSims", 5000, "monte carlo simulations to run")
 	mcHorizon = flag.Int("mcHorizon", 300, "trials per simulation")
@@ -115,7 +140,7 @@ func main() {
 		log.Fatalf(err.Error())
 	}
 
-	var arms []bandit.Arm
+	arms := []bandit.Arm{}
 	for _, μ := range μs {
 		arms = append(arms, bandit.Bernoulli(μ))
 	}
@@ -126,41 +151,24 @@ func main() {
 		}
 	}
 
-	sims, horizon := *mcSims, *mcHorizon
-
-	lines := make(plotLines)
-	for _, ε := range []float64{0.1, 0.2, 0.3, 0.4, 0.5} {
-		s, err := bandit.MonteCarlo(sims, horizon, arms, banditNew(ε))
-		if err != nil {
-			log.Fatalf(err.Error())
-		}
-
-		lines[s.Description] = bandit.Accuracy(s, bestArms)
+	s, err := sims(banditNew, arms, *mcSims, *mcHorizon)
+	if err != nil {
+		log.Fatalf(err.Error())
 	}
 
-	draw(lines, "Accuracy", "Time", "P(selecting best arm)")
+	draw(lines(s, bandit.Accuracy(bestArms)), "Accuracy", "Time", "P(selecting best arm)")
 
-	lines = make(plotLines)
-	for _, ε := range []float64{0.1, 0.2, 0.3, 0.4, 0.5} {
-		s, err := bandit.MonteCarlo(sims, horizon, arms, banditNew(ε))
-		if err != nil {
-			log.Fatalf(err.Error())
-		}
-
-		lines[s.Description] = bandit.Performance(s)
+	s, err = sims(banditNew, arms, *mcSims, *mcHorizon)
+	if err != nil {
+		log.Fatalf(err.Error())
 	}
 
-	draw(lines, "Performance", "Time", "P(selecting best arm)")
+	draw(lines(s, bandit.Performance), "Performance", "Time", "P(selecting best arm)")
 
-	lines = make(plotLines)
-	for _, ε := range []float64{0.1, 0.2, 0.3, 0.4, 0.5} {
-		s, err := bandit.MonteCarlo(sims, horizon, arms, banditNew(ε))
-		if err != nil {
-			log.Fatalf(err.Error())
-		}
-
-		lines[s.Description] = bandit.Cumulative(s)
+	s, err = sims(banditNew, arms, *mcSims, *mcHorizon)
+	if err != nil {
+		log.Fatalf(err.Error())
 	}
 
-	draw(lines, "Cumulative", "Time", "P(selecting best arm)")
+	draw(lines(s, bandit.Cumulative), "Cumulative", "Time", "P(selecting best arm)")
 }
