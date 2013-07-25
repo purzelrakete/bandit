@@ -2,8 +2,11 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"github.com/purzelrakete/bandit"
 	"log"
+	"strconv"
+	"strings"
 )
 
 var (

@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"github.com/purzelrakete/bandit"
 	"image/color"
-	"strconv"
 	"strings"
 )
 
