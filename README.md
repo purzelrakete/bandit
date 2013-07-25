@@ -16,6 +16,8 @@ Bandits are fully defined by the following interface:
 type Bandit interface {
   SelectArm() int
   Update(arm int, reward float64)
+  Reset()
+  Version() string
 }
 ```
 
@@ -51,17 +53,19 @@ arms := []bandit.Arm{
   bandit.Bernoulli(0.8),
 })
 
-s, err := bandit.MonteCarlo(sims, trials, arms, func() (bandit.Bandit, error) {
-  return bandit.EpsilonGreedyNew(len(arms), ε)
-})
-
+bandit, err := NewEpsilonGreedy(len(arms), ε)
 if err != nil {
-  log.Fatalf(err.Error())
+  log.Fatal(err.Error())
 }
 
-performance := bandit.Performance(s, 4)
-accuracy := bandit.Accuracy(s)
-cumulative := bandit.Cumulative(s)
+sim, err := MonteCarlo(sims, trials, arms, bandit)
+if err != nil {
+  log.Fatal(err.Error())
+}
+
+performance := bandit.Performance(sim, 4)
+accuracy := bandit.Accuracy(sim)
+cumulative := bandit.Cumulative(sim)
 ```
 
 ## Plotting
