@@ -100,34 +100,3 @@ func summarize(sims simulations, summary bandit.Summary) graph {
 
 	return lines
 }
-
-// parseArms converts command line 0.1,0.2 into a slice of floats. Returns
-// the the best arm (1 indexed). In the case of equally good best arms there
-// will be multiple indices in the returned slice.
-func parseArms(sμ string) ([]float64, []int, error) {
-	var μs []float64
-	var imax []int
-	max := 0.0
-	for i, s := range strings.Split(sμ, ",") {
-		μ, err := strconv.ParseFloat(s, 64)
-		if err != nil {
-			return []float64{}, []int{}, fmt.Errorf("NaN: %s", err.Error())
-		}
-
-		if μ < 0 || μ > 1 {
-			return []float64{}, []int{}, fmt.Errorf("μ not in [0,1]: %.5f", μ)
-		}
-
-		// there may be multiple equally good (best) arms
-		if μ > max {
-			max = μ
-			imax = []int{i + 1}
-		} else if μ == max {
-			imax = append(imax, i+1)
-		}
-
-		μs = append(μs, μ)
-	}
-
-	return μs, imax, nil
-}
