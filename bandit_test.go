@@ -1,8 +1,6 @@
 package bandit
 
-import (
-	"testing"
-)
+import "testing"
 
 func TestEpsilonGreedy(t *testing.T) {
 	ε := 0.1
@@ -55,5 +53,17 @@ func TestSoftmax(t *testing.T) {
 	expected := sims * trials
 	if got := len(sim.Selected); got != expected {
 		t.Fatalf("incorrect number of trials: %d", got)
+	}
+}
+
+func TestCampaign(t *testing.T) {
+	campaigns, err := ParseCampaigns("fixtures/campaigns.tsv")
+	if err != nil {
+		t.Fatalf("while reading campaign fixture: %s", err.Error())
+	}
+
+	expected := 3
+	if got := len(campaigns["widgets"].Variants); got != expected {
+		t.Fatalf("expected %d variants, got %d", expected, got)
 	}
 }

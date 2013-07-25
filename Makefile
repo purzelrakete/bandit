@@ -1,9 +1,15 @@
-.PHONY: all plot build test deps clean
+.PHONY: all plot http oob build test deps clean
 
-all: deps build test plot
+all: deps build test plot http oob
 
 plot:
 	make -C plot
+
+http:
+	make -C http
+
+oob:
+	make -C oob
 
 build:
 	go build -v

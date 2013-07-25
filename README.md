@@ -24,11 +24,41 @@ type Bandit interface {
 You should construct a concrete bandit like this:
 
 ```go
-b := bandit.EpsilonGreedyNew(2, 0.1)
+b := bandit.NewSoftmax(2, 0.1)
 ```
 
-This constructs a bandit with 2 arms using `EpsilonGreedy` with `ε` set to
-10%.
+This constructs a bandit with 2 arms using `Softmax` with `τ` set to 0.1.
+
+## HTTP and out of band testing
+
+The OOBBandit can be used as an out of the box API endpoint for javascript
+applications.
+
+In this scenario, the application makes a request to the api endpoint:
+
+    GET https://api/ab/widgets?uid=11 HTTP/1.0
+
+And receives a json response response
+
+    HTTP/1.0 200 OK
+    Content-Type: text/json
+
+    {
+      uid: 11,
+      campaign: "widgets",
+      url: "https://api/widget?color=blue"
+      tag: "widget-secret-sauce-flf89-c8c3u-c82nv"
+    }
+
+The client can now follow up with a request to the returned widget:
+
+    GET https://api/widget?color=blue HTTP/1.0
+
+### Starting the out of band endpoint
+
+```sh
+$GOPATH/bin oob -port 80 -campaignFile campaigns.tsv
+```
 
 ## Simulation
 

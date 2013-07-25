@@ -75,7 +75,7 @@ type Simulation struct {
 // Summary summarizes a Simulation and returns corresponding plot points.
 type Summary func(s *Simulation) []float64
 
-// Accuracy returns the proportion of times the best arm was pulled at each 
+// Accuracy returns the proportion of times the best arm was pulled at each
 // trial point. Takes a slice of best arms since n arms may be equally good.
 func Accuracy(bestArms []int) Summary {
 	return func(s *Simulation) []float64 {
