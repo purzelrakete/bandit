@@ -15,7 +15,7 @@ func TestEpsilonGreedy(t *testing.T) {
 		Bernoulli(0.8),
 	}
 
-	bandit, err := EpsilonGreedyNew(len(arms), ε)
+	bandit, err := NewEpsilonGreedy(len(arms), ε)
 	if err != nil {
 		t.Fatalf(err.Error())
 	}
@@ -42,7 +42,7 @@ func TestSoftmax(t *testing.T) {
 		Bernoulli(0.8),
 	}
 
-	bandit, err := SoftmaxNew(len(arms), τ)
+	bandit, err := NewSoftmax(len(arms), τ)
 	if err != nil {
 		t.Fatalf(err.Error())
 	}

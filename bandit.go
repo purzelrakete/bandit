@@ -15,8 +15,8 @@ type Bandit interface {
 	Version() string
 }
 
-// EpsilonGreedyNew constructs an epsilon greedy bandit.
-func EpsilonGreedyNew(arms int, epsilon float64) (Bandit, error) {
+// NewEpsilonGreedy constructs an epsilon greedy bandit.
+func NewEpsilonGreedy(arms int, epsilon float64) (Bandit, error) {
 	if !(epsilon >= 0 && epsilon <= 1) {
 		return &epsilonGreedy{}, fmt.Errorf("epsilon not in [0, 1]")
 	}
@@ -55,14 +55,14 @@ func (e *epsilonGreedy) SelectArm() int {
 		arm = e.rand.Intn(e.arms)
 	}
 
-	e.counts[arm] = e.counts[arm] + 1
+	e.counts[arm]++
 	return arm + 1
 }
 
 // Update the running average
 func (e *epsilonGreedy) Update(arm int, reward float64) {
-	arm = arm - 1
-	e.counts[arm] = e.counts[arm] + 1
+	arm--
+	e.counts[arm]++
 	count := e.counts[arm]
 	e.values[arm] = ((e.values[arm] * float64(count-1)) + reward) / float64(count)
 }
@@ -79,8 +79,8 @@ func (e *epsilonGreedy) Reset() {
 	e.rand = rand.New(rand.NewSource(time.Now().UnixNano()))
 }
 
-// SoftmaxNew constructs a softmax bandit. Softmax explores non randomly
-func SoftmaxNew(arms int, τ float64) (Bandit, error) {
+// NewSoftmax constructs a softmax bandit. Softmax explores non randomly
+func NewSoftmax(arms int, τ float64) (Bandit, error) {
 	if !(τ >= 0.0) {
 		return &softmax{}, fmt.Errorf("τ not in [0, ∞]")
 	}
@@ -128,8 +128,8 @@ func (s *softmax) SelectArm() int {
 
 // Update the running average
 func (s *softmax) Update(arm int, reward float64) {
-	arm = arm - 1
-	s.counts[arm] = s.counts[arm] + 1
+	arm--
+	s.counts[arm]++
 	count := s.counts[arm]
 	s.values[arm] = ((s.values[arm] * float64(count-1)) + reward) / float64(count)
 }
