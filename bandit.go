@@ -11,16 +11,17 @@ import (
 type Bandit interface {
 	SelectArm() int
 	Update(arm int, reward float64)
+	Reset()
 	Version() string
 }
 
 // EpsilonGreedyNew constructs an epsilon greedy bandit.
 func EpsilonGreedyNew(arms int, epsilon float64) (Bandit, error) {
 	if !(epsilon >= 0 && epsilon <= 1) {
-		return epsilonGreedy{}, fmt.Errorf("epsilon not in [0, 1]")
+		return &epsilonGreedy{}, fmt.Errorf("epsilon not in [0, 1]")
 	}
 
-	return epsilonGreedy{
+	return &epsilonGreedy{
 		counts:  make([]int, arms),
 		values:  make([]float64, arms),
 		rand:    rand.New(rand.NewSource(time.Now().UnixNano())),
@@ -40,7 +41,7 @@ type epsilonGreedy struct {
 }
 
 // SelectArm according to EpsilonGreedy strategy
-func (e epsilonGreedy) SelectArm() int {
+func (e *epsilonGreedy) SelectArm() int {
 	arm := 0
 	if e.rand.Float64() > e.epsilon {
 		// best arm
@@ -59,7 +60,7 @@ func (e epsilonGreedy) SelectArm() int {
 }
 
 // Update the running average
-func (e epsilonGreedy) Update(arm int, reward float64) {
+func (e *epsilonGreedy) Update(arm int, reward float64) {
 	arm = arm - 1
 	e.counts[arm] = e.counts[arm] + 1
 	count := e.counts[arm]
@@ -67,17 +68,24 @@ func (e epsilonGreedy) Update(arm int, reward float64) {
 }
 
 // Version returns information on this bandit
-func (e epsilonGreedy) Version() string {
+func (e *epsilonGreedy) Version() string {
 	return fmt.Sprintf("EpsilonGreedy(epsilon=%.2f)", e.epsilon)
+}
+
+// Reset returns the bandit to it's newly constructed state
+func (e *epsilonGreedy) Reset() {
+	e.counts = make([]int, e.arms)
+	e.values = make([]float64, e.arms)
+	e.rand = rand.New(rand.NewSource(time.Now().UnixNano()))
 }
 
 // SoftmaxNew constructs a softmax bandit. Softmax explores non randomly
 func SoftmaxNew(arms int, τ float64) (Bandit, error) {
 	if !(τ >= 0.0) {
-		return softmax{}, fmt.Errorf("τ not in [0, ∞]")
+		return &softmax{}, fmt.Errorf("τ not in [0, ∞]")
 	}
 
-	return softmax{
+	return &softmax{
 		counts: make([]int, arms),
 		values: make([]float64, arms),
 		rand:   rand.New(rand.NewSource(time.Now().UnixNano())),
@@ -96,7 +104,7 @@ type softmax struct {
 }
 
 // SelectArm 
-func (s softmax) SelectArm() int {
+func (s *softmax) SelectArm() int {
 	z := 0.0
 	for _, value := range s.values {
 		z = z + math.Exp(value/s.tau)
@@ -119,7 +127,7 @@ func (s softmax) SelectArm() int {
 }
 
 // Update the running average
-func (s softmax) Update(arm int, reward float64) {
+func (s *softmax) Update(arm int, reward float64) {
 	arm = arm - 1
 	s.counts[arm] = s.counts[arm] + 1
 	count := s.counts[arm]
@@ -127,6 +135,13 @@ func (s softmax) Update(arm int, reward float64) {
 }
 
 // Version returns information on this bandit
-func (s softmax) Version() string {
+func (s *softmax) Version() string {
 	return fmt.Sprintf("Softmax(tau=%.2f)", s.tau)
+}
+
+// Reset returns the bandit to it's newly constructed state
+func (s *softmax) Reset() {
+	s.counts = make([]int, s.arms)
+	s.values = make([]float64, s.arms)
+	s.rand = rand.New(rand.NewSource(time.Now().UnixNano()))
 }

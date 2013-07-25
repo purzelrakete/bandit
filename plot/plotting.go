@@ -23,7 +23,7 @@ func xys(data []float64) plotter.XYs {
 	return points
 }
 
-// plotLine represents labelled plot lines
+// graph is labelled plot lines
 type graph map[string][]float64
 
 // draw is a generic plotter of labelled lines.
@@ -54,7 +54,8 @@ func draw(lines graph, title, xLabel, yLabel string) error {
 		return fmt.Errorf(err.Error())
 	}
 
-	filename := fmt.Sprintf("bandit_%s.png", strings.ToLower(title))
+	name := strings.Replace(strings.ToLower(title), " ", "-", -1)
+	filename := fmt.Sprintf("bandit-%s.png", name)
 	if err := p.Save(8, 8, filename); err != nil {
 		return fmt.Errorf(err.Error())
 	}
@@ -62,8 +63,8 @@ func draw(lines graph, title, xLabel, yLabel string) error {
 	return nil
 }
 
-// banditNew constructs parameterized BanditNew functions
-type banditNew func(x float64) bandit.BanditNew
+// bandits
+type bandits []bandit.Bandit
 
 // simulations
 type simulations []bandit.Simulation
@@ -72,10 +73,10 @@ type simulations []bandit.Simulation
 type arms []bandit.Arm
 
 // simulate runs a Monte Carlo simulation with given arms and bandits
-func simulate(b banditNew, arms arms, sims, horizon int) (simulations, error) {
+func simulate(bs bandits, arms arms, sims, horizon int) (simulations, error) {
 	ret := simulations{}
-	for _, x := range []float64{0.1, 0.2, 0.3, 0.4, 0.5} {
-		s, err := bandit.MonteCarlo(sims, horizon, arms, b(x))
+	for _, b := range bs {
+		s, err := bandit.MonteCarlo(sims, horizon, arms, b)
 		if err != nil {
 			return simulations{}, fmt.Errorf(err.Error())
 		}
@@ -90,7 +91,7 @@ func simulate(b banditNew, arms arms, sims, horizon int) (simulations, error) {
 func summarize(sims simulations, summary bandit.Summary) graph {
 	lines := make(graph)
 	for _, sim := range sims {
-		lines[sim.Description] = summary(sim)
+		lines[sim.Description] = summary(&sim)
 	}
 
 	return lines
@@ -127,6 +128,12 @@ func parseArms(sμ string) ([]float64, []int, error) {
 	return μs, imax, nil
 }
 
+// group ties together n bandits over all summary functions
+type group struct {
+	name    string
+	bandits bandits
+}
+
 var (
 	mcSims    = flag.Int("mcSims", 5000, "monte carlo simulations to run")
 	mcHorizon = flag.Int("mcHorizon", 300, "trials per simulation")
@@ -143,42 +150,71 @@ func main() {
 		log.Fatalf(err.Error())
 	}
 
+	// bernoulli arms. these determine the observed distribution
 	arms := arms{}
 	for _, μ := range μs {
 		arms = append(arms, bandit.Bernoulli(μ))
 	}
 
-	bandits := []banditNew{
-		func(ε float64) bandit.BanditNew {
-			return func() (bandit.Bandit, error) {
-				return bandit.EpsilonGreedyNew(len(μs), ε)
-			}
-		},
+	// groups of graphs to draw
+	groups := []group{}
+
+	// epsilon greedy
+	greedys := bandits{}
+	for _, ε := range []float64{0.1, 0.2, 0.3, 0.4, 0.5} {
+		bandit, err := bandit.EpsilonGreedyNew(len(μs), ε)
+		if err != nil {
+			log.Fatalf(err.Error())
+		}
+
+		greedys = append(greedys, bandit)
 	}
 
-	for _, b := range bandits {
-		s, err := simulate(b, arms, *mcSims, *mcHorizon)
+	groups = append(groups, group{
+		name:    "Epsilon Greedy",
+		bandits: greedys,
+	})
+
+	// softmax
+	softmaxes := bandits{}
+	for _, τ := range []float64{0.1, 0.2, 0.3, 0.4, 0.5} {
+		bandit, err := bandit.SoftmaxNew(len(μs), τ)
+		if err != nil {
+			log.Fatalf(err.Error())
+		}
+
+		softmaxes = append(softmaxes, bandit)
+	}
+
+	groups = append(groups, group{
+		name:    "Softmax",
+		bandits: softmaxes,
+	})
+
+	// draw groups
+	for _, group := range groups {
+		s, err := simulate(group.bandits, arms, *mcSims, *mcHorizon)
 		if err != nil {
 			log.Fatalf(err.Error())
 		}
 
 		graph := summarize(s, bandit.Accuracy(bestArms))
-		draw(graph, "Accuracy", "Time", "P(selecting best arm)")
+		draw(graph, group.name+" Accuracy", "Time", "P(selecting best arm)")
 
-		s, err = simulate(b, arms, *mcSims, *mcHorizon)
+		s, err = simulate(group.bandits, arms, *mcSims, *mcHorizon)
 		if err != nil {
 			log.Fatalf(err.Error())
 		}
 
 		graph = summarize(s, bandit.Performance)
-		draw(graph, "Performance", "Time", "P(selecting best arm)")
+		draw(graph, group.name+" Performance", "Time", "P(selecting best arm)")
 
-		s, err = simulate(b, arms, *mcSims, *mcHorizon)
+		s, err = simulate(group.bandits, arms, *mcSims, *mcHorizon)
 		if err != nil {
 			log.Fatalf(err.Error())
 		}
 
 		graph = summarize(s, bandit.Cumulative)
-		draw(graph, "Cumulative", "Time", "P(selecting best arm)")
+		draw(graph, group.name+" Cumulative", "Time", "P(selecting best arm)")
 	}
 }

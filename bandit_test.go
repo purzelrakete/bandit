@@ -15,10 +15,12 @@ func TestEpsilonGreedy(t *testing.T) {
 		Bernoulli(0.8),
 	}
 
-	sim, err := MonteCarlo(sims, trials, arms, func() (Bandit, error) {
-		return EpsilonGreedyNew(len(arms), ε)
-	})
+	bandit, err := EpsilonGreedyNew(len(arms), ε)
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
 
+	sim, err := MonteCarlo(sims, trials, arms, bandit)
 	if err != nil {
 		t.Fatalf(err.Error())
 	}
@@ -40,10 +42,12 @@ func TestSoftmax(t *testing.T) {
 		Bernoulli(0.8),
 	}
 
-	sim, err := MonteCarlo(sims, trials, arms, func() (Bandit, error) {
-		return SoftmaxNew(len(arms), τ)
-	})
+	bandit, err := SoftmaxNew(len(arms), τ)
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
 
+	sim, err := MonteCarlo(sims, trials, arms, bandit)
 	if err != nil {
 		t.Fatalf(err.Error())
 	}

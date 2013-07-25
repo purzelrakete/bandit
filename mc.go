@@ -21,11 +21,8 @@ func Bernoulli(μ float64) Arm {
 	}
 }
 
-// BanditNew is a curried constructor function.
-type BanditNew func() (Bandit, error)
-
 // MonteCarlo runs a monte carlo experiment with the given bandit and arms.
-func MonteCarlo(sims, trials int, arms []Arm, bandit BanditNew) (Simulation, error) {
+func MonteCarlo(sims, trials int, arms []Arm, b Bandit) (Simulation, error) {
 	s := Simulation{
 		Sims:       sims,
 		Trials:     trials,
@@ -37,11 +34,7 @@ func MonteCarlo(sims, trials int, arms []Arm, bandit BanditNew) (Simulation, err
 	}
 
 	for sim := 0; sim < sims; sim++ {
-		b, err := bandit()
-		if err != nil {
-			return Simulation{}, err
-		}
-
+		b.Reset()
 		s.Description = b.Version()
 
 		for trial := 0; trial < trials; trial++ {
@@ -80,12 +73,12 @@ type Simulation struct {
 }
 
 // Summary summarizes a Simulation and returns corresponding plot points.
-type Summary func(s Simulation) []float64
+type Summary func(s *Simulation) []float64
 
 // Accuracy returns the proportion of times the best arm was pulled at each 
 // trial point. Takes a slice of best arms since n arms may be equally good.
 func Accuracy(bestArms []int) Summary {
-	return func(s Simulation) []float64 {
+	return func(s *Simulation) []float64 {
 		t := make([]float64, s.Trials)
 		for trial := 0; trial < s.Trials; trial++ {
 			correct := 0
@@ -111,7 +104,7 @@ func Accuracy(bestArms []int) Summary {
 
 // Performance returns an array of average rewards at each trial point.
 // Averaged over sims
-func Performance(s Simulation) []float64 {
+func Performance(s *Simulation) []float64 {
 	t := make([]float64, s.Trials)
 	for trial := 0; trial < s.Trials; trial++ {
 		accum, count := 0.0, 0
@@ -133,7 +126,7 @@ func Performance(s Simulation) []float64 {
 
 // Cumulative performance returns an array of average rewards at each trial
 // point.  Averaged over sims
-func Cumulative(s Simulation) []float64 {
+func Cumulative(s *Simulation) []float64 {
 	t := make([]float64, s.Trials)
 	for trial := 0; trial < s.Trials; trial++ {
 		accum, count := 0.0, 0
