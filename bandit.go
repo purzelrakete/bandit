@@ -44,12 +44,18 @@ type epsilonGreedy struct {
 func (e *epsilonGreedy) SelectArm() int {
 	arm := 0
 	if e.rand.Float64() > e.epsilon {
-		// best arm
-		for i := range e.values {
-			if e.values[i] > e.values[arm] {
-				arm = i
+		imax, max := []int{}, 0.0
+		for i, value := range e.values {
+			if value > max {
+				max = value
+				imax = []int{i}
+			} else if value == max {
+				imax = append(imax, i)
 			}
 		}
+
+		// best arm. randomly pick because there may be equally best arms.
+		arm = imax[e.rand.Intn(len(imax))]
 	} else {
 		// random arm
 		arm = e.rand.Intn(e.arms)
@@ -94,7 +100,7 @@ func NewSoftmax(arms int, τ float64) (Bandit, error) {
 	}, nil
 }
 
-// softmax holds counts values and temperature τ 
+// softmax holds counts values and temperature τ
 type softmax struct {
 	counts []int
 	values []float64
@@ -103,7 +109,7 @@ type softmax struct {
 	rand   *rand.Rand
 }
 
-// SelectArm 
+// SelectArm
 func (s *softmax) SelectArm() int {
 	z := 0.0
 	for _, value := range s.values {
