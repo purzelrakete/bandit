@@ -15,7 +15,7 @@ test:
 	go test -v
 
 deps:
-	go get -v
+	go get -v $(PKGS)
 
 install:
 	go install -v $(PKGS)
