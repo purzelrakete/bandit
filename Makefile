@@ -1,6 +1,10 @@
 .PHONY: all build test deps install clean
 
-PKGS := $(shell echo "github.com/purzelrakete/bandit{,/http,/oob,/plot}")
+PKGS := \
+github.com/purzelrakete/bandit \
+github.com/purzelrakete/bandit/http \
+github.com/purzelrakete/bandit/oob \
+github.com/purzelrakete/bandit/plot
 
 all: install
 
