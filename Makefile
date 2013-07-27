@@ -1,24 +1,20 @@
-.PHONY: all plot http oob build test deps clean
+.PHONY: all build test deps install clean
 
-all: deps build test plot http oob
+PKGS := $(shell echo "github.com/purzelrakete/bandit{,/http,/oob,/plot}")
 
-plot:
-	make -C plot
+all: install
 
-http:
-	make -C http
+build: deps
+	go build -v $(PKGS)
 
-oob:
-	make -C oob
-
-build:
-	go build -v
-
-test:
+test: deps
 	go test -v
 
 deps:
 	go get -v
 
+install: test
+	go install -v $(PKGS)
+
 clean:
-	go clean
+	go clean $(PKGS)
