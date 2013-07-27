@@ -57,7 +57,7 @@ func TestSoftmax(t *testing.T) {
 }
 
 func TestCampaign(t *testing.T) {
-	campaigns, err := ParseCampaigns("fixtures/campaigns.tsv")
+	campaigns, err := ParseCampaigns("campaigns.tsv")
 	if err != nil {
 		t.Fatalf("while reading campaign fixture: %s", err.Error())
 	}
