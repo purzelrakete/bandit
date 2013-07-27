@@ -6,18 +6,18 @@ github.com/purzelrakete/bandit/http \
 github.com/purzelrakete/bandit/oob \
 github.com/purzelrakete/bandit/plot
 
-all: install
+all: deps build test install
 
-build: deps
+build:
 	go build -v $(PKGS)
 
-test: deps
+test:
 	go test -v
 
 deps:
 	go get -v
 
-install: test
+install:
 	go install -v $(PKGS)
 
 clean:
