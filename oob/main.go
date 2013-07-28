@@ -2,7 +2,7 @@ package main
 
 import (
 	"flag"
-
+	"github.com/bmizerany/pat"
 	"github.com/purzelrakete/bandit"
 	bhttp "github.com/purzelrakete/bandit/http"
 	"log"
@@ -24,15 +24,21 @@ func main() {
 		log.Fatalf("could not read campaigns: %s", err.Error())
 	}
 
+	tests := make(bandit.Tests)
 	for name, campaign := range campaigns {
-		arms := len(campaign.Variants)
-		b, err := bandit.NewEpsilonGreedy(arms, 0.1)
+		b, err := bandit.NewEpsilonGreedy(len(campaign.Variants), 0.1)
 		if err != nil {
 			log.Fatal(err.Error())
 		}
 
-		http.HandleFunc("/ab/"+name, bhttp.OOBHandler(b, campaign))
+		tests[name] = bandit.Test{
+			Bandit:   b,
+			Campaign: campaign,
+		}
 	}
 
+	m := pat.New()
+	m.Get("/test/:campaign", http.HandlerFunc(bhttp.OOBHandler(tests)))
+	http.Handle("/", m)
 	log.Fatal(http.ListenAndServe(*port, nil))
 }

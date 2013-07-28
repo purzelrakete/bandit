@@ -8,6 +8,15 @@ import (
 	"strconv"
 )
 
+// Test is a bandit set up against a campaign.
+type Test struct {
+	Bandit   Bandit
+	Campaign Campaign
+}
+
+// Tests maps campaign names to Test setups.
+type Tests map[string]Test
+
 // Campaign is a single campaign. Variants are in ascending ordinal sorting,
 // where ordinals are contiguous and start at 1.
 type Campaign struct {
@@ -18,7 +27,7 @@ type Campaign struct {
 // Variant describes endpoints which are mapped onto bandit arms.
 type Variant struct {
 	Ordinal int
-	Url     string
+	URL     string
 	Tag     string
 }
 
@@ -85,7 +94,7 @@ func ParseCampaigns(filename string) (Campaigns, error) {
 		name := record[0]
 		variants[name] = append(variants[name], Variant{
 			Ordinal: ordinal,
-			Url:     record[2],
+			URL:     record[2],
 			Tag:     record[3],
 		})
 	}
