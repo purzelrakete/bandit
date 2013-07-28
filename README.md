@@ -26,7 +26,7 @@ And receives a json response response
       uid: 11,
       campaign: "widgets",
       url: "https://api/widget?color=blue"
-      tag: "widget-secret-sauce-flf89-c8c3u-c82nv"
+      tag: "widget-sauce-flf89"
     }
 
 The client can now follow up with a request to the returned widget:

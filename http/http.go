@@ -8,14 +8,14 @@ import (
 
 // APIResponse is the json response on the /test endpoint
 type APIResponse struct {
-	UID      int    `json:"uid"`
+	UID      string `json:"uid"`
 	Campaign string `json:"campaign"`
 	URL      string `json:"url"`
 	Tag      string `json:"tag"`
 }
 
-// OOBHandler response to /test/:campaign with the provided bandits.
-func OOBHandler(tests bandit.Tests) http.HandlerFunc {
+// OOBSelectionHandler response to /test/:campaign with the provided bandits.
+func OOBSelectionHandler(tests bandit.Tests) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		defer r.Body.Close()
 		w.Header().Set("Content-Type", "text/json")
@@ -35,7 +35,7 @@ func OOBHandler(tests bandit.Tests) http.HandlerFunc {
 		}
 
 		json, err := json.Marshal(APIResponse{
-			UID:      0,
+			UID:      "0",
 			Campaign: test.Campaign.Name,
 			URL:      variant.URL,
 			Tag:      variant.Tag,
@@ -46,6 +46,7 @@ func OOBHandler(tests bandit.Tests) http.HandlerFunc {
 			return
 		}
 
+		bandit.LogSelection("0", test.Campaign, variant)
 		w.Write(json)
 	}
 }
