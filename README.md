@@ -8,35 +8,14 @@ between exploring new arms and exploiting the currently best arm.
 The project is based on John Myles White's [Bandit
 Algorithms for Website Optimization](http://shop.oreilly.com/product/0636920027393.do).
 
-## Api
-
-Bandits are fully defined by the following interface:
-
-```go
-type Bandit interface {
-  SelectArm() int
-  Update(arm int, reward float64)
-  Reset()
-  Version() string
-}
-```
-
-You should construct a concrete bandit like this:
-
-```go
-b := bandit.NewSoftmax(2, 0.1)
-```
-
-This constructs a bandit with 2 arms using `Softmax` with `τ` set to 0.1.
-
-## HTTP and out of band testing
+## Out of band testing with the HTTP endpoint
 
 The OOBBandit can be used as an out of the box API endpoint for javascript
 applications.
 
 In this scenario, the application makes a request to the api endpoint:
 
-    GET https://api/ab/widgets?uid=11 HTTP/1.0
+    GET https://api/test/widgets?uid=11 HTTP/1.0
 
 And receives a json response response
 
@@ -59,6 +38,40 @@ The client can now follow up with a request to the returned widget:
 ```sh
 $GOPATH/bin oob -port 80 -campaignFile campaigns.tsv
 ```
+
+## In band testing with the Api
+
+Bandits are fully defined by the following interface:
+
+```go
+type Bandit interface {
+  SelectArm() int
+  Update(arm int, reward float64)
+  Reset()
+  Version() string
+}
+```
+
+You should construct a concrete bandit like this:
+
+```go
+b := bandit.NewSoftmax(2, 0.1)
+```
+
+This constructs a bandit with 2 arms using `Softmax` with `τ` set to 0.1.
+
+## Algorithms
+
+### EpsilonGreedy
+
+Randomly explores with a probability of `ε`. The rest of the time, the best
+known arm is selected.
+
+### Softmax
+
+Explores arms proportionally to their success. Explore exploit is traded off
+by temperature parameter τ. As τ → ∞, the bandit explores randomly. When
+τ = 0, the bandit will always explore the best known arm.
 
 ## Simulation
 
@@ -121,17 +134,4 @@ View defaults and available flags:
 ```sh
 $GOPATH/bin/plot -h
 ```
-
-## Algorithms
-
-### EpsilonGreedy
-
-Randomly explores with a probability of `ε`. The rest of the time, the best
-known arm is selected.
-
-### Softmax
-
-Explores arms proportionally to their success. Explore exploit is traded off
-by temperature parameter τ. As τ → ∞, the bandit explores randomly. When
-τ = 0, the bandit will always explore the best known arm.
 
