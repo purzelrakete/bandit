@@ -66,6 +66,27 @@ func main() {
 		bandits: softmaxes,
 	})
 
+	// mixed
+	mixed := bandits{}
+	greedy, err := bandit.NewEpsilonGreedy(len(μs), 0.1)
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+
+	mixed = append(mixed, greedy)
+
+	softmax, err := bandit.NewSoftmax(len(μs), 0.1)
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+
+	mixed = append(mixed, softmax)
+
+	groups = append(groups, group{
+		name:    "Comparative",
+		bandits: mixed,
+	})
+
 	// draw groups
 	for _, group := range groups {
 		s, err := simulate(group.bandits, arms, *mcSims, *mcHorizon)
