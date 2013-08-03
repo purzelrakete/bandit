@@ -5,15 +5,17 @@ package bandit
 
 import (
 	"encoding/csv"
+	"fmt"
 	"os"
 )
 
 var (
-	selectLog = csv.NewWriter(os.Stdout)
+	selectWriter = csv.NewWriter(os.Stdout)
+	rewardWriter = csv.NewWriter(os.Stdout)
 )
 
 func init() {
-	selectLog.Comma = '\t'
+	selectWriter.Comma = '\t'
 }
 
 // LogSelection captures all selected arms. This log can be used in conjunction
@@ -26,5 +28,19 @@ func LogSelection(uid string, campaign Campaign, selected Variant) error {
 		selected.Tag,
 	}
 
-	return selectLog.WriteAll([][]string{record})
+	return selectWriter.WriteAll([][]string{record})
+}
+
+// LogReward captures all selected arms. This log can be used in conjunction
+// with reward logs to fully rebuild bandits.
+func LogReward(uid string, campaign Campaign, selected Variant, reward float64) error {
+	record := []string{
+		uid,
+		campaign.Name,
+		string(selected.Ordinal),
+		selected.Tag,
+		fmt.Sprintf("%f", reward),
+	}
+
+	return rewardWriter.WriteAll([][]string{record})
 }

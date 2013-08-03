@@ -53,7 +53,7 @@ func SelectionHandler(tests bandit.Tests) http.HandlerFunc {
 		name := r.URL.Query().Get(":campaign")
 		test, ok := tests[name]
 		if ok != true {
-			http.Error(w, "campaign not found", http.StatusInternalServerError)
+			http.Error(w, "invalid campaign", http.StatusBadRequest)
 			return
 		}
 
@@ -72,11 +72,38 @@ func SelectionHandler(tests bandit.Tests) http.HandlerFunc {
 		})
 
 		if err != nil {
-			http.Error(w, "could not marshal variant", http.StatusInternalServerError)
+			http.Error(w, "could not build variant", http.StatusInternalServerError)
 			return
 		}
 
 		bandit.LogSelection("0", test.Campaign, variant)
 		w.Write(json)
+	}
+}
+
+// LogRewardHandler logs reward lines. It's better to log rewards directly
+// through your main logging pipeline, but the handler is here in case you
+// can't do that. This handler does not update bandits with rewards, since
+// otherwise all instances would have to be updated. The standard setup relies
+// on batch updates instead. SelectionHandler polls for update models.
+func LogRewardHandler(tests bandit.Tests) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		defer r.Body.Close()
+		w.Header().Set("Content-Type", "text/json")
+
+		tag := r.URL.Query().Get(":tag")
+		if tag == "" {
+			http.Error(w, "cannot reward without tag", http.StatusBadRequest)
+			return
+		}
+
+		campaign, variant, err := bandit.GetVariant(&tests, tag)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		bandit.LogSelection("0", campaign, variant)
+		w.WriteHeader(http.StatusOK)
 	}
 }

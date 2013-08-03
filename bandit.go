@@ -20,8 +20,8 @@ import (
 type Bandit interface {
 	SelectArm() int
 	Update(arm int, reward float64)
-	Reset()
 	Version() string
+	Reset()
 }
 
 // NewEpsilonGreedy constructs an epsilon greedy bandit.

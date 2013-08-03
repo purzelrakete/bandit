@@ -17,9 +17,6 @@ type Test struct {
 	Campaign Campaign
 }
 
-// Tests maps campaign names to Test setups.
-type Tests map[string]Test
-
 // Campaign is a single campaign. Variants are in ascending ordinal sorting,
 // where ordinals are contiguous and start at 1.
 type Campaign struct {
@@ -59,6 +56,22 @@ func SelectVariant(c Campaign, ordinal int) (Variant, error) {
 	}
 
 	return c.Variants[ordinal-1], nil
+}
+
+// Tests maps campaign names to Test setups.
+type Tests map[string]Test
+
+// GetVariant returns the Campaign and variant pointed to by a string tag.
+func GetVariant(t *Tests, tag string) (Campaign, Variant, error) {
+	for _, test := range *t {
+		for _, variant := range test.Campaign.Variants {
+			if variant.Tag == tag {
+				return test.Campaign, variant, nil
+			}
+		}
+	}
+
+	return Campaign{}, Variant{}, fmt.Errorf("could not find variant '%s'", tag)
 }
 
 // Campaigns is an index of names to campaigns

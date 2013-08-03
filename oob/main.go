@@ -40,8 +40,11 @@ func main() {
 		}
 	}
 
+	// handlers
 	m := pat.New()
 	m.Get("/test/:campaign", http.HandlerFunc(bhttp.SelectionHandler(tests)))
 	http.Handle("/", m)
+
+	// serve
 	log.Fatal(http.ListenAndServe(*port, nil))
 }
