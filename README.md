@@ -1,6 +1,7 @@
 # Bandit
 
 [![Build Status](https://travis-ci.org/purzelrakete/bandit.png)](https://travis-ci.org/purzelrakete/bandit)
+[![Coverage Status](https://coveralls.io/repos/purzelrakete/bandit/badge.png)](https://coveralls.io/r/purzelrakete/bandit)
 
 A golang multiarmed bandit. Runs A/B tests while controlling the tradeoff
 between exploring new arms and exploiting the currently best arm.
