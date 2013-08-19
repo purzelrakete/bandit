@@ -41,7 +41,7 @@ func draw(lines graph, title, xLabel, yLabel string) error {
 	}
 
 	name := strings.Replace(strings.ToLower(title), " ", "-", -1)
-	filename := fmt.Sprintf("bandit-%s.png", name)
+	filename := fmt.Sprintf("bandit-%s.svg", name)
 	if err := p.Save(8, 8, filename); err != nil {
 		return fmt.Errorf(err.Error())
 	}

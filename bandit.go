@@ -33,17 +33,17 @@ func NewEpsilonGreedy(arms int, epsilon float64) (Bandit, error) {
 // epsilonGreedy randomly selects arms with a probability of ε. The rest of
 // the time, epsilonGreedy selects the currently best known arm.
 type epsilonGreedy struct {
-	counts  []int
-	values  []float64
-	epsilon float64
-	arms    int
-	rand    *rand.Rand
+	counts  []int      // number of pulls. len(counts) == arms.
+	values  []float64  // running average reward per arm. len(values) == arms.
+	arms    int        // number of arms present in this bandit
+	epsilon float64    // epsilon value for this bandit
+	rand    *rand.Rand // seeded random number generator
 }
 
-// SelectArm according to EpsilonGreedy strategy
+// SelectArm returns 1 indexed arm to be tried next.
 func (e *epsilonGreedy) SelectArm() int {
 	arm := 0
-	if e.rand.Float64() > e.epsilon {
+	if z := e.rand.Float64(); z > e.epsilon {
 		imax, max := []int{}, 0.0
 		for i, value := range e.values {
 			if value > max {
@@ -85,7 +85,8 @@ func (e *epsilonGreedy) Reset() {
 	e.rand = rand.New(rand.NewSource(time.Now().UnixNano()))
 }
 
-// NewSoftmax constructs a softmax bandit. Softmax explores non randomly
+// NewSoftmax constructs a softmax bandit. Softmax explores arms in proportion
+// to their estimated values.
 func NewSoftmax(arms int, τ float64) (Bandit, error) {
 	if !(τ >= 0.0) {
 		return &softmax{}, fmt.Errorf("τ not in [0, ∞]")
@@ -102,34 +103,32 @@ func NewSoftmax(arms int, τ float64) (Bandit, error) {
 
 // softmax holds counts values and temperature τ
 type softmax struct {
-	counts []int
-	values []float64
-	tau    float64
-	arms   int
-	rand   *rand.Rand
+	counts []int      // number of pulls. len(counts) == arms.
+	values []float64  // running average reward per arm. len(values) == arms.
+	arms   int        // number of arms present in this bandit
+	tau    float64    // tau value for this bandit
+	rand   *rand.Rand // seeded random number generator
 }
 
-// SelectArm
+// SelectArm returns 1 indexed arm to be tried next.
 func (s *softmax) SelectArm() int {
-	z := 0.0
+	normalizer := 0.0
 	for _, value := range s.values {
-		z = z + math.Exp(value/s.tau)
+		normalizer += math.Exp(value / s.tau)
 	}
 
-	var distribution []float64
-	for _, value := range s.values {
-		distribution = append(distribution, math.Exp(value/s.tau)/z)
-	}
-
-	accum := 0.0
-	for i, p := range distribution {
-		accum = accum + p
-		if accum > z {
-			return i
+	cumulativeProb := 0.0
+	draw := len(s.values) - 1
+	z := s.rand.Float64()
+	for i, value := range s.values {
+		cumulativeProb = cumulativeProb + math.Exp(value/s.tau)/normalizer
+		if cumulativeProb > z {
+			draw = i
+			break
 		}
 	}
 
-	return len(distribution) - 1
+	return draw + 1
 }
 
 // Update the running average

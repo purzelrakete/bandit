@@ -119,7 +119,7 @@ display the accuracy, performance and cumulative performance over time.
 
 ```sh
 $GOPATH/bin/plot
-open bandit*.png
+open -a "/Applications/Google Chrome.app" bandit*.svg
 ```
 
 You can change the default number and parameterization of bernoulli arms like
