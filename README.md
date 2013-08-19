@@ -136,3 +136,7 @@ View defaults and available flags:
 $GOPATH/bin/plot -h
 ```
 
+You'll get something like this.
+
+![plot](https://dl.dropboxusercontent.com/u/1704851/bandit.svg)
+
