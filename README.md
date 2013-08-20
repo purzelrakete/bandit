@@ -13,8 +13,8 @@ Full documentation is available [on godoc](http://godoc.org/github.com/purzelrak
 
 ## Out of band testing with the HTTP endpoint
 
-The OOBBandit can be used as an out of the box API endpoint for javascript
-applications.
+The SelectionHandler can be used as an out of the box API endpoint for
+javascript applications.
 
 In this scenario, the application makes a request to the api endpoint:
 

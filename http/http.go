@@ -20,7 +20,7 @@ type APIResponse struct {
 	Tag      string `json:"tag"`
 }
 
-// OOBSelectionHandler can be used as an out of the box API endpoint for
+// SelectionHandler can be used as an out of the box API endpoint for
 // javascript applications.
 //
 // In this scenario, the application makes a request to the api endpoint:
@@ -45,7 +45,7 @@ type APIResponse struct {
 //
 // This two phase approach can be collapsed by using the bandit directly
 // inside a golang api endpoint.
-func OOBSelectionHandler(tests bandit.Tests) http.HandlerFunc {
+func SelectionHandler(tests bandit.Tests) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		defer r.Body.Close()
 		w.Header().Set("Content-Type", "text/json")
