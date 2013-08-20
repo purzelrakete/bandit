@@ -12,10 +12,10 @@ build:
 	go build -v $(PKGS)
 
 test:
-	go test -v
+	go test -v $(PKGS)
 
 lint:
-	if golint *.go | grep ":"; then false; else true; fi
+	if find . -name '*.go' | xargs golint | grep ":"; then false; else true; fi
 
 coverage:
 	goveralls -service drone.io $${COVERALLS_TOKEN:?}
