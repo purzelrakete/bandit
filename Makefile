@@ -4,7 +4,8 @@ PKGS := \
 github.com/purzelrakete/bandit \
 github.com/purzelrakete/bandit/http \
 github.com/purzelrakete/bandit/oob \
-github.com/purzelrakete/bandit/plot
+github.com/purzelrakete/bandit/plot \
+github.com/purzelrakete/bandit/example
 
 all: deps build lint test install
 

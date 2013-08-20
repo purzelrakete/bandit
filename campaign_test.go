@@ -11,8 +11,8 @@ func TestCampaign(t *testing.T) {
 		t.Fatalf("while reading campaign fixture: %s", err.Error())
 	}
 
-	expected := 3
-	if got := len(campaigns["widgets"].Variants); got != expected {
+	expected := 2
+	if got := len(campaigns["geometry"].Variants); got != expected {
 		t.Fatalf("expected %d variants, got %d", expected, got)
 	}
 }

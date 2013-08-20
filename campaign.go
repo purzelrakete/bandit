@@ -11,12 +11,6 @@ import (
 	"strconv"
 )
 
-// Test is a bandit set up against a campaign.
-type Test struct {
-	Bandit   Bandit
-	Campaign Campaign
-}
-
 // Campaign is a single campaign. Variants are in ascending ordinal sorting,
 // where ordinals are contiguous and start at 1.
 type Campaign struct {
@@ -58,9 +52,6 @@ func SelectVariant(c Campaign, ordinal int) (Variant, error) {
 	return c.Variants[ordinal-1], nil
 }
 
-// Tests maps campaign names to Test setups.
-type Tests map[string]Test
-
 // GetVariant returns the Campaign and variant pointed to by a string tag.
 func GetVariant(t *Tests, tag string) (Campaign, Variant, error) {
 	for _, test := range *t {
@@ -72,6 +63,38 @@ func GetVariant(t *Tests, tag string) (Campaign, Variant, error) {
 	}
 
 	return Campaign{}, Variant{}, fmt.Errorf("could not find variant '%s'", tag)
+}
+
+// Test is a bandit set up against a campaign.
+type Test struct {
+	Bandit   Bandit
+	Campaign Campaign
+}
+
+// Tests maps campaign names to Test setups.
+type Tests map[string]Test
+
+// NewTests returns a complete set of campaign, bandit tuples (bandit.Test).
+func NewTests(campaignTSV string) (Tests, error) {
+	campaigns, err := ParseCampaigns(campaignTSV)
+	if err != nil {
+		return Tests{}, fmt.Errorf("could not read campaigns: %s", err.Error())
+	}
+
+	tests := make(Tests)
+	for name, campaign := range campaigns {
+		b, err := NewSoftmax(len(campaign.Variants), 0.1)
+		if err != nil {
+			return Tests{}, fmt.Errorf(err.Error())
+		}
+
+		tests[name] = Test{
+			Bandit:   b,
+			Campaign: campaign,
+		}
+	}
+
+	return tests, nil
 }
 
 // Campaigns is an index of names to campaigns

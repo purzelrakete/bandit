@@ -8,6 +8,7 @@ package http
 
 import (
 	"encoding/json"
+
 	"github.com/purzelrakete/bandit"
 	"net/http"
 )
@@ -89,9 +90,9 @@ func SelectionHandler(tests bandit.Tests) http.HandlerFunc {
 func LogRewardHandler(tests bandit.Tests) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		defer r.Body.Close()
-		w.Header().Set("Content-Type", "text/json")
+		w.Header().Set("Content-Type", "text/application")
 
-		tag := r.URL.Query().Get(":tag")
+		tag := r.URL.Query().Get("tag")
 		if tag == "" {
 			http.Error(w, "cannot reward without tag", http.StatusBadRequest)
 			return

@@ -13,8 +13,8 @@ import (
 )
 
 var (
-	campaignsTsv = flag.String("campaigns", "campaigns.tsv", "campaigns tsv filename")
-	port         = flag.String("port", ":8080", "http port")
+	oobCampaigns = flag.String("campaigns", "campaigns.tsv", "campaigns tsv filename")
+	oobBind      = flag.String("port", ":8080", "interface / port to bind to")
 )
 
 func init() {
@@ -22,22 +22,9 @@ func init() {
 }
 
 func main() {
-	campaigns, err := bandit.ParseCampaigns(*campaignsTsv)
+	tests, err := bandit.NewTests(*oobCampaigns)
 	if err != nil {
-		log.Fatalf("could not read campaigns: %s", err.Error())
-	}
-
-	tests := make(bandit.Tests)
-	for name, campaign := range campaigns {
-		b, err := bandit.NewEpsilonGreedy(len(campaign.Variants), 0.1)
-		if err != nil {
-			log.Fatal(err.Error())
-		}
-
-		tests[name] = bandit.Test{
-			Bandit:   b,
-			Campaign: campaign,
-		}
+		log.Fatalf("could not construct campaigns: %s", err.Error())
 	}
 
 	// handlers
@@ -46,5 +33,5 @@ func main() {
 	http.Handle("/", m)
 
 	// serve
-	log.Fatal(http.ListenAndServe(*port, nil))
+	log.Fatal(http.ListenAndServe(*oobBind, nil))
 }

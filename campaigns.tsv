@@ -1,3 +1,2 @@
-widgets	1	https://api/widget?color=blue	widget-sauce-flf89
-widgets	3	https://api/widget?color=red	widget-sauce-1142
-widgets	2	https://api/widget?color=green	widget-sauce-9997
+geometry	1	http://localhost:8080/widget?shape=square	w-flf89-square
+geometry	2	http://localhost:8080/widget?shape=circle	w-1142-circle

@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Squares or Circles</title>
+  <link href='http://goo.gl/Pmc0tk' rel='stylesheet' type='text/css'>
+  <style>
+    html, body, div { margin: 0; padding: 0; }
+    a { color: #85c0f6; text-decoration: none; }
+    a:hover { color: #3d6d93; }
+    p { font-family: "Georgia"; }
+    body {
+      color: #5c5c5c;
+      font-family: Montserrat, sans-serif;
+      font-size: 20px;
+      margin: 80px auto;
+      width: 720px;
+    }
+
+    #reward { color: #ddd; }
+    .circle { border-radius: 50%; }
+    .circle, .square { border: solid 9px; margin-bottom: 1em; }
+  </style>
+</head>
+<body>
+  <h1>Squares or Circles?</h1>
+  <p>A trial using the bundled test campaign.</p>
+  <div id="canvas"></div>
+  <div id="reward">
+  <a class="feedback" href="/feedback?like=1">Like</a> •
+  <a class="feedback" href="/feedback?like=0">Meh</a>
+  </div>
+  <script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
+  <script type="text/javascript">
+    $(function() {
+      var rnd = Math.random, canvas = $('#canvas');
+      function jiggle() {
+        var diameter = rnd() * 300;
+        canvas
+          .removeClass('circle square')
+          .css('background-color', color(200))
+          .css('border-color', color(100))
+          .width(diameter).height(diameter);
+      }
+
+      function color(range) { return 'hsl(' + rnd() * range + ', 80%, 90%)'; }
+      function render(variant) { jiggle(); canvas.addClass(variant.shape); }
+      function select() { $.ajax({url: '/select/geometry'}).done(update); }
+      function update(variant) {
+        $.ajax({ url: variant.url, dataType: 'jsonp' }).done(render);
+        $(".feedback").data("tag", variant.tag);
+      }
+
+      $('.feedback').click(function() {
+        var logger = $(this).attr('href') + '&tag=' + $(this).data('tag');
+        $.ajax({ url: logger, success: function(data, err) { select(); } });
+        return false;
+      });
+
+      select(); // initial state
+    });
+  </script>
+</body>
+</html>
