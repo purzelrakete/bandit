@@ -142,3 +142,14 @@ You'll get something like this.
 
 ![plot](https://dl.dropboxusercontent.com/u/1704851/bandit.svg)
 
+# Status
+
+This API is currently *not stable*. Consider this a 0.0.0 release that is
+subject to change at any time.
+
+# Credits
+
+Developed by
+
+- Rany Keddo (@purzelrakete)
+
