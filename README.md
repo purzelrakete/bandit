@@ -42,7 +42,7 @@ The client can now follow up with a request to the returned widget:
 $GOPATH/bin oob -port 80 -campaignFile campaigns.tsv
 ```
 
-## In band testing with the Api
+## Direct use
 
 Bandits are fully defined by the following interface:
 
