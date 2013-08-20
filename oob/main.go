@@ -41,7 +41,7 @@ func main() {
 	}
 
 	m := pat.New()
-	m.Get("/test/:campaign", http.HandlerFunc(bhttp.OOBSelectionHandler(tests)))
+	m.Get("/test/:campaign", http.HandlerFunc(bhttp.SelectionHandler(tests)))
 	http.Handle("/", m)
 	log.Fatal(http.ListenAndServe(*port, nil))
 }
