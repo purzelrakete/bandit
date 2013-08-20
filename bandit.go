@@ -1,3 +1,12 @@
+// Copyright 2013 SoundCloud, Rany Keddo. All rights reserved.  Use of this
+// source code is governed by a license that can be found in the LICENSE file.
+
+// Package bandit implements a multiarmed bandit. Runs A/B tests while
+// controlling the tradeoff between exploring new arms and exploiting the
+// currently best arm.
+//
+// The project is based on John Myles White's 'Bandit Algorithms for Website
+// Optimization'.
 package bandit
 
 import (

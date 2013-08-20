@@ -9,6 +9,8 @@ between exploring new arms and exploiting the currently best arm.
 The project is based on John Myles White's [Bandit
 Algorithms for Website Optimization](http://shop.oreilly.com/product/0636920027393.do).
 
+Full documentation is available [on godoc](http://godoc.org/github.com/purzelrakete/bandit).
+
 ## Out of band testing with the HTTP endpoint
 
 The OOBBandit can be used as an out of the box API endpoint for javascript
@@ -119,7 +121,7 @@ display the accuracy, performance and cumulative performance over time.
 
 ```sh
 $GOPATH/bin/plot
-open -a "/Applications/Google Chrome.app" bandit*.svg
+open bandit*.svg
 ```
 
 You can change the default number and parameterization of bernoulli arms like
