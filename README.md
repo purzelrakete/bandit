@@ -11,6 +11,31 @@ Algorithms for Website Optimization](http://shop.oreilly.com/product/06369200273
 
 Full documentation is available [on godoc](http://godoc.org/github.com/purzelrakete/bandit).
 
+## Building
+
+Build the project by running `make`.
+
+## Try
+
+You can run the bundled example application from the project root. It's a
+very simple demonstration of the out of band api. Run `$GOPATH/bin example`,
+then go to http://localhost:8080/ to test the performance of squares
+against circles. If you perfer circles, you should start to see more circles
+being served to you over time.
+
+See example/index.html for usage.
+
+## Usage scenario
+
+This library is intended to be used to instrument a website or a web api. This
+setting poses some special problems:
+
+* Delayed feedback (batch reward aggregation)
+* Non stationary rewards (diurnal cycles)
+
+See [Explore/Exploit Schemes for Web Content Optimzation] [1] for a discussion
+of these problems.
+
 ## Out of band testing with the HTTP endpoint
 
 The SelectionHandler can be used as an out of the box API endpoint for
@@ -38,9 +63,8 @@ The client can now follow up with a request to the returned widget:
 
 ### Starting the out of band endpoint
 
-```sh
-$GOPATH/bin oob -port 80 -campaignFile campaigns.tsv
-```
+Run `$GOPATH/bin oob -port 80 -campaignFile campaigns.tsv` to start the
+endpoint with the provided test campaigns.
 
 ## Direct use
 
@@ -110,7 +134,7 @@ if err != nil {
 }
 
 performance := bandit.Performance(sim, 4)
-accuracy := bandit.Accuracy(sim)
+ccuracy := bandit.Accuracy(sim)
 cumulative := bandit.Cumulative(sim)
 ```
 
@@ -153,3 +177,7 @@ Developed by
 
 - Rany Keddo (@purzelrakete)
 
+Thanks to John Myles White for some advice wrt. delayed bandits and
+segmentation.
+
+[1]: http://dl.acm.org/citation.cfm?id=1677012" "Explore/Exploit Schemes for Web Content Optimzation"
