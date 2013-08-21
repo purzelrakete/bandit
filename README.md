@@ -177,7 +177,6 @@ Developed by
 
 - Rany Keddo (@purzelrakete)
 
-Thanks to John Myles White for some advice wrt. delayed bandits and
-segmentation.
+Thanks to John Myles White for some advice.
 
 [1]: http://dl.acm.org/citation.cfm?id=1677012" "Explore/Exploit Schemes for Web Content Optimzation"
