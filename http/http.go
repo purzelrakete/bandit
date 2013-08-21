@@ -8,9 +8,9 @@ package http
 
 import (
 	"encoding/json"
-
 	"github.com/purzelrakete/bandit"
 	"net/http"
+	"strconv"
 )
 
 // APIResponse is the json response on the /test endpoint
@@ -84,9 +84,8 @@ func SelectionHandler(tests bandit.Tests) http.HandlerFunc {
 
 // LogRewardHandler logs reward lines. It's better to log rewards directly
 // through your main logging pipeline, but the handler is here in case you
-// can't do that. This handler does not update bandits with rewards, since
-// otherwise all instances would have to be updated. The standard setup relies
-// on batch updates instead. SelectionHandler polls for update models.
+// can't do that. This handler is currently updates the supplied bandits
+// directly, which makes it unsuitable for real use.
 func LogRewardHandler(tests bandit.Tests) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		defer r.Body.Close()
@@ -98,11 +97,28 @@ func LogRewardHandler(tests bandit.Tests) http.HandlerFunc {
 			return
 		}
 
+		reward := r.URL.Query().Get("reward")
+		if reward == "" {
+			http.Error(w, "reward missing", http.StatusBadRequest)
+			return
+		}
+
+		fReward, err := strconv.ParseFloat(reward, 64)
+		if err != nil {
+			http.Error(w, "reward is not a float", http.StatusBadRequest)
+			return
+		}
+
 		campaign, variant, err := bandit.GetVariant(&tests, tag)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
+
+		// Update the bandit in memory. This mechanism is not practical and will
+		// be converted into a batch update scheme soon.
+		b := tests[campaign.Name].Bandit
+		b.Update(variant.Ordinal, fReward)
 
 		bandit.LogSelection("0", campaign, variant)
 		w.WriteHeader(http.StatusOK)

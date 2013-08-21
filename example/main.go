@@ -46,12 +46,12 @@ func main() {
 	}
 
 	// routes
-	m := pat.New()
-	m.Get("/", http.HandlerFunc(index))
-	m.Get("/widget", http.HandlerFunc(widget))
-	m.Get("/select/:campaign", http.HandlerFunc(bhttp.SelectionHandler(tests)))
-	m.Get("/feedback", http.HandlerFunc(bhttp.LogRewardHandler(tests)))
-	http.Handle("/", m)
+	mux := pat.New()
+	mux.Get("/", http.HandlerFunc(index))
+	mux.Get("/widget", http.HandlerFunc(widget))
+	mux.Get("/select/:campaign", http.HandlerFunc(bhttp.SelectionHandler(tests)))
+	mux.Get("/feedback", http.HandlerFunc(bhttp.LogRewardHandler(tests)))
+	http.Handle("/", mux)
 
 	// serve
 	log.Fatal(http.ListenAndServe(*exBind, nil))

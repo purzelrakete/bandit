@@ -74,7 +74,7 @@ func (e *epsilonGreedy) SelectArm() int {
 	return arm + 1
 }
 
-// Update the running average
+// Update the running average, where arm is the 1 indexed arm
 func (e *epsilonGreedy) Update(arm int, reward float64) {
 	arm--
 	e.counts[arm]++
@@ -140,7 +140,7 @@ func (s *softmax) SelectArm() int {
 	return draw + 1
 }
 
-// Update the running average
+// Update the running average, where arm is the 1 indexed arm.
 func (s *softmax) Update(arm int, reward float64) {
 	arm--
 	s.counts[arm]++

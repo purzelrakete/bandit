@@ -20,9 +20,9 @@ type Campaign struct {
 
 // Variant describes endpoints which are mapped onto bandit arms.
 type Variant struct {
-	Ordinal int
-	URL     string
-	Tag     string
+	Ordinal int    // 1 indexed arm ordina
+	URL     string // the url associated with this variant, for out of band
+	Tag     string // this tag is used throughout the lifecycle of the campaign
 }
 
 // Variants is a set of variants sorted by ordinal.
