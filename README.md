@@ -13,7 +13,8 @@ Full documentation is available [on godoc](http://godoc.org/github.com/purzelrak
 
 ## Building
 
-Build the project by running `make`.
+Build the project by running `make`. You need at go1.1.1 or higher to build
+the project.
 
 ## Try
 
