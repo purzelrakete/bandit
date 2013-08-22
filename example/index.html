@@ -10,16 +10,16 @@
     a:hover { color: #3d6d93; }
     p { font-family: "Georgia"; }
     body {
+      padding: 50px 0 0 100px;
       color: #5c5c5c;
+      border-top: 3px solid #85c0f6;
       font-family: Montserrat, sans-serif;
       font-size: 20px;
-      margin: 80px auto;
-      width: 720px;
     }
 
     #reward { color: #ddd; }
     .circle { border-radius: 50%; }
-    .circle, .square { border: solid 9px; margin-bottom: 1em; }
+    .circle, .square { border: solid 9px; margin-bottom: 2em; }
   </style>
 </head>
 <body>
@@ -53,7 +53,7 @@
 
       $('.feedback').click(function() {
         var logger = $(this).attr('href') + '&tag=' + $(this).data('tag');
-        $.ajax({ url: logger, success: function(data, err) { select(); } });
+        $.ajax({ url: logger, success: select });
         return false;
       });
 
