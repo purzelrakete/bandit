@@ -4,13 +4,12 @@
 package bandit
 
 import (
-	"strings"
-
 	"encoding/csv"
 	"fmt"
 	"os"
 	"sort"
 	"strconv"
+	"strings"
 )
 
 // Campaign is a single campaign. Variants are in ascending ordinal sorting,
@@ -22,7 +21,7 @@ type Campaign struct {
 
 // Variant describes endpoints which are mapped onto bandit arms.
 type Variant struct {
-	Ordinal int    // 1 indexed arm ordina
+	Ordinal int    // 1 indexed arm ordinal
 	URL     string // the url associated with this variant, for out of band
 	Tag     string // this tag is used throughout the lifecycle of the campaign
 }

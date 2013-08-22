@@ -19,7 +19,7 @@ the project.
 ## Try
 
 You can run the bundled example application from the project root. It's a
-very simple demonstration of the out of band api. Run `$GOPATH/bin example`,
+very simple demonstration of the out of band api. Run `$GOPATH/bin/example`,
 then go to http://localhost:8080/ to test the performance of squares
 against circles. If you perfer circles, you should start to see more circles
 being served to you over time.
@@ -64,7 +64,7 @@ The client can now follow up with a request to the returned widget:
 
 ### Starting the out of band endpoint
 
-Run `$GOPATH/bin oob -port 80 -campaignFile campaigns.tsv` to start the
+Run `$GOPATH/bin/oob -port 80 -campaignFile campaigns.tsv` to start the
 endpoint with the provided test campaigns.
 
 ## Direct use

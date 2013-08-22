@@ -47,10 +47,10 @@ func main() {
 
 	// routes
 	mux := pat.New()
-	mux.Get("/", http.HandlerFunc(index))
+	mux.Get("/select/:campaign", bhttp.SelectionHandler(tests))
 	mux.Get("/widget", http.HandlerFunc(widget))
-	mux.Get("/select/:campaign", http.HandlerFunc(bhttp.SelectionHandler(tests)))
-	mux.Get("/feedback", http.HandlerFunc(bhttp.LogRewardHandler(tests)))
+	mux.Get("/feedback", bhttp.LogRewardHandler(tests))
+	mux.Get("/", http.HandlerFunc(index))
 	http.Handle("/", mux)
 
 	// serve
