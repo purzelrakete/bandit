@@ -44,8 +44,8 @@ func (v Variants) Swap(i, j int) {
 	v[i], v[j] = v[j], v[i]
 }
 
-// SelectVariant selects the appropriate variant given it's 1 indexed ordinal
-func SelectVariant(e Experiment, ordinal int) (Variant, error) {
+// GetVariant selects the appropriate variant given it's 1 indexed ordinal
+func GetVariant(e Experiment, ordinal int) (Variant, error) {
 	if l := len(e.Variants); ordinal < 0 || ordinal > l {
 		return Variant{}, fmt.Errorf("ordinal %d not in [1,%d]", ordinal, l)
 	}
@@ -53,17 +53,15 @@ func SelectVariant(e Experiment, ordinal int) (Variant, error) {
 	return e.Variants[ordinal-1], nil
 }
 
-// GetVariant returns the Experiment and variant pointed to by a string tag.
-func GetVariant(t *Tests, tag string) (Experiment, Variant, error) {
-	for _, test := range *t {
-		for _, variant := range test.Experiment.Variants {
-			if variant.Tag == tag {
-				return test.Experiment, variant, nil
-			}
+// GetTaggedVariant selects the appropriate variant given it's tag
+func GetTaggedVariant(e Experiment, tag string) (Variant, error) {
+	for _, variant := range e.Variants {
+		if variant.Tag == tag {
+			return variant, nil
 		}
 	}
 
-	return Experiment{}, Variant{}, fmt.Errorf("could not find variant '%s'", tag)
+	return Variant{}, fmt.Errorf("tag '%s' is not in given experiment", tag)
 }
 
 // Test is a bandit set up against an experiment.
@@ -96,6 +94,19 @@ func NewTests(experimentsTSV string) (Tests, error) {
 	}
 
 	return tests, nil
+}
+
+// GetExperiment returns the Experiment and variant pointed to by a string tag.
+func GetExperiment(t *Tests, tag string) (Experiment, Variant, error) {
+	for _, test := range *t {
+		for _, variant := range test.Experiment.Variants {
+			if variant.Tag == tag {
+				return test.Experiment, variant, nil
+			}
+		}
+	}
+
+	return Experiment{}, Variant{}, fmt.Errorf("could not find variant '%s'", tag)
 }
 
 // Experiments is an index of names to experiment

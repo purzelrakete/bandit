@@ -9,14 +9,18 @@ import (
 	"strings"
 )
 
+const (
+	banditSelection = "BanditSelection"
+	banditReward    = "BanditReward"
+)
+
 // LogSelection captures all selected arms. This log can be used in conjunction
 // with reward logs to fully rebuild bandits.
 func LogSelection(uid string, experiment Experiment, selected Variant) {
 	record := []string{
-		"BanditSelection",
-		uid,
+		banditSelection,
 		experiment.Name,
-		fmt.Sprintf("%d", selected.Ordinal),
+		uid,
 		selected.Tag,
 	}
 
@@ -27,10 +31,9 @@ func LogSelection(uid string, experiment Experiment, selected Variant) {
 // with reward logs to fully rebuild bandits.
 func LogReward(uid string, experiment Experiment, selected Variant, reward float64) {
 	record := []string{
-		"BanditReward",
-		uid,
+		banditReward,
 		experiment.Name,
-		fmt.Sprintf("%d", selected.Ordinal),
+		uid,
 		selected.Tag,
 		fmt.Sprintf("%f", reward),
 	}

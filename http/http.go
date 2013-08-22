@@ -59,7 +59,7 @@ func SelectionHandler(tests bandit.Tests) http.HandlerFunc {
 		}
 
 		selected := test.Bandit.SelectArm()
-		variant, err := bandit.SelectVariant(test.Experiment, selected)
+		variant, err := bandit.GetVariant(test.Experiment, selected)
 		if err != nil {
 			http.Error(w, "could not select variant", http.StatusInternalServerError)
 			return
@@ -109,7 +109,7 @@ func LogRewardHandler(tests bandit.Tests) http.HandlerFunc {
 			return
 		}
 
-		experiment, variant, err := bandit.GetVariant(&tests, tag)
+		experiment, variant, err := bandit.GetExperiment(&tests, tag)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return

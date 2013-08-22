@@ -28,7 +28,7 @@ func main() {
 		log.Fatal(err.Error())
 	}
 
-	// bernoulli arms. these determine the observed distribution
+	// bernoulli arms. this is the hidden distribution.
 	arms := arms{}
 	for _, μ := range μs {
 		arms = append(arms, bandit.Bernoulli(μ))

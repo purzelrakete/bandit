@@ -105,7 +105,7 @@ func Accuracy(bestArms []int) Summary {
 	}
 }
 
-// Performance returns an array of average rewards at each trial point.
+// Performance returns an array of mean rewards at each trial point.
 // Averaged over sims
 func Performance(s *Simulation) []float64 {
 	t := make([]float64, s.Trials)
@@ -127,7 +127,7 @@ func Performance(s *Simulation) []float64 {
 	return t
 }
 
-// Cumulative performance returns an array of average rewards at each trial
+// Cumulative performance returns an array of mean rewards at each trial
 // point.  Averaged over sims
 func Cumulative(s *Simulation) []float64 {
 	t := make([]float64, s.Trials)

@@ -28,14 +28,18 @@ See example/index.html for usage.
 
 ## Usage scenario
 
-This library is intended to be used to instrument a website or a web api. This
-setting poses some special problems:
+This library is intended to be used to instrument a high volume website or
+a web api. This setting poses some special problems:
 
-* Delayed feedback (batch reward aggregation)
-* Non stationary rewards (diurnal cycles)
+* Delayed feedback. Clicks, views and other potential reward information is
+  logged into a distributed filesystem like HDFS and must be aggregated by
+  a batch job before use.
+* Stickiness. Users that are assigned to a particular arm should not see
+  results from a different arm within a fixed period. Page reloads may
+  otherwise disrupt the user experience.
 
 See [Explore/Exploit Schemes for Web Content Optimzation] [1] for a discussion
-of these problems.
+of some of these problems.
 
 ## Out of band testing with the HTTP endpoint
 
