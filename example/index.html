@@ -10,16 +10,17 @@
     a:hover { color: #3d6d93; }
     p { font-family: "Georgia"; }
     body {
-      padding: 50px 0 0 100px;
-      color: #5c5c5c;
       border-top: 3px solid #85c0f6;
+      color: #5c5c5c;
       font-family: Montserrat, sans-serif;
       font-size: 20px;
+      padding: 50px 0 0 100px;
     }
 
     #reward { color: #ddd; }
-    #canvas { border: solid 9px; margin-bottom: 2em; }
+    #canvas { margin-bottom: 2em; }
     .circle { border-radius: 50%; }
+    .circle, .square { border: solid 9px; }
   </style>
 </head>
 <body>
@@ -33,27 +34,27 @@
   <script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
   <script type="text/javascript">
     $(function() {
-      var rnd = Math.random, canvas = $('#canvas');
-      function jiggle() {
-        var diameter = rnd() * 300;
-        canvas
+      function render(variant) {
+        var diameter = Math.random() * 300;
+        $('#canvas')
           .removeClass('circle square')
           .css('background-color', color(200))
           .css('border-color', color(100))
-          .width(diameter).height(diameter);
+          .width(diameter).height(diameter)
+          .addClass(variant.shape);
       }
 
-      function color(range) { return 'hsl(' + rnd() * range + ', 80%, 90%)'; }
-      function render(variant) { jiggle(); canvas.addClass(variant.shape); }
-      function select() { $.ajax({url: '/select/shape-20130822'}).done(update); }
+      function color(h) { return 'hsl(' + Math.random() * h + ', 80%, 90%)'; }
+      function select() { $.ajax({ url: '/select/shape-20130822' }).done(update); }
       function update(variant) {
         $.ajax({ url: variant.url, dataType: 'jsonp' }).done(render);
-        $(".feedback").data("tag", variant.tag);
+        $('.feedback').data('tag', variant.tag);
       }
 
       $('.feedback').click(function() {
-        var logger = $(this).attr('href') + '&tag=' + $(this).data('tag');
-        $.ajax({ url: logger, success: select });
+        var logger = $(this).attr('href');
+        var tag = $(this).data('tag');
+        $.ajax({ url: logger, data: { tag: tag }, success: select });
         return false;
       });
 
