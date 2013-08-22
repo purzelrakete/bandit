@@ -45,7 +45,7 @@
 
       function color(range) { return 'hsl(' + rnd() * range + ', 80%, 90%)'; }
       function render(variant) { jiggle(); canvas.addClass(variant.shape); }
-      function select() { $.ajax({url: '/select/geometry'}).done(update); }
+      function select() { $.ajax({url: '/select/shape-20130822'}).done(update); }
       function update(variant) {
         $.ajax({ url: variant.url, dataType: 'jsonp' }).done(render);
         $(".feedback").data("tag", variant.tag);

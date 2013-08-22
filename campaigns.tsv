@@ -1,2 +1,2 @@
-geometry	1	http://localhost:8080/widget?shape=square	w-flf89-square
-geometry	2	http://localhost:8080/widget?shape=circle	w-1142-circle
+shape-20130822	1	http://localhost:8080/widget?shape=square	shape-s1-square
+shape-20130822	2	http://localhost:8080/widget?shape=circle	shape-c8-circle

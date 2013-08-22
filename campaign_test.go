@@ -12,7 +12,7 @@ func TestCampaign(t *testing.T) {
 	}
 
 	expected := 2
-	if got := len(campaigns["geometry"].Variants); got != expected {
+	if got := len(campaigns["shape-20130822"].Variants); got != expected {
 		t.Fatalf("expected %d variants, got %d", expected, got)
 	}
 }
