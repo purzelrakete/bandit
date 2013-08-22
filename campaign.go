@@ -4,6 +4,8 @@
 package bandit
 
 import (
+	"strings"
+
 	"encoding/csv"
 	"fmt"
 	"os"
@@ -131,10 +133,19 @@ func ParseCampaigns(filename string) (Campaigns, error) {
 		}
 
 		name := record[0]
+		if words := strings.Fields(name); len(words) != 1 {
+			return Campaigns{}, fmt.Errorf("campaign has whitespace: %s", name)
+		}
+
+		tag := record[3]
+		if words := strings.Fields(tag); len(words) != 1 {
+			return Campaigns{}, fmt.Errorf("tag has whitespace: %s", tag)
+		}
+
 		variants[name] = append(variants[name], Variant{
 			Ordinal: ordinal,
 			URL:     record[2],
-			Tag:     record[3],
+			Tag:     tag,
 		})
 	}
 

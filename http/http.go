@@ -120,7 +120,7 @@ func LogRewardHandler(tests bandit.Tests) http.HandlerFunc {
 		b := tests[campaign.Name].Bandit
 		b.Update(variant.Ordinal, fReward)
 
-		bandit.LogSelection("0", campaign, variant)
+		bandit.LogReward("0", campaign, variant, fReward)
 		w.WriteHeader(http.StatusOK)
 	}
 }
