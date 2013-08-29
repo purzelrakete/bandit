@@ -172,6 +172,19 @@ You'll get something like this.
 This API is currently *not stable*. Consider this a 0.0.0 release that is
 subject to change at any time.
 
+## TODO
+
+- [x] interfaces and implementations for epsilon greedy, softmax
+- [x] monte carlo simulations
+- [x] plotting of simulation results
+- [x] campaigns and variants
+- [x] http handlers for out of band usage
+- [x] example javascript app using out of band endpoints
+- [ ] delayed bandit with batch aggregations
+- [ ] ucb1 implementation
+- [ ] ucb with extensions for delayed rewards
+- [ ] sticky assignment
+
 # Credits
 
 Developed by
