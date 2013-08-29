@@ -53,7 +53,7 @@ And receives a json response response
 
     {
       uid: 11,
-      campaign: "widgets",
+      experiment: "widgets",
       url: "https://api/widget?color=blue"
       tag: "widget-sauce-flf89"
     }
@@ -64,8 +64,8 @@ The client can now follow up with a request to the returned widget:
 
 ### Starting the out of band endpoint
 
-Run `$GOPATH/bin/oob -port 80 -campaignFile campaigns.tsv` to start the
-endpoint with the provided test campaigns.
+Run `$GOPATH/bin/oob -port 80 -oobExperiments experiments.tsv` to start the
+endpoint with the provided test experiments.
 
 ## Direct use
 
@@ -177,7 +177,7 @@ subject to change at any time.
 - [x] interfaces and implementations for epsilon greedy, softmax
 - [x] monte carlo simulations
 - [x] plotting of simulation results
-- [x] campaigns and variants
+- [x] experiments and variants
 - [x] http handlers for out of band usage
 - [x] example javascript app using out of band endpoints
 - [ ] delayed bandit with batch aggregations
