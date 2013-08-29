@@ -13,8 +13,8 @@ import (
 )
 
 var (
-	oobCampaigns = flag.String("campaigns", "campaigns.tsv", "campaigns tsv filename")
-	oobBind      = flag.String("port", ":8080", "interface / port to bind to")
+	oobExperiments = flag.String("experiments", "experiments.tsv", "experiments tsv filename")
+	oobBind        = flag.String("port", ":8080", "interface / port to bind to")
 )
 
 func init() {
@@ -22,14 +22,14 @@ func init() {
 }
 
 func main() {
-	tests, err := bandit.NewTests(*oobCampaigns)
+	tests, err := bandit.NewTests(*oobExperiments)
 	if err != nil {
-		log.Fatalf("could not construct campaigns: %s", err.Error())
+		log.Fatalf("could not construct experiments: %s", err.Error())
 	}
 
 	// handlers
 	m := pat.New()
-	m.Get("/test/:campaign", http.HandlerFunc(bhttp.SelectionHandler(tests)))
+	m.Get("/test/:experiment", http.HandlerFunc(bhttp.SelectionHandler(tests)))
 	http.Handle("/", m)
 
 	// serve

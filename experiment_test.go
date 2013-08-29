@@ -5,14 +5,14 @@ package bandit
 
 import "testing"
 
-func TestCampaign(t *testing.T) {
-	campaigns, err := ParseCampaigns("campaigns.tsv")
+func TestExperiment(t *testing.T) {
+	experiments, err := ParseExperiments("experiments.tsv")
 	if err != nil {
-		t.Fatalf("while reading campaign fixture: %s", err.Error())
+		t.Fatalf("while reading experiment fixture: %s", err.Error())
 	}
 
 	expected := 2
-	if got := len(campaigns["shape-20130822"].Variants); got != expected {
+	if got := len(experiments["shape-20130822"].Variants); got != expected {
 		t.Fatalf("expected %d variants, got %d", expected, got)
 	}
 }

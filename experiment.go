@@ -12,9 +12,9 @@ import (
 	"strings"
 )
 
-// Campaign is a single campaign. Variants are in ascending ordinal sorting,
-// where ordinals are contiguous and start at 1.
-type Campaign struct {
+// Experiment is a single experiment. Variants are in ascending ordinal
+// sorting, where ordinals are contiguous and start at 1.
+type Experiment struct {
 	Name     string
 	Variants Variants
 }
@@ -23,7 +23,7 @@ type Campaign struct {
 type Variant struct {
 	Ordinal int    // 1 indexed arm ordinal
 	URL     string // the url associated with this variant, for out of band
-	Tag     string // this tag is used throughout the lifecycle of the campaign
+	Tag     string // this tag is used throughout the lifecycle of the experiment
 }
 
 // Variants is a set of variants sorted by ordinal.
@@ -45,67 +45,68 @@ func (v Variants) Swap(i, j int) {
 }
 
 // SelectVariant selects the appropriate variant given it's 1 indexed ordinal
-func SelectVariant(c Campaign, ordinal int) (Variant, error) {
-	if l := len(c.Variants); ordinal < 0 || ordinal > l {
+func SelectVariant(e Experiment, ordinal int) (Variant, error) {
+	if l := len(e.Variants); ordinal < 0 || ordinal > l {
 		return Variant{}, fmt.Errorf("ordinal %d not in [1,%d]", ordinal, l)
 	}
 
-	return c.Variants[ordinal-1], nil
+	return e.Variants[ordinal-1], nil
 }
 
-// GetVariant returns the Campaign and variant pointed to by a string tag.
-func GetVariant(t *Tests, tag string) (Campaign, Variant, error) {
+// GetVariant returns the Experiment and variant pointed to by a string tag.
+func GetVariant(t *Tests, tag string) (Experiment, Variant, error) {
 	for _, test := range *t {
-		for _, variant := range test.Campaign.Variants {
+		for _, variant := range test.Experiment.Variants {
 			if variant.Tag == tag {
-				return test.Campaign, variant, nil
+				return test.Experiment, variant, nil
 			}
 		}
 	}
 
-	return Campaign{}, Variant{}, fmt.Errorf("could not find variant '%s'", tag)
+	return Experiment{}, Variant{}, fmt.Errorf("could not find variant '%s'", tag)
 }
 
-// Test is a bandit set up against a campaign.
+// Test is a bandit set up against an experiment.
 type Test struct {
-	Bandit   Bandit
-	Campaign Campaign
+	Bandit     Bandit
+	Experiment Experiment
 }
 
-// Tests maps campaign names to Test setups.
+// Tests maps experiment names to Test setups.
 type Tests map[string]Test
 
-// NewTests returns a complete set of campaign, bandit tuples (bandit.Test).
-func NewTests(campaignTSV string) (Tests, error) {
-	campaigns, err := ParseCampaigns(campaignTSV)
+// NewTests returns a complete set of experiment, bandit tuples (bandit.Test).
+func NewTests(experimentsTSV string) (Tests, error) {
+	experiments, err := ParseExperiments(experimentsTSV)
 	if err != nil {
-		return Tests{}, fmt.Errorf("could not read campaigns: %s", err.Error())
+		return Tests{}, fmt.Errorf("could not read experiments: %s", err.Error())
 	}
 
 	tests := make(Tests)
-	for name, campaign := range campaigns {
-		b, err := NewSoftmax(len(campaign.Variants), 0.1)
+	for name, experiment := range experiments {
+		b, err := NewSoftmax(len(experiment.Variants), 0.1)
 		if err != nil {
 			return Tests{}, fmt.Errorf(err.Error())
 		}
 
 		tests[name] = Test{
-			Bandit:   b,
-			Campaign: campaign,
+			Bandit:     b,
+			Experiment: experiment,
 		}
 	}
 
 	return tests, nil
 }
 
-// Campaigns is an index of names to campaigns
-type Campaigns map[string]Campaign
+// Experiments is an index of names to experiment
+type Experiments map[string]Experiment
 
-// ParseCampaigns reads in a tsv file and converts it to a list of campaigns.
-func ParseCampaigns(filename string) (Campaigns, error) {
+// ParseExperiments reads in a tsv file and converts it to a list of
+// experiments.
+func ParseExperiments(filename string) (Experiments, error) {
 	file, err := os.Open(filename)
 	if err != nil {
-		return Campaigns{}, fmt.Errorf("need a valid input file: %v", err)
+		return Experiments{}, fmt.Errorf("need a valid input file: %v", err)
 	}
 
 	defer file.Close()
@@ -114,31 +115,31 @@ func ParseCampaigns(filename string) (Campaigns, error) {
 	reader.Comma = '\t'
 	records, err := reader.ReadAll()
 	if err != nil {
-		return Campaigns{}, fmt.Errorf("could not read tsv: %s ", err)
+		return Experiments{}, fmt.Errorf("could not read tsv: %s ", err)
 	}
 
 	// intermediary data structure groups variants
-	type campaignVariants map[string]Variants
+	type experimentVariants map[string]Variants
 
-	variants := make(campaignVariants)
+	variants := make(experimentVariants)
 	for i, record := range records {
 		if l := len(record); l != 4 {
-			return Campaigns{}, fmt.Errorf("record is not %v long: %v", l, record)
+			return Experiments{}, fmt.Errorf("record is not %v long: %v", l, record)
 		}
 
 		ordinal, err := strconv.Atoi(record[1])
 		if err != nil {
-			return Campaigns{}, fmt.Errorf("invalid ordinal on line %n: %s", i, err)
+			return Experiments{}, fmt.Errorf("invalid ordinal on line %n: %s", i, err)
 		}
 
 		name := record[0]
 		if words := strings.Fields(name); len(words) != 1 {
-			return Campaigns{}, fmt.Errorf("campaign has whitespace: %s", name)
+			return Experiments{}, fmt.Errorf("experiment has whitespace: %s", name)
 		}
 
 		tag := record[3]
 		if words := strings.Fields(tag); len(words) != 1 {
-			return Campaigns{}, fmt.Errorf("tag has whitespace: %s", tag)
+			return Experiments{}, fmt.Errorf("tag has whitespace: %s", tag)
 		}
 
 		variants[name] = append(variants[name], Variant{
@@ -148,11 +149,11 @@ func ParseCampaigns(filename string) (Campaigns, error) {
 		})
 	}
 
-	// sorted campaign variants
-	campaigns := make(Campaigns)
+	// sorted experiment variants
+	experiments := make(Experiments)
 	for name, variants := range variants {
 		sort.Sort(variants)
-		campaigns[name] = Campaign{
+		experiments[name] = Experiment{
 			Name:     name,
 			Variants: variants,
 		}
@@ -162,10 +163,10 @@ func ParseCampaigns(filename string) (Campaigns, error) {
 	for name, variants := range variants {
 		for i := 0; i < len(variants); i++ {
 			if ord := variants[i].Ordinal; ord != i+1 {
-				return Campaigns{}, fmt.Errorf("%s: variant %d noncontiguous", name, ord)
+				return Experiments{}, fmt.Errorf("%s: variant %d noncontiguous", name, ord)
 			}
 		}
 	}
 
-	return campaigns, nil
+	return experiments, nil
 }

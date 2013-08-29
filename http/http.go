@@ -15,10 +15,10 @@ import (
 
 // APIResponse is the json response on the /test endpoint
 type APIResponse struct {
-	UID      string `json:"uid"`
-	Campaign string `json:"campaign"`
-	URL      string `json:"url"`
-	Tag      string `json:"tag"`
+	UID        string `json:"uid"`
+	Experiment string `json:"experiment"`
+	URL        string `json:"url"`
+	Tag        string `json:"tag"`
 }
 
 // SelectionHandler can be used as an out of the box API endpoint for
@@ -35,7 +35,7 @@ type APIResponse struct {
 //
 //     {
 //       uid: 11,
-//       campaign: "widgets",
+//       experiment: "widgets",
 //       url: "https://api/widget?color=blue"
 //       tag: "widget-sauce-flf89"
 //     }
@@ -51,25 +51,25 @@ func SelectionHandler(tests bandit.Tests) http.HandlerFunc {
 		defer r.Body.Close()
 		w.Header().Set("Content-Type", "text/json")
 
-		name := r.URL.Query().Get(":campaign")
+		name := r.URL.Query().Get(":experiment")
 		test, ok := tests[name]
 		if ok != true {
-			http.Error(w, "invalid campaign", http.StatusBadRequest)
+			http.Error(w, "invalid experiment", http.StatusBadRequest)
 			return
 		}
 
 		selected := test.Bandit.SelectArm()
-		variant, err := bandit.SelectVariant(test.Campaign, selected)
+		variant, err := bandit.SelectVariant(test.Experiment, selected)
 		if err != nil {
 			http.Error(w, "could not select variant", http.StatusInternalServerError)
 			return
 		}
 
 		json, err := json.Marshal(APIResponse{
-			UID:      "0",
-			Campaign: test.Campaign.Name,
-			URL:      variant.URL,
-			Tag:      variant.Tag,
+			UID:        "0",
+			Experiment: test.Experiment.Name,
+			URL:        variant.URL,
+			Tag:        variant.Tag,
 		})
 
 		if err != nil {
@@ -77,7 +77,7 @@ func SelectionHandler(tests bandit.Tests) http.HandlerFunc {
 			return
 		}
 
-		bandit.LogSelection("0", test.Campaign, variant)
+		bandit.LogSelection("0", test.Experiment, variant)
 		w.Write(json)
 	}
 }
@@ -109,7 +109,7 @@ func LogRewardHandler(tests bandit.Tests) http.HandlerFunc {
 			return
 		}
 
-		campaign, variant, err := bandit.GetVariant(&tests, tag)
+		experiment, variant, err := bandit.GetVariant(&tests, tag)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -117,10 +117,10 @@ func LogRewardHandler(tests bandit.Tests) http.HandlerFunc {
 
 		// Update the bandit in memory. This mechanism is not practical and will
 		// be converted into a batch update scheme soon.
-		b := tests[campaign.Name].Bandit
+		b := tests[experiment.Name].Bandit
 		b.Update(variant.Ordinal, fReward)
 
-		bandit.LogReward("0", campaign, variant, fReward)
+		bandit.LogReward("0", experiment, variant, fReward)
 		w.WriteHeader(http.StatusOK)
 	}
 }

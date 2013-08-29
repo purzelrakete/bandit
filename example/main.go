@@ -14,8 +14,8 @@ import (
 )
 
 var (
-	exCampaigns = flag.String("campaigns", "campaigns.tsv", "campaigns tsv filename")
-	exBind      = flag.String("bind", ":8080", "interface and port to bind to")
+	exExperiments = flag.String("experiments", "experiments.tsv", "experiments tsv filename")
+	exBind        = flag.String("bind", ":8080", "interface and port to bind to")
 )
 
 func init() {
@@ -40,14 +40,14 @@ func widget(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	tests, err := bandit.NewTests(*exCampaigns)
+	tests, err := bandit.NewTests(*exExperiments)
 	if err != nil {
-		log.Fatalf("could not construct campaigns: %s", err.Error())
+		log.Fatalf("could not construct experiments: %s", err.Error())
 	}
 
 	// routes
 	mux := pat.New()
-	mux.Get("/select/:campaign", bhttp.SelectionHandler(tests))
+	mux.Get("/select/:experiment", bhttp.SelectionHandler(tests))
 	mux.Get("/widget", http.HandlerFunc(widget))
 	mux.Get("/feedback", bhttp.LogRewardHandler(tests))
 	mux.Get("/", http.HandlerFunc(index))

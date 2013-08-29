@@ -11,11 +11,11 @@ import (
 
 // LogSelection captures all selected arms. This log can be used in conjunction
 // with reward logs to fully rebuild bandits.
-func LogSelection(uid string, campaign Campaign, selected Variant) {
+func LogSelection(uid string, experiment Experiment, selected Variant) {
 	record := []string{
 		"BanditSelection",
 		uid,
-		campaign.Name,
+		experiment.Name,
 		fmt.Sprintf("%d", selected.Ordinal),
 		selected.Tag,
 	}
@@ -25,11 +25,11 @@ func LogSelection(uid string, campaign Campaign, selected Variant) {
 
 // LogReward captures all selected arms. This log can be used in conjunction
 // with reward logs to fully rebuild bandits.
-func LogReward(uid string, campaign Campaign, selected Variant, reward float64) {
+func LogReward(uid string, experiment Experiment, selected Variant, reward float64) {
 	record := []string{
 		"BanditReward",
 		uid,
-		campaign.Name,
+		experiment.Name,
 		fmt.Sprintf("%d", selected.Ordinal),
 		selected.Tag,
 		fmt.Sprintf("%f", reward),
