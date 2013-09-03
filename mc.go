@@ -37,8 +37,8 @@ func MonteCarlo(sims, trials int, arms []Arm, b Bandit) (Simulation, error) {
 	}
 
 	for sim := 0; sim < sims; sim++ {
-		b.Reset()
 		s.Description = b.Version()
+		b.Reset(&Counters{})
 
 		for trial := 0; trial < trials; trial++ {
 			selected := b.SelectArm()

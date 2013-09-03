@@ -13,6 +13,7 @@ import (
 	"fmt"
 	"math"
 	"math/rand"
+	"sync"
 	"time"
 )
 
@@ -21,13 +22,13 @@ type Bandit interface {
 	SelectArm() int
 	Update(arm int, reward float64)
 	Version() string
-	Reset()
+	Reset(*Counters) error
 }
 
 // epsilonGreedy randomly selects arms with a probability of ε. The rest of
 // the time, epsilonGreedy selects the currently best known arm.
 type epsilonGreedy struct {
-	counters
+	Counters
 	epsilon float64 // epsilon value for this bandit
 }
 
@@ -38,7 +39,7 @@ func NewEpsilonGreedy(arms int, epsilon float64) (Bandit, error) {
 	}
 
 	return &epsilonGreedy{
-		counters: newCounters(arms),
+		Counters: NewCounters(arms),
 		epsilon:  epsilon,
 	}, nil
 }
@@ -75,7 +76,7 @@ func (e *epsilonGreedy) Version() string {
 
 // softmax selects proportially to success
 type softmax struct {
-	counters
+	Counters
 	tau float64 // tau value for this bandit
 }
 
@@ -87,7 +88,7 @@ func NewSoftmax(arms int, τ float64) (Bandit, error) {
 	}
 
 	return &softmax{
-		counters: newCounters(arms),
+		Counters: NewCounters(arms),
 		tau:      τ,
 	}, nil
 }
@@ -118,17 +119,19 @@ func (s *softmax) Version() string {
 	return fmt.Sprintf("Softmax(tau=%.2f)", s.tau)
 }
 
-// counters maintain internal bandit state
-type counters struct {
+// Counters maintain internal bandit state
+type Counters struct {
+	sync.Mutex
+
 	arms   int        // number of arms present in this bandit
 	counts []int      // number of pulls. len(counts) == arms.
 	rand   *rand.Rand // seeded random number generator
 	values []float64  // running average reward per arm. len(values) == arms.
 }
 
-// newCounters constructs counters for given arms
-func newCounters(arms int) counters {
-	return counters{
+// NewCounters constructs counters for given arms
+func NewCounters(arms int) Counters {
+	return Counters{
 		arms:   arms,
 		counts: make([]int, arms),
 		rand:   rand.New(rand.NewSource(time.Now().UnixNano())),
@@ -137,16 +140,33 @@ func newCounters(arms int) counters {
 }
 
 // Update the running average, where arm is the 1 indexed arm
-func (e *counters) Update(arm int, reward float64) {
+func (c *Counters) Update(arm int, reward float64) {
+	c.Lock()
+	defer c.Unlock()
+
 	arm--
-	e.counts[arm]++
-	count := e.counts[arm]
-	e.values[arm] = ((e.values[arm] * float64(count-1)) + reward) / float64(count)
+	c.counts[arm]++
+	count := c.counts[arm]
+	c.values[arm] = ((c.values[arm] * float64(count-1)) + reward) / float64(count)
 }
 
-// Reset returns the bandit to it's newly constructed state
-func (s *counters) Reset() {
-	s.counts = make([]int, s.arms)
-	s.values = make([]float64, s.arms)
-	s.rand = rand.New(rand.NewSource(time.Now().UnixNano()))
+// Reset the bandit to a new counter state. Pass in Counters{} to reset to
+// initial state.
+func (c *Counters) Reset(snapshot *Counters) error {
+	if c.arms != snapshot.arms {
+		return fmt.Errorf("cannot %d arms with %d arms", c.arms, snapshot.arms)
+	}
+
+	if snapshot.arms == 0 {
+		return fmt.Errorf("need at least 1 arm")
+	}
+
+	c.Lock()
+	defer c.Unlock()
+
+	c.counts = snapshot.counts
+	c.rand = snapshot.rand
+	c.values = snapshot.values
+
+	return nil
 }
