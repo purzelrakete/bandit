@@ -69,69 +69,64 @@ func SnapshotReducer(e Experiment, r io.Reader, w io.Writer) func() {
 			counters.Update(int(variant), reward)
 		}
 
-		fmt.Fprintln(w, SnapshotLine(counters, e))
+		fmt.Fprintln(w, SnapshotLine(counters))
 	}
 }
 
 // SnapshotLine returns a snapshot log line
-func SnapshotLine(c counters, e Experiment) string {
+func SnapshotLine(c counters) string {
 	var values []string
 	for _, reward := range c.values {
 		values = append(values, fmt.Sprintf("%f", float64(reward)))
 	}
 
 	return strings.Join([]string{
-		e.Name,
-		fmt.Sprintf("%d", len(e.Variants)),
+		fmt.Sprintf("%d", c.arms),
 		strings.Join(values, " "),
 	}, " ")
 }
 
 // ParseSnapshot reads in a snapshot file. Snapshot files contain a single
-// line per experiment, for example:
+// line experiment snapshot, for example:
 //
-// shape-20130822 2 0.1 0.5
-// shape-20130317 3 0.111 0.87 0.8901
+// 2 0.1 0.5
 //
 // Tokens are separated by whitespace. The given example encodes an experiment
-// with two variants. The experiment name is immediately followed by it's
-// number of variants. This is followed by rewards (mean reward for each arm).
-func ParseSnapshot(s io.Reader, campaign string) (counters, error) {
-	var found bool
-	var c counters
-	scanner := bufio.NewScanner(s)
-	for scanner.Scan() {
-		line := scanner.Text()
-		if strings.Index(line, campaign) == 0 {
-			if found {
-				return counters{}, fmt.Errorf("> 1 campaign snapshot: %s", campaign)
-			}
-
-			found = true
-			fields := strings.Fields(line)
-			arms, err := strconv.ParseInt(fields[1], 10, 16)
-			if err != nil {
-				return counters{}, fmt.Errorf("arms not an int: %s", err.Error())
-			}
-
-			if int(arms) != len(fields)-2 {
-				return counters{}, fmt.Errorf("more fields than arms.")
-			}
-
-			var rewards []float64
-			for _, str := range fields[2:] {
-				reward, err := strconv.ParseFloat(str, 64)
-				if err != nil {
-					return counters{}, fmt.Errorf("rewards malformed: %s", err.Error())
-				}
-
-				rewards = append(rewards, reward)
-			}
-
-			c = newCounters(int(arms))
-			c.values = rewards
+// with two variants. First is the number of variants. This is followed by
+// rewards (mean reward for each arm).
+func ParseSnapshot(s io.Reader) (counters, error) {
+	lines := 0
+	var line string
+	for scanner := bufio.NewScanner(s); scanner.Scan(); lines++ {
+		if lines > 1 {
+			return counters{}, fmt.Errorf("> 1 line in snapshot")
 		}
+
+		line = scanner.Text()
 	}
+
+	fields := strings.Fields(line)
+	arms, err := strconv.ParseInt(fields[0], 10, 16)
+	if err != nil {
+		return counters{}, fmt.Errorf("arms not an int: %s", err.Error())
+	}
+
+	if int(arms) != len(fields)-1 {
+		return counters{}, fmt.Errorf("more fields than arms.")
+	}
+
+	var rewards []float64
+	for _, str := range fields[1:] {
+		reward, err := strconv.ParseFloat(str, 64)
+		if err != nil {
+			return counters{}, fmt.Errorf("rewards malformed: %s", err.Error())
+		}
+
+		rewards = append(rewards, reward)
+	}
+
+	c := newCounters(int(arms))
+	c.values = rewards
 
 	return c, nil
 }

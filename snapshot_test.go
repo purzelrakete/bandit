@@ -36,22 +36,16 @@ func TestSnapshot(t *testing.T) {
 	reducer()
 	reduced := strings.TrimRight(w.String(), "\n ")
 
-	expected := "shape-20130822 2 0.000000 0.500000"
+	expected := "2 0.000000 0.500000"
 	if got := reduced; got != expected {
 		t.Fatalf("expected '%s' but got '%s'", expected, got)
 	}
 }
 
 func TestParseSnapshot(t *testing.T) {
-	log := []string{
-		"shape-20130822 2 0.120000 0.300000",
-		"shape-20130317 3 0.111000 0.870000 0.890100",
-	}
+	input := strings.NewReader("2 0.120000 0.300000")
 
-	input := strings.NewReader(strings.Join(log, "\n"))
-	campaign := "shape-20130822"
-
-	s, err := ParseSnapshot(input, campaign)
+	s, err := ParseSnapshot(input)
 	if err != nil {
 		t.Fatalf("could not parse snapshot file: ", err.Error())
 	}
