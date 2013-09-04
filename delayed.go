@@ -3,7 +3,7 @@ package bandit
 import "fmt"
 
 // NewDelayedBandit wraps the given bandit.
-func NewDelayedBandit(b *Bandit, updates <-chan Counters) (Bandit, error) {
+func NewDelayedBandit(b Bandit, updates <-chan Counters) (Bandit, error) {
 	bandit := delayedBandit{
 		bandit:  b,
 		updates: updates,
@@ -11,7 +11,7 @@ func NewDelayedBandit(b *Bandit, updates <-chan Counters) (Bandit, error) {
 
 	go func() {
 		for counters := range updates {
-			(*b).Reset(&counters)
+			b.Reset(&counters)
 		}
 	}()
 
@@ -24,17 +24,17 @@ func NewDelayedBandit(b *Bandit, updates <-chan Counters) (Bandit, error) {
 type delayedBandit struct {
 	Counters
 	updates <-chan Counters
-	bandit  *Bandit
+	bandit  Bandit
 }
 
 // SelectArm delegates to the wrapped bandit
 func (b *delayedBandit) SelectArm() int {
-	return (*b.bandit).SelectArm()
+	return b.bandit.SelectArm()
 }
 
 // Version gives information about delayed bandit + the wrapped bandit.
 func (b *delayedBandit) Version() string {
-	return fmt.Sprintf("Delayed(%s)", (*b.bandit).Version())
+	return fmt.Sprintf("Delayed(%s)", b.bandit.Version())
 }
 
 // DelayedUpdate updates the internal counters of a bandit with the provided
@@ -42,8 +42,48 @@ func (b *delayedBandit) Version() string {
 func (b *delayedBandit) Reset(c *Counters) error {
 	b.Lock()
 	defer b.Unlock()
-	return (*b.bandit).Reset(c)
+	return b.bandit.Reset(c)
 }
 
 // Update is a NOP. Delayed bandit is updated with Reset(counter) instead
 func (b *delayedBandit) Update(arm int, reward float64) {}
+
+// simulatedDelayedBandit is used for testing but also simulation and
+// plotting. It simulates delayed bandit by flushing counters to the
+// underlying bandit after `limit` number of updates.
+type simulatedDelayedBandit struct {
+	delayedBandit
+	limit   int // #updates to wait before flushing Counters to underlying bandit
+	updates int // #updates since last flush
+}
+
+// NewSimulatedDelayedBandit simulates delayed bandit by flushing counters to
+// the underlying bandit after `flush` number of updates.
+func NewSimulatedDelayedBandit(b Bandit, arms, flush int) Bandit {
+	return &simulatedDelayedBandit{
+		limit:   flush,
+		updates: flush,
+		delayedBandit: delayedBandit{
+			bandit:   b,
+			Counters: NewCounters(arms),
+		},
+	}
+}
+
+// Update flushes counters to the underlying bandit every n updates. This is
+// approximately the behaviour seen by a delayed bandit in production.
+func (b *simulatedDelayedBandit) Update(arm int, reward float64) {
+	b.Lock()
+	defer b.Unlock()
+
+	arm--
+	b.counts[arm]++
+	count := b.counts[arm]
+	b.values[arm] = ((b.values[arm] * float64(count-1)) + reward) / float64(count)
+
+	b.updates++
+	if b.updates >= b.limit {
+		b.bandit.Reset(&b.Counters)
+		b.updates = 0
+	}
+}

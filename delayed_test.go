@@ -9,6 +9,7 @@ func TestDelayedBandit(t *testing.T) {
 	τ := 0.1
 	sims := 5000
 	trials := 300
+	flushAfter := 100
 	bestArmIndex := 4 // Bernoulli(bestArm)
 	bestArm := 0.8
 	arms := []Arm{
@@ -23,20 +24,9 @@ func TestDelayedBandit(t *testing.T) {
 		t.Fatalf(err.Error())
 	}
 
-	d := testDelayedBandit{
-		limit:   100,
-		updates: 100,
-		delayedBandit: delayedBandit{
-			bandit:   &b,
-			Counters: NewCounters(len(arms)),
-		},
-	}
+	d := NewSimulatedDelayedBandit(b, len(arms), flushAfter)
 
-	if err != nil {
-		t.Fatalf(err.Error())
-	}
-
-	sim, err := MonteCarlo(sims, trials, arms, &d)
+	sim, err := MonteCarlo(sims, trials, arms, d)
 	if err != nil {
 		t.Fatalf(err.Error())
 	}
@@ -55,30 +45,5 @@ func TestDelayedBandit(t *testing.T) {
 	cumulatives := Cumulative(&sim)
 	if got := cumulatives[len(cumulatives)-1]; got < expectedCumulative {
 		t.Fatalf("cumulative performance should be > %f. is %f", expectedCumulative, got)
-	}
-}
-
-// testing bandit
-type testDelayedBandit struct {
-	delayedBandit
-	limit   int // #updates to wait before flushing Counters to underlying bandit
-	updates int // #updates since last flush
-}
-
-// Update flushes counters to the underlying bandit every n updates. This is
-// approximately the behaviour seen by a delayed bandit in production.
-func (b *testDelayedBandit) Update(arm int, reward float64) {
-	b.Lock()
-	defer b.Unlock()
-
-	arm--
-	b.counts[arm]++
-	count := b.counts[arm]
-	b.values[arm] = ((b.values[arm] * float64(count-1)) + reward) / float64(count)
-
-	b.updates++
-	if b.updates >= b.limit {
-		(*b.bandit).Reset(&b.Counters)
-		b.updates = 0
 	}
 }
