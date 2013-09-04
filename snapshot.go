@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"os"
 	"strconv"
 	"strings"
 )
@@ -129,4 +130,21 @@ func ParseSnapshot(s io.Reader) (Counters, error) {
 	c.values = rewards
 
 	return c, nil
+}
+
+// GetSnapshot returns Counters given a snapshot filename.
+func GetSnapshot(filename string) (Counters, error) {
+	file, err := os.Open(filename)
+	if err != nil {
+		return Counters{}, fmt.Errorf("could not open file: %s", err.Error())
+	}
+
+	defer file.Close()
+
+	counters, err := ParseSnapshot(file)
+	if err != nil {
+		return Counters{}, fmt.Errorf("could not parse snapshot: %s", err.Error())
+	}
+
+	return counters, nil
 }

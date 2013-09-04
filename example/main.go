@@ -40,7 +40,10 @@ func widget(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	tests, err := bandit.NewTests(*exExperiments)
+	tests, err := bandit.NewTests(*exExperiments, func(arms int) (bandit.Bandit, error) {
+		return bandit.NewSoftmax(arms, 0.1)
+	})
+
 	if err != nil {
 		log.Fatalf("could not construct experiments: %s", err.Error())
 	}

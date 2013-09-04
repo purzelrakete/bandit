@@ -1,9 +1,13 @@
 package bandit
 
-import "fmt"
+import (
+	"fmt"
+	"log"
+	"time"
+)
 
 // NewDelayedBandit wraps the given bandit.
-func NewDelayedBandit(b Bandit, updates <-chan Counters) (Bandit, error) {
+func NewDelayedBandit(b Bandit, updates chan Counters) (Bandit, error) {
 	bandit := delayedBandit{
 		bandit:  b,
 		updates: updates,
@@ -23,7 +27,7 @@ func NewDelayedBandit(b Bandit, updates <-chan Counters) (Bandit, error) {
 // Snapshot replaces the bandit's internal counters.
 type delayedBandit struct {
 	Counters
-	updates <-chan Counters
+	updates chan Counters
 	bandit  Bandit
 }
 
@@ -48,13 +52,35 @@ func (b *delayedBandit) Reset(c *Counters) error {
 // Update is a NOP. Delayed bandit is updated with Reset(counter) instead
 func (b *delayedBandit) Update(arm int, reward float64) {}
 
-// simulatedDelayedBandit is used for testing but also simulation and
-// plotting. It simulates delayed bandit by flushing counters to the
-// underlying bandit after `limit` number of updates.
-type simulatedDelayedBandit struct {
-	delayedBandit
-	limit   int // #updates to wait before flushing Counters to underlying bandit
-	updates int // #updates since last flush
+// NewDelayedTests constructs a (bandit, experiment) tuples
+func NewDelayedTests(experiment, snapshot string, poll time.Duration) (Tests, error) {
+	c := make(chan Counters)
+	go func() {
+		t := time.NewTicker(poll)
+		for _ = range t.C {
+			counters, err := GetSnapshot(snapshot)
+			if err != nil {
+				log.Fatalf("could not get snapshot: %s", err.Error())
+			}
+
+			c <- counters
+		}
+	}()
+
+	tests, err := NewTests(experiment, func(arms int) (Bandit, error) {
+		b, err := NewSoftmax(arms, 0.1)
+		if err != nil {
+			return b, err
+		}
+
+		return NewDelayedBandit(b, c)
+	})
+
+	if err != nil {
+		log.Fatalf("could not construct experiments: %s", err.Error())
+	}
+
+	return tests, nil
 }
 
 // NewSimulatedDelayedBandit simulates delayed bandit by flushing counters to
@@ -68,6 +94,15 @@ func NewSimulatedDelayedBandit(b Bandit, arms, flush int) Bandit {
 			Counters: NewCounters(arms),
 		},
 	}
+}
+
+// simulatedDelayedBandit is used for testing but also simulation and
+// plotting. It simulates delayed bandit by flushing counters to the
+// underlying bandit after `limit` number of updates.
+type simulatedDelayedBandit struct {
+	delayedBandit
+	limit   int // #updates to wait before flushing Counters to underlying bandit
+	updates int // #updates since last flush
 }
 
 // Update flushes counters to the underlying bandit every n updates. This is

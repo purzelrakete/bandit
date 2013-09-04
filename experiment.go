@@ -73,8 +73,11 @@ type Test struct {
 // Tests maps experiment names to Test setups.
 type Tests map[string]Test
 
+// BanditFactory returns an initialized bandit
+type BanditFactory func(arms int) (Bandit, error)
+
 // NewTests returns a complete set of experiment, bandit tuples (bandit.Test).
-func NewTests(experimentsTSV string) (Tests, error) {
+func NewTests(experimentsTSV string, f BanditFactory) (Tests, error) {
 	experiments, err := ParseExperiments(experimentsTSV)
 	if err != nil {
 		return Tests{}, fmt.Errorf("could not read experiments: %s", err.Error())
@@ -82,7 +85,7 @@ func NewTests(experimentsTSV string) (Tests, error) {
 
 	tests := make(Tests)
 	for name, experiment := range experiments {
-		b, err := NewSoftmax(len(experiment.Variants), 0.1)
+		b, err := f(len(experiment.Variants))
 		if err != nil {
 			return Tests{}, fmt.Errorf(err.Error())
 		}

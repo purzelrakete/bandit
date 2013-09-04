@@ -10,11 +10,13 @@ import (
 	bhttp "github.com/purzelrakete/bandit/http"
 	"log"
 	"net/http"
+	"time"
 )
 
 var (
 	oobExperiments = flag.String("experiments", "experiments.tsv", "experiments tsv filename")
 	oobBind        = flag.String("port", ":8080", "interface / port to bind to")
+	oobSnapshot    = flag.String("snapshot", "snapshot.dsv", "campaign snapshot file")
 )
 
 func init() {
@@ -22,14 +24,13 @@ func init() {
 }
 
 func main() {
-	tests, err := bandit.NewTests(*oobExperiments)
+	t, err := bandit.NewDelayedTests(*oobExperiments, *oobSnapshot, 1*time.Minute)
 	if err != nil {
 		log.Fatalf("could not construct experiments: %s", err.Error())
 	}
 
-	// handlers
 	m := pat.New()
-	m.Get("/test/:experiment", http.HandlerFunc(bhttp.SelectionHandler(tests)))
+	m.Get("/select/:experiment", http.HandlerFunc(bhttp.SelectionHandler(t)))
 	http.Handle("/", m)
 
 	// serve
