@@ -128,7 +128,7 @@ func parseArms(sμ string) ([]float64, []int, error) {
 	for i, s := range strings.Split(sμ, ",") {
 		μ, err := strconv.ParseFloat(s, 64)
 		if err != nil {
-			return []float64{}, []int{}, fmt.Errorf("NaN: %s", err.Error())
+			return []float64{}, []int{}, fmt.Errorf("not a number: %s", err.Error())
 		}
 
 		if μ < 0 || μ > 1 {

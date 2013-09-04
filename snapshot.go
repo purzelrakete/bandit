@@ -112,7 +112,7 @@ func ParseSnapshot(s io.Reader) (Counters, error) {
 	}
 
 	if int(arms) != len(fields)-1 {
-		return Counters{}, fmt.Errorf("more fields than arms.")
+		return Counters{}, fmt.Errorf("more fields than arms")
 	}
 
 	var rewards []float64
