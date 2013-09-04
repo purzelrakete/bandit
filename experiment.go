@@ -61,7 +61,7 @@ func GetTaggedVariant(e Experiment, tag string) (Variant, error) {
 		}
 	}
 
-	return Variant{}, fmt.Errorf("tag '%s' is not in given experiment", tag)
+	return Variant{}, fmt.Errorf("tag '%s' is not in experiment %s", tag, e.Name)
 }
 
 // Test is a bandit set up against an experiment.
@@ -151,6 +151,10 @@ func ParseExperiments(filename string) (Experiments, error) {
 		tag := record[3]
 		if words := strings.Fields(tag); len(words) != 1 {
 			return Experiments{}, fmt.Errorf("tag has whitespace: %s", tag)
+		}
+
+		if !strings.HasPrefix(tag, name+":") {
+			return Experiments{}, fmt.Errorf("tag must start with '%s:'", name)
 		}
 
 		variants[name] = append(variants[name], Variant{
