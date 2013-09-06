@@ -8,10 +8,10 @@ controlling the tradeoff between exploring new arms and exploiting the
 currently best arm. It can be used inside a go project or from other languages
 through an HTTP API and works well on high volume websites or APIs.
 
-Bandit is based on John Myles White's [Bandit
-Algorithms for Website Optimization](http://shop.oreilly.com/product/0636920027393.do).
-
-Full documentation is available [on godoc](http://godoc.org/github.com/purzelrakete/bandit).
+Bandit is based on John Myles White's [Bandit Algorithms for Website
+Optimization](http://shop.oreilly.com/product/0636920027393.do). Full
+documentation is available [on
+godoc](http://godoc.org/github.com/purzelrakete/bandit).
 
 ## Try Bandit
 
@@ -208,7 +208,7 @@ Developed by
 Thanks to for advice and opinions to
 
 - John Myles White
-- Peter Burgeon
+- Peter Bourgon
 - Josh Devins
 - Sean Braithwaite
 
