@@ -110,67 +110,10 @@ detailed information.
 
 ## Simulation
 
-The following code runs a monte carlo simulation with the epsilon greedy
-algorithm. There are 4 arms with the probability of a reward of 1.0 defined in
-`arms`. Results are returned in `Simulation`, which holds a full recording of
-the simulation. It can be summarized with the functions `Performance`,
-`Accuracy` and `Cumulative`.
-
-```go
-import (
-  "github.com/purzelrakete/bandit"
-  "log"
-)
-
-sims := 1000
-trials := 400
-arms := []bandit.Arm{
-  bandit.Bernoulli(0.1),
-  bandit.Bernoulli(0.3),
-  bandit.Bernoulli(0.2),
-  bandit.Bernoulli(0.8),
-})
-
-bandit, err := NewEpsilonGreedy(len(arms), ε)
-if err != nil {
-  log.Fatal(err.Error())
-}
-
-sim, err := MonteCarlo(sims, trials, arms, bandit)
-if err != nil {
-  log.Fatal(err.Error())
-}
-
-performance := bandit.Performance(sim, 4)
-ccuracy := bandit.Accuracy(sim)
-cumulative := bandit.Cumulative(sim)
-```
-
-## Plotting
-
-You can run and plot a Monte Carlo simulation using the `plot` binary. It will
-display the accuracy, performance and cumulative performance over time.
-
-```sh
-$GOPATH/bin/plot
-open bandit*.svg
-```
-
-You can change the default number and parameterization of bernoulli arms like
-this:
-
-```sh
-$GOPATH/bin/plot -mus 0.22,0.1,0.7
-open bandit*.png
-```
-
-View defaults and available flags:
-
-```sh
-$GOPATH/bin/plot -h
-```
-
-You'll get something like this.
+Bandit includes the facility to simulate and plot experiemnts. You should run
+your own simulations before putting experiments into production. See `mc.go`
+for details. Too plot the provided simulations, run $GOPATH/bin/plot. You'll
+get something like this:
 
 ![plot](https://dl.dropboxusercontent.com/u/1704851/bandit.svg)
 

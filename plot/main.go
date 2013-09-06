@@ -22,6 +22,15 @@ func init() {
 	flag.Parse()
 }
 
+// You can run and plot a Monte Carlo simulation using the `plot` binary. It
+// will display the accuracy, performance and cumulative performance over
+// time.
+//
+// You can change the default number and parameterization of bernoulli arms
+// like this:
+//
+// plot -mus 0.22,0.1,0.7
+//
 func main() {
 	μs, bestArms, err := parseArms(*mcMus)
 	if err != nil {
