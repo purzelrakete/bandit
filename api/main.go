@@ -24,7 +24,7 @@ func init() {
 }
 
 func main() {
-	t, err := bandit.NewDelayedTests(*apiExperiments, *apiSnapshot, 1*time.Minute)
+	t, err := bandit.NewDelayedTrials(*apiExperiments, *apiSnapshot, 1*time.Minute)
 	if err != nil {
 		log.Fatalf("could not construct experiments: %s", err.Error())
 	}

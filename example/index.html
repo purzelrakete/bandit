@@ -45,7 +45,7 @@
       }
 
       function color(h) { return 'hsl(' + Math.random() * h + ', 80%, 90%)'; }
-      function select() { $.ajax({ url: '/s/shape-20130822' }).done(update); }
+      function select() { $.ajax({ url: '/trials/shape-20130822' }).done(update); }
       function update(variant) {
         $.ajax({ url: variant.url, dataType: 'jsonp' }).done(render);
         $('.feedback').data('tag', variant.tag);

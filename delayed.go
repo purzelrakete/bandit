@@ -52,8 +52,8 @@ func (b *delayedBandit) Reset(c *Counters) error {
 // Update is a NOP. Delayed bandit is updated with Reset(counter) instead
 func (b *delayedBandit) Update(arm int, reward float64) {}
 
-// NewDelayedTests constructs a (bandit, experiment) tuples
-func NewDelayedTests(experiment, snapshot string, poll time.Duration) (Tests, error) {
+// NewDelayedTrials constructs a (bandit, experiment) tuples
+func NewDelayedTrials(experiment, snapshot string, poll time.Duration) (Trials, error) {
 	c := make(chan Counters)
 	go func() {
 		t := time.NewTicker(poll)
@@ -67,7 +67,7 @@ func NewDelayedTests(experiment, snapshot string, poll time.Duration) (Tests, er
 		}
 	}()
 
-	tests, err := NewTests(experiment, func(arms int) (Bandit, error) {
+	trials, err := NewTrials(experiment, func(arms int) (Bandit, error) {
 		b, err := NewSoftmax(arms, 0.1)
 		if err != nil {
 			return b, err
@@ -80,7 +80,7 @@ func NewDelayedTests(experiment, snapshot string, poll time.Duration) (Tests, er
 		log.Fatalf("could not construct experiments: %s", err.Error())
 	}
 
-	return tests, nil
+	return trials, nil
 }
 
 // NewSimulatedDelayedBandit simulates delayed bandit by flushing counters to

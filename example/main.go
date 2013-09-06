@@ -40,7 +40,7 @@ func widget(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	tests, err := bandit.NewTests(*exExperiments, func(arms int) (bandit.Bandit, error) {
+	tests, err := bandit.NewTrials(*exExperiments, func(arms int) (bandit.Bandit, error) {
 		return bandit.NewSoftmax(arms, 0.1)
 	})
 
@@ -50,7 +50,7 @@ func main() {
 
 	// routes
 	mux := pat.New()
-	mux.Get("/select/:experiment", bhttp.SelectionHandler(tests))
+	mux.Get("/trials/:experiment", bhttp.SelectionHandler(tests))
 	mux.Get("/widget", http.HandlerFunc(widget))
 	mux.Get("/feedback", bhttp.LogRewardHandler(tests))
 	mux.Get("/", http.HandlerFunc(index))

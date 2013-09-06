@@ -29,7 +29,7 @@ func SnapshotMapper(e Experiment, r io.Reader, w io.Writer) func() {
 					log.Fatalf("line does not have %d fields: '%s'", rewardLen, line)
 				}
 
-				variant, err := GetTaggedVariant(e, fields[5])
+				variant, err := e.GetTaggedVariant(fields[5])
 				if err != nil {
 					log.Fatalf("invalid variant on line '%s': %s", line, err.Error())
 				}

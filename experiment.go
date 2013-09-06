@@ -19,6 +19,26 @@ type Experiment struct {
 	Variants Variants
 }
 
+// GetVariant selects the appropriate variant given it's 1 indexed ordinal
+func (e *Experiment) GetVariant(ordinal int) (Variant, error) {
+	if l := len(e.Variants); ordinal < 0 || ordinal > l {
+		return Variant{}, fmt.Errorf("ordinal %d not in [1,%d]", ordinal, l)
+	}
+
+	return e.Variants[ordinal-1], nil
+}
+
+// GetTaggedVariant selects the appropriate variant given it's tag
+func (e Experiment) GetTaggedVariant(tag string) (Variant, error) {
+	for _, variant := range e.Variants {
+		if variant.Tag == tag {
+			return variant, nil
+		}
+	}
+
+	return Variant{}, fmt.Errorf("tag '%s' is not in experiment %s", tag, e.Name)
+}
+
 // Variant describes endpoints which are mapped onto bandit arms.
 type Variant struct {
 	Ordinal int    // 1 indexed arm ordinal
@@ -29,82 +49,57 @@ type Variant struct {
 // Variants is a set of variants sorted by ordinal.
 type Variants []Variant
 
-// Len satisfies sort.Interface
-func (v Variants) Len() int {
-	return len(v)
-}
-
-// Less satisfies sort.Interface
-func (v Variants) Less(i, j int) bool {
-	return v[i].Ordinal < v[j].Ordinal
-}
-
-// Swap satisfies sort.Interface
-func (v Variants) Swap(i, j int) {
-	v[i], v[j] = v[j], v[i]
-}
-
-// GetVariant selects the appropriate variant given it's 1 indexed ordinal
-func GetVariant(e Experiment, ordinal int) (Variant, error) {
-	if l := len(e.Variants); ordinal < 0 || ordinal > l {
-		return Variant{}, fmt.Errorf("ordinal %d not in [1,%d]", ordinal, l)
-	}
-
-	return e.Variants[ordinal-1], nil
-}
-
-// GetTaggedVariant selects the appropriate variant given it's tag
-func GetTaggedVariant(e Experiment, tag string) (Variant, error) {
-	for _, variant := range e.Variants {
-		if variant.Tag == tag {
-			return variant, nil
-		}
-	}
-
-	return Variant{}, fmt.Errorf("tag '%s' is not in experiment %s", tag, e.Name)
-}
-
-// Test is a bandit set up against an experiment.
-type Test struct {
-	Bandit     Bandit
-	Experiment Experiment
-}
-
-// Tests maps experiment names to Test setups.
-type Tests map[string]Test
+func (v Variants) Len() int           { return len(v) }
+func (v Variants) Less(i, j int) bool { return v[i].Ordinal < v[j].Ordinal }
+func (v Variants) Swap(i, j int)      { v[i], v[j] = v[j], v[i] }
 
 // BanditFactory returns an initialized bandit
 type BanditFactory func(arms int) (Bandit, error)
 
-// NewTests returns a complete set of experiment, bandit tuples (bandit.Test).
-func NewTests(experimentsTSV string, f BanditFactory) (Tests, error) {
+// Trial is a bandit set up against an experiment.
+type Trial struct {
+	Bandit     Bandit
+	Experiment Experiment
+}
+
+// Select calls SelectArm on the bandit and returns the associated variant
+func (t *Trial) Select() (Variant, error) {
+	selected := t.Bandit.SelectArm()
+	return t.Experiment.GetVariant(selected)
+}
+
+// NewTrials returns a complete set of experiment, bandit tuples (bandit.Trial).
+func NewTrials(experimentsTSV string, f BanditFactory) (Trials, error) {
 	experiments, err := ParseExperiments(experimentsTSV)
 	if err != nil {
-		return Tests{}, fmt.Errorf("could not read experiments: %s", err.Error())
+		return Trials{}, fmt.Errorf("could not read experiments: %s", err.Error())
 	}
 
-	tests := make(Tests)
+	trials := make(Trials)
 	for name, experiment := range experiments {
 		b, err := f(len(experiment.Variants))
 		if err != nil {
-			return Tests{}, fmt.Errorf(err.Error())
+			return Trials{}, fmt.Errorf(err.Error())
 		}
 
-		tests[name] = Test{
+		trials[name] = Trial{
 			Bandit:     b,
 			Experiment: experiment,
 		}
 	}
 
-	return tests, nil
+	return trials, nil
 }
 
-// GetExperiment returns the Experiment and variant pointed to by a string tag.
-func GetExperiment(t *Tests, tag string) (Experiment, Variant, error) {
-	for _, test := range *t {
-		for _, variant := range test.Experiment.Variants {
+// Trials maps experiment names to Trial setups.
+type Trials map[string]Trial
+
+// GetVariant returns the Experiment and variant pointed to by a string tag.
+func (t *Trials) GetVariant(tag string) (Experiment, Variant, error) {
+	for _, trial := range *t {
+		for _, variant := range trial.Experiment.Variants {
 			if variant.Tag == tag {
-				return test.Experiment, variant, nil
+				return trial.Experiment, variant, nil
 			}
 		}
 	}
