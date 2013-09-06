@@ -173,7 +173,6 @@ switch t.Select().Tag {
   case "shape-20130822:c8-circle":
     msg = "hello circle"
 }
-
 ```
 
 ## Bandit Algorithms
