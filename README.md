@@ -44,12 +44,14 @@ endpoint with the provided test experiments.
 In this scenario, the application makes a request to the api endpoint and
 then a second request to your api.
 
+```
   --------------         -----------------
  |  javascript  | ----> | bandit HTTP API |
   --------------         -----------------
         |                 ------------
         ---------------> |  your api  |
                           ------------
+```
 
 Get a variant from the HTTP API first:
 
@@ -79,15 +81,18 @@ Launch the HTTP API as above. When you get a request to your endpoint, make
 a backend request to the HTTP API. Use the returned variant information to
 make your response.
 
-         ------------         -----------------
-  ----> |  your api  | ----> | bandit HTTP API |
-         ------------         -----------------
-
+```
+           ------------         -----------------
+    ----> |  your api  | ----> | bandit HTTP API |
+           ------------         -----------------
+```
 ### Running experiments as a go library
 
-        ------------
- ----> |  your api  |
-        --|bandit|--
+```
+       ------------
+----> |  your api  |
+       --|bandit|--
+```
 
 Set your handler up with a bandit.Test
 
