@@ -1,7 +1,7 @@
 // Copyright 2013 SoundCloud, Rany Keddo. All rights reserved.  Use of this
 // source code is governed by a license that can be found in the LICENSE file.
 
-// Package http provides out of band handling for bandit tests. This can be
+// Package http provides an HTTP API for bandit tests. This can be
 // used by a client side javascript app to determine arm selection and to
 // record rewards.
 package http
