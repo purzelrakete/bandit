@@ -139,5 +139,6 @@ Thanks to for advice and opinions to
 - John Myles White
 - Peter Burgeon
 - Josh Devins
+- Sean Braithwaite
 
 [1]: http://dl.acm.org/citation.cfm?id=1677012" "Explore/Exploit Schemes for Web Content Optimzation"
