@@ -14,9 +14,9 @@ import (
 )
 
 var (
-	oobExperiments = flag.String("experiments", "experiments.tsv", "experiments tsv filename")
-	oobBind        = flag.String("port", ":8080", "interface / port to bind to")
-	oobSnapshot    = flag.String("snapshot", "snapshot.dsv", "campaign snapshot file")
+	apiExperiments = flag.String("experiments", "experiments.tsv", "experiments tsv filename")
+	apiBind        = flag.String("port", ":8080", "interface / port to bind to")
+	apiSnapshot    = flag.String("snapshot", "snapshot.dsv", "campaign snapshot file")
 )
 
 func init() {
@@ -24,7 +24,7 @@ func init() {
 }
 
 func main() {
-	t, err := bandit.NewDelayedTests(*oobExperiments, *oobSnapshot, 1*time.Minute)
+	t, err := bandit.NewDelayedTests(*apiExperiments, *apiSnapshot, 1*time.Minute)
 	if err != nil {
 		log.Fatalf("could not construct experiments: %s", err.Error())
 	}
@@ -34,5 +34,5 @@ func main() {
 	http.Handle("/", m)
 
 	// serve
-	log.Fatal(http.ListenAndServe(*oobBind, nil))
+	log.Fatal(http.ListenAndServe(*apiBind, nil))
 }
