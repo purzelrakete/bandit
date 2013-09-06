@@ -38,7 +38,7 @@ language.
 
 ### Javascript and the HTTP API
 
-Run `$GOPATH/bin/oob -port 80 -oobExperiments experiments.tsv` to start the
+Run `$GOPATH/bin/api -port 80 -apiExperiments experiments.tsv` to start the
 endpoint with the provided test experiments.
 
 In this scenario, the application makes a request to the api endpoint and
