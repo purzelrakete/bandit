@@ -91,9 +91,9 @@ then a second request to your api.
 
 Get a variant from the HTTP API first:
 
-    GET https://api/test/widgets?uid=11 HTTP/1.0
+    GET https://api/trials/widgets?uid=11 HTTP/1.0
 
-And receives a json response response
+The API responds with a variant:
 
     HTTP/1.0 200 OK
     Content-Type: text/json
@@ -109,7 +109,7 @@ The client can now follow up with a request to the returned widget:
 
     GET https://api/widget?color=blue HTTP/1.0
 
-See example/index.html for an example of this.
+See the exampe binary and example/index.html for a running example of this.
 
 ### Project in another language using the HTTP API
 
@@ -122,7 +122,7 @@ a backend request to the HTTP API. Use the returned variant to vary.
           .------------.       .-----------------.
 ```
 
-### Running experiments with the go library
+### Running experiments in go with the bandit library
 
 You can load an experiment with an associated bandit as a Trial.
 
@@ -144,6 +144,8 @@ You can load an experiment with an associated bandit as a Trial.
 Set your handler up with a bandit.Trial
 
 ```go
+import "github.com/purzelrakete/bandit"
+
 trials, err := bandit.NewDelayedTrials(experiments, snapshot, 1*time.Minute)
 if err != nil {
   log.Fatalf("could not set up trial: %s", err.Error())
@@ -155,7 +157,7 @@ if !ok {
 }
 
 m := pat.New()
-m.Get("/widget, MyEndpoint(t))
+m.Get("/widget", MyEndpoint(t))
 http.Handle("/", m)
 
 log.Fatal(http.ListenAndServe(*apiBind, nil))
@@ -183,8 +185,9 @@ detailed information.
 
 Bandit includes the facility to simulate and plot experiemnts. You should run
 your own simulations before putting experiments into production. See `mc.go`
-for details. Too plot the provided simulations, run $GOPATH/bin/plot. You'll
-get something like this:
+for details. Too plot the provided simulations, run $GOPATH/bin/plot.
+
+Here's an example plot:
 
 ![plot](https://dl.dropboxusercontent.com/u/1704851/bandit.svg)
 
