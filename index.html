@@ -38,37 +38,227 @@
           <span class="credits right">Hosted on GitHub Pages &mdash; Theme by <a href="https://twitter.com/michigangraham">mattgraham</a></span>
         </div>
 
-        <h3>
-<a name="welcome-to-github-pages" class="anchor" href="#welcome-to-github-pages"><span class="octicon octicon-link"></span></a>Welcome to GitHub Pages.</h3>
+        <p><a href="https://travis-ci.org/purzelrakete/bandit"><img src="https://travis-ci.org/purzelrakete/bandit.png?branch=master" alt="Build Status"></a>
+<a href="https://coveralls.io/r/purzelrakete/bandit"><img src="https://coveralls.io/repos/purzelrakete/bandit/badge.png" alt="Coverage Status"></a></p>
 
-<p>This automatic page generator is the easiest way to create beautiful pages for all of your projects. Author your page content here using GitHub Flavored Markdown, select a template crafted by a designer, and publish. After your page is generated, you can check out the new branch:</p>
+<p>A golang multiarmed bandit. Use it in your project to run A/B tests while
+controlling the tradeoff between exploring new arms and exploiting the
+currently best arm. It can be used inside a go project or from other languages
+through an HTTP API and works well on high volume websites or APIs.</p>
 
-<pre><code>$ cd your_repo_root/repo_name
-$ git fetch origin
-$ git checkout gh-pages
+<p>Bandit is based on John Myles White's <a href="http://shop.oreilly.com/product/0636920027393.do">Bandit Algorithms for Website
+Optimization</a>. Full
+documentation is available <a href="http://godoc.org/github.com/purzelrakete/bandit">on
+godoc</a>.</p>
+
+<h2>
+<a name="try-bandit" class="anchor" href="#try-bandit"><span class="octicon octicon-link"></span></a>Try Bandit</h2>
+
+<p>You need at go1.1.1 or higher. Build the project by running <code>make</code>.</p>
+
+<p>You can run a simple demonstration of the HTTP API with <code>$GOPATH/bin/example</code>.
+Go to http://localhost:8080/ to test the performance of squares against
+circles. If you perfer circles, you should start to see more circles being
+served to you over time.</p>
+
+<h2>
+<a name="when-to-use-bandit" class="anchor" href="#when-to-use-bandit"><span class="octicon octicon-link"></span></a>When to use bandit</h2>
+
+<p>This library is intended to be used to instrument a high volume website or
+a web api. It is helpful to have a logging pipeline in place.</p>
+
+<h2>
+<a name="design" class="anchor" href="#design"><span class="octicon octicon-link"></span></a>Design</h2>
+
+<p>A Bandit is used to select arms and update arms with reward information:</p>
+
+<div class="highlight"><pre><span class="kd">type</span> <span class="nx">Bandit</span> <span class="kd">interface</span> <span class="p">{</span>
+  <span class="nx">SelectArm</span><span class="p">()</span> <span class="kt">int</span>
+  <span class="nx">Update</span><span class="p">(</span><span class="nx">arm</span> <span class="kt">int</span><span class="p">,</span> <span class="nx">reward</span> <span class="kt">float64</span><span class="p">)</span>
+<span class="p">}</span>
+</pre></div>
+
+<p>A delayed Bandit has no Update implementation. Instead it maintains static
+rewards counters for each arm, and periodically updates those counters from an
+externally generated snapshot.  This snapshot contains the number of arms
+followed by the mean reward for each arm:</p>
+
+<pre><code>2 0.4 0.3
 </code></pre>
 
-<p>If you're using the GitHub for Mac, simply sync your repository and you'll see the new branch.</p>
+<p>You are expected to generate this reward snapshot yourself using log
+information. If you adhere to the provided log format, you can use
+bandit.SnapshotMapper and bandit.SnapshotReducer to either run a hadoop
+streaming job or simply pipe the two commands together in your shell. Have
+a look at <code>log.go</code> to see the format:</p>
+
+<pre><code>2013/08/22 14:20:05 BanditSelection shape-20130822 0 shape-20130822:c8-circle
+2013/08/22 14:20:06 BanditReward shape-20130822 0 shape-20130822:c8-circle 1.0
+</code></pre>
+
+<p>To use a bandit, you first have to define an experiment and it's variants.
+This is currently configured as a tsv with name, url, tag:</p>
+
+<pre><code>shape-20130822  1   http://localhost:8080/widget?shape=square   shape-20130822:s1-square
+shape-20130822  2   http://localhost:8080/widget?shape=circle   shape-20130822:c8-circle
+</code></pre>
+
+<h2>
+<a name="running-experiments" class="anchor" href="#running-experiments"><span class="octicon octicon-link"></span></a>Running experiments</h2>
+
+<p>Choose the best method for your project depending on whether you have a client
+side javascript application, a go project, or a project in some other
+language.</p>
 
 <h3>
-<a name="designer-templates" class="anchor" href="#designer-templates"><span class="octicon octicon-link"></span></a>Designer Templates</h3>
+<a name="javascript-and-the-http-api" class="anchor" href="#javascript-and-the-http-api"><span class="octicon octicon-link"></span></a>Javascript and the HTTP API</h3>
 
-<p>We've crafted some handsome templates for you to use. Go ahead and continue to layouts to browse through them. You can easily go back to edit your page before publishing. After publishing your page, you can revisit the page generator and switch to another theme. Your Page content will be preserved if it remained markdown format.</p>
+<p>Run <code>$GOPATH/bin/api -port 80 -apiExperiments experiments.tsv</code> to start the
+endpoint with the provided test experiments.</p>
+
+<p>In this scenario, the application makes a request to the api endpoint and
+then a second request to your api.</p>
+
+<pre><code>   .--------------.        .-----------------.
+   |  javascript  | -----&gt; | bandit HTTP API |
+   .--------------.        .-----------------.
+          |                .------------.
+          ---------------&gt; |  your api  |
+                           .------------.
+</code></pre>
+
+<p>Get a variant from the HTTP API first:</p>
+
+<pre><code>GET https://api/trials/widgets?uid=11 HTTP/1.0
+</code></pre>
+
+<p>The API responds with a variant:</p>
+
+<pre><code>HTTP/1.0 200 OK
+Content-Type: text/json
+
+{
+  uid: 11,
+  experiment: "widgets",
+  url: "https://api/widget?color=blue"
+  tag: "widget-sauce-flf89"
+}
+</code></pre>
+
+<p>The client can now follow up with a request to the returned widget:</p>
+
+<pre><code>GET https://api/widget?color=blue HTTP/1.0
+</code></pre>
+
+<p>See the exampe binary and example/index.html for a running example of this.</p>
 
 <h3>
-<a name="rather-drive-stick" class="anchor" href="#rather-drive-stick"><span class="octicon octicon-link"></span></a>Rather Drive Stick?</h3>
+<a name="project-in-another-language-using-the-http-api" class="anchor" href="#project-in-another-language-using-the-http-api"><span class="octicon octicon-link"></span></a>Project in another language using the HTTP API</h3>
 
-<p>If you prefer to not use the automatic generator, push a branch named <code>gh-pages</code> to your repository to create a page manually. In addition to supporting regular HTML content, GitHub Pages support Jekyll, a simple, blog aware static site generator written by our own Tom Preston-Werner. Jekyll makes it easy to create site-wide headers and footers without having to copy them across every page. It also offers intelligent blog support and other advanced templating features.</p>
+<p>Launch the HTTP API as above. When you get a request to your endpoint, make
+a backend request to the HTTP API. Use the returned variant to vary.</p>
+
+<pre><code>          .------------.       .-----------------.
+    ----&gt; |  your api  | ----&gt; | bandit HTTP API |
+          .------------.       .-----------------.
+</code></pre>
 
 <h3>
-<a name="authors-and-contributors" class="anchor" href="#authors-and-contributors"><span class="octicon octicon-link"></span></a>Authors and Contributors</h3>
+<a name="running-experiments-in-go-with-the-bandit-library" class="anchor" href="#running-experiments-in-go-with-the-bandit-library"><span class="octicon octicon-link"></span></a>Running experiments in go with the bandit library</h3>
 
-<p>You can <a href="https://github.com/blog/821" class="user-mention">@mention</a> a GitHub username to generate a link to their profile. The resulting <code>&lt;a&gt;</code> element will link to the contributor's GitHub Profile. For example: In 2007, Chris Wanstrath (<a href="https://github.com/defunkt" class="user-mention">@defunkt</a>), PJ Hyett (<a href="https://github.com/pjhyett" class="user-mention">@pjhyett</a>), and Tom Preston-Werner (<a href="https://github.com/mojombo" class="user-mention">@mojombo</a>) founded GitHub.</p>
+<p>You can load an experiment with an associated bandit as a Trial.</p>
 
-<h3>
-<a name="support-or-contact" class="anchor" href="#support-or-contact"><span class="octicon octicon-link"></span></a>Support or Contact</h3>
+<pre><code>                                     .------------.
+                 .--------.          |  snapshot  |       periodic job
+       --------&gt; | Bandit | &lt;------  |    file    | &lt;---  aggregates logs
+      |          .--------.          .------------.       into counters
+   .-------.
+   | Trial |
+   .-------.     .------------.       .----------.
+      |          | Experiment | --*-&gt; |  Variant |
+       --------&gt; .------------.       .----------.
+                 | name       |       | tag      |
+                 .------------.       | url      |
+                                      .----------.
+</code></pre>
 
-<p>Having trouble with Pages? Check out the documentation at <a href="http://help.github.com/pages">http://help.github.com/pages</a> or contact <a href="mailto:support@github.com">support@github.com</a> and we’ll help you sort it out.</p>
+<p>Set your handler up with a bandit.Trial</p>
+
+<div class="highlight"><pre><span class="kn">import</span> <span class="s">"github.com/purzelrakete/bandit"</span>
+
+<span class="nx">trials</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">bandit</span><span class="p">.</span><span class="nx">NewDelayedTrials</span><span class="p">(</span><span class="nx">experiments</span><span class="p">,</span> <span class="nx">snapshot</span><span class="p">,</span> <span class="mi">1</span><span class="o">*</span><span class="nx">time</span><span class="p">.</span><span class="nx">Minute</span><span class="p">)</span>
+<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+  <span class="nx">log</span><span class="p">.</span><span class="nx">Fatalf</span><span class="p">(</span><span class="s">"could not set up trial: %s"</span><span class="p">,</span> <span class="nx">err</span><span class="p">.</span><span class="nx">Error</span><span class="p">())</span>
+<span class="p">}</span>
+
+<span class="nx">t</span><span class="p">,</span> <span class="nx">ok</span> <span class="o">:=</span> <span class="nx">trails</span><span class="p">[</span><span class="s">"shape-20130822"</span><span class="p">]</span>
+<span class="k">if</span> <span class="p">!</span><span class="nx">ok</span> <span class="p">{</span>
+  <span class="nx">log</span><span class="p">.</span><span class="nx">Fatalf</span><span class="p">(</span><span class="s">"could not find campaign"</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="nx">m</span> <span class="o">:=</span> <span class="nx">pat</span><span class="p">.</span><span class="nx">New</span><span class="p">()</span>
+<span class="nx">m</span><span class="p">.</span><span class="nx">Get</span><span class="p">(</span><span class="s">"/widget"</span><span class="p">,</span> <span class="nx">MyEndpoint</span><span class="p">(</span><span class="nx">t</span><span class="p">))</span>
+<span class="nx">http</span><span class="p">.</span><span class="nx">Handle</span><span class="p">(</span><span class="s">"/"</span><span class="p">,</span> <span class="nx">m</span><span class="p">)</span>
+
+<span class="nx">log</span><span class="p">.</span><span class="nx">Fatal</span><span class="p">(</span><span class="nx">http</span><span class="p">.</span><span class="nx">ListenAndServe</span><span class="p">(</span><span class="o">*</span><span class="nx">apiBind</span><span class="p">,</span> <span class="kc">nil</span><span class="p">))</span>
+</pre></div>
+
+<p>You can iterate over available Variants in your endpoint setup via
+t.Experiment.Variants. Then begin serving requests. For example:</p>
+
+<pre><code>switch t.Select().Tag {
+  case "shape-20130822:s1-square":
+    msg = "hello square"
+  case "shape-20130822:c8-circle":
+    msg = "hello circle"
+}
+</code></pre>
+
+<h2>
+<a name="bandit-algorithms" class="anchor" href="#bandit-algorithms"><span class="octicon octicon-link"></span></a>Bandit Algorithms</h2>
+
+<p>You can currently choose between Epsilon Greedy and Softmax. See the godoc for
+detailed information.</p>
+
+<h2>
+<a name="simulation" class="anchor" href="#simulation"><span class="octicon octicon-link"></span></a>Simulation</h2>
+
+<p>Bandit includes the facility to simulate and plot experiemnts. You should run
+your own simulations before putting experiments into production. See <code>mc.go</code>
+for details. Too plot the provided simulations, run $GOPATH/bin/plot.</p>
+
+<p>Here's an example plot:</p>
+
+<p><img src="https://dl.dropboxusercontent.com/u/1704851/bandit.svg" alt="plot"></p>
+
+<h1>
+<a name="status" class="anchor" href="#status"><span class="octicon octicon-link"></span></a>Status</h1>
+
+<p>This API is currently <em>not stable</em>. Consider this a 0.0.0 release that is
+subject to change at any time.</p>
+
+<h2>
+<a name="todo" class="anchor" href="#todo"><span class="octicon octicon-link"></span></a>TODO</h2>
+
+<ul>
+<li>UCB1 implementation</li>
+<li>UCB with extensions for delayed rewards</li>
+<li>Sticky assignements</li>
+</ul><h1>
+<a name="credits" class="anchor" href="#credits"><span class="octicon octicon-link"></span></a>Credits</h1>
+
+<p>Developed by</p>
+
+<ul>
+<li>Rany Keddo (<a href="https://github.com/purzelrakete" class="user-mention">@purzelrakete</a>)</li>
+</ul><p>Thanks to for advice and opinions to</p>
+
+<ul>
+<li>John Myles White</li>
+<li>Peter Bourgon</li>
+<li>Josh Devins</li>
+<li>Sean Braithwaite</li>
+</ul>
       </section>
 
     </div>
