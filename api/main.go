@@ -24,13 +24,17 @@ func init() {
 }
 
 func main() {
-	t, err := bandit.NewDelayedTrials(*apiExperiments, *apiSnapshot, 1*time.Minute)
+	es, err := bandit.NewExperiments(*apiExperiments)
 	if err != nil {
 		log.Fatalf("could not construct experiments: %s", err.Error())
 	}
 
+	if err := es.InitDelayedBandit(*apiSnapshot, 2*time.Minute); err != nil {
+		log.Fatalf("could initialize bandits: %s", err.Error())
+	}
+
 	m := pat.New()
-	m.Get("/select/:experiment", http.HandlerFunc(bhttp.SelectionHandler(t)))
+	m.Get("/experiments/:name", http.HandlerFunc(bhttp.SelectionHandler(es)))
 	http.Handle("/", m)
 
 	// serve

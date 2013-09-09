@@ -25,7 +25,7 @@
 </head>
 <body>
   <h1>Squares or Circles?</h1>
-  <p>A trial using the bundled test experiment.</p>
+  <p>A bandit experiment.</p>
   <div id="canvas"></div>
   <div id="reward">
     <a class="feedback" href="/feedback?reward=1">Like</a> •
@@ -45,7 +45,7 @@
       }
 
       function color(h) { return 'hsl(' + Math.random() * h + ', 80%, 90%)'; }
-      function select() { $.ajax({ url: '/trials/shape-20130822' }).done(update); }
+      function select() { $.ajax({ url: '/experiments/shape-20130822' }).done(update); }
       function update(variant) {
         $.ajax({ url: variant.url, dataType: 'jsonp' }).done(render);
         $('.feedback').data('tag', variant.tag);

@@ -1,10 +1,6 @@
 package bandit
 
-import (
-	"fmt"
-	"log"
-	"time"
-)
+import "fmt"
 
 // NewDelayedBandit wraps the given bandit.
 func NewDelayedBandit(b Bandit, updates chan Counters) (Bandit, error) {
@@ -51,37 +47,6 @@ func (b *delayedBandit) Reset(c *Counters) error {
 
 // Update is a NOP. Delayed bandit is updated with Reset(counter) instead
 func (b *delayedBandit) Update(arm int, reward float64) {}
-
-// NewDelayedTrials constructs a (bandit, experiment) tuples
-func NewDelayedTrials(experiment, snapshot string, poll time.Duration) (Trials, error) {
-	c := make(chan Counters)
-	go func() {
-		t := time.NewTicker(poll)
-		for _ = range t.C {
-			counters, err := GetSnapshot(snapshot)
-			if err != nil {
-				log.Fatalf("could not get snapshot: %s", err.Error())
-			}
-
-			c <- counters
-		}
-	}()
-
-	trials, err := NewTrials(experiment, func(arms int) (Bandit, error) {
-		b, err := NewSoftmax(arms, 0.1)
-		if err != nil {
-			return b, err
-		}
-
-		return NewDelayedBandit(b, c)
-	})
-
-	if err != nil {
-		log.Fatalf("could not construct experiments: %s", err.Error())
-	}
-
-	return trials, nil
-}
 
 // NewSimulatedDelayedBandit simulates delayed bandit by flushing counters to
 // the underlying bandit after `flush` number of updates.

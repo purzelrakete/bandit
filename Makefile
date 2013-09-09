@@ -1,16 +1,23 @@
-.PHONY: all build test lint coverage deps install clean
+.PHONY: all build test lint coverage deps clean
 
-PKGS := \
+LIBS := \
 github.com/purzelrakete/bandit \
-github.com/purzelrakete/bandit/http \
+github.com/purzelrakete/bandit/http
+
+BINS := \
 github.com/purzelrakete/bandit/api \
 github.com/purzelrakete/bandit/plot \
 github.com/purzelrakete/bandit/example
 
-all: deps build lint test install
+PKGS := $(LIBS) $(BINS)
+
+all: deps build lint test
 
 build:
-	go build -v $(PKGS)
+	go build -v $(LIBS)
+	go build -o bandit-api github.com/purzelrakete/bandit/api
+	go build -o bandit-example github.com/purzelrakete/bandit/example
+	go build -o bandit-plot github.com/purzelrakete/bandit/plot
 
 test:
 	go test -v $(PKGS)
@@ -27,8 +34,6 @@ deps:
 	go get github.com/golang/lint/golint
 	go get github.com/mattn/goveralls
 
-install:
-	go install -v $(PKGS)
-
 clean:
 	go clean $(PKGS)
+	find . -type f -perm -o+rx -name 'bandit-*' -delete

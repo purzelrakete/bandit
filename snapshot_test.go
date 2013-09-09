@@ -16,12 +16,12 @@ func TestSnapshot(t *testing.T) {
 		"2013/08/22 14:20:10 BanditReward plant-20121111 0 plants-20121111:f1-camelia 1.0",
 	}
 
-	campaigns, err := ParseExperiments("experiments.tsv")
+	es, err := NewExperiments("experiments.tsv")
 	if err != nil {
 		t.Fatalf("while reading campaign fixture: %s", err.Error())
 	}
 
-	c, ok := campaigns["shape-20130822"]
+	c, ok := (*es)["shape-20130822"]
 	if !ok {
 		t.Fatalf("could not find shapes campaign.")
 	}

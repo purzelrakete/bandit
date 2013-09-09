@@ -15,7 +15,7 @@ import (
 
 // SnapshotMapper returns a hadoop streaming mapper function. Emits (arm,
 // reward) tuples onto the given writer, for the specified experiment only.
-func SnapshotMapper(e Experiment, r io.Reader, w io.Writer) func() {
+func SnapshotMapper(e *Experiment, r io.Reader, w io.Writer) func() {
 	reward := banditReward + " " + e.Name
 	rewardLen := 7
 
@@ -47,7 +47,7 @@ func SnapshotMapper(e Experiment, r io.Reader, w io.Writer) func() {
 
 // SnapshotReducer returns a hadoop streaming reducer function. Emits one
 // SnapshotLine for the specificed experiment.
-func SnapshotReducer(e Experiment, r io.Reader, w io.Writer) func() {
+func SnapshotReducer(e *Experiment, r io.Reader, w io.Writer) func() {
 	return func() {
 		arms := len(e.Variants)
 		c := NewCounters(arms)

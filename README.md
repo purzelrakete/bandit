@@ -17,7 +17,7 @@ godoc](http://godoc.org/github.com/purzelrakete/bandit).
 
 You need at go1.1.1 or higher. Build the project by running `make`.
 
-You can run a simple demonstration of the HTTP API with `$GOPATH/bin/example`.
+You can run a simple demonstration of the HTTP API with `bandit-example`.
 Go to http://localhost:8080/ to test the performance of squares against
 circles. If you perfer circles, you should start to see more circles being
 served to you over time.
@@ -74,8 +74,9 @@ language.
 
 ### Javascript and the HTTP API
 
-Run `$GOPATH/bin/api -port 80 -apiExperiments experiments.tsv` to start the
-endpoint with the provided test experiments.
+Build the project by running `make`, then run `bandit-api -port 80
+-apiExperiments experiments.tsv` to start the endpoint with the provided test
+experiments.
 
 In this scenario, the application makes a request to the api endpoint and
 then a second request to your api.
@@ -91,7 +92,7 @@ then a second request to your api.
 
 Get a variant from the HTTP API first:
 
-    GET https://api/trials/widgets?uid=11 HTTP/1.0
+    GET https://api/experiements/widgets?uid=11 HTTP/1.0
 
 The API responds with a variant:
 
@@ -124,42 +125,40 @@ a backend request to the HTTP API. Use the returned variant to vary.
 
 ### Running experiments in go with the bandit library
 
-You can load an experiment with an associated bandit as a Trial.
+LoYou can load an experiment with an associated bandit as an Experiment.
 
 ```
-                                     .------------.
-                 .--------.          |  snapshot  |       periodic job
-       --------> | Bandit | <------  |    file    | <---  aggregates logs
-      |          .--------.          .------------.       into counters
-   .-------.
-   | Trial |
-   .-------.     .------------.       .----------.
-      |          | Experiment | --*-> |  Variant |
-       --------> .------------.       .----------.
-                 | name       |       | tag      |
-                 .------------.       | url      |
-                                      .----------.
+                          .------------.
+       .--------.         |  snapshot  |       periodic job
+       | Bandit | <------ |    file    | <---  aggregates logs
+       .--------.         .------------.       into counters
+           ^
+           |
+      .------------.       .----------.
+      | Experiment | --*-> |  Variant |
+      .------------.       .----------.
+      | name       |       | tag      |
+      .------------.       | url      |
+                           .----------.
 ```
 
-Set your handler up with a bandit.Trial
+Set your experiment up like this:
 
 ```go
-import "github.com/purzelrakete/bandit"
-
-trials, err := bandit.NewDelayedTrials(experiments, snapshot, 1*time.Minute)
+es, err := bandit.NewExperiments(*apiExperiments)
 if err != nil {
-  log.Fatalf("could not set up trial: %s", err.Error())
+	log.Fatalf("could not construct experiments: %s", err.Error())
 }
 
-t, ok := trails["shape-20130822"]
-if !ok {
-  log.Fatalf("could not find campaign")
+if err := es.InitDelayedBandit(*apiSnapshot, 2*time.Minute); err != nil {
+	log.Fatalf("could initialize bandits: %s", err.Error())
 }
 
 m := pat.New()
-m.Get("/widget", MyEndpoint(t))
+m.Get("/experiments/:name", http.HandlerFunc(bhttp.SelectionHandler(es)))
 http.Handle("/", m)
 
+// serve
 log.Fatal(http.ListenAndServe(*apiBind, nil))
 ```
 
@@ -184,7 +183,8 @@ detailed information.
 
 Bandit includes the facility to simulate and plot experiemnts. You should run
 your own simulations before putting experiments into production. See `mc.go`
-for details. Too plot the provided simulations, run $GOPATH/bin/plot.
+for details. Too plot the provided simulations, build the project by running
+`make`, then run bandit-plot.
 
 Here's an example plot:
 

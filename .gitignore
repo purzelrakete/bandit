@@ -1,5 +1,6 @@
 *.png
 *.svg
-plot/plot
-api/api
+bandit-api
+bandit-example
+bandit-plot
 TODO.org

@@ -1,13 +1,14 @@
 // Copyright 2013 SoundCloud, Rany Keddo. All rights reserved.  Use of this
 // source code is governed by a license that can be found in the LICENSE file.
 
-// Package http provides an HTTP API for bandit trials. This can be
+// Package http provides an HTTP API for bandit experiments. This can be
 // used by a client side javascript app to determine arm selection and to
 // record rewards.
 package http
 
 import (
 	"encoding/json"
+
 	"github.com/purzelrakete/bandit"
 	"net/http"
 	"strconv"
@@ -26,7 +27,7 @@ type APIResponse struct {
 //
 // In this scenario, the application makes a request to the api endpoint:
 //
-//     GET https://api/trials/widgets?uid=11 HTTP/1.0
+//     GET https://api/experiments/widgets?uid=11 HTTP/1.0
 //
 // And receives a json response response
 //
@@ -46,19 +47,20 @@ type APIResponse struct {
 //
 // This two phase approach can be collapsed by using the bandit directly
 // inside a golang api endpoint.
-func SelectionHandler(trials bandit.Trials) http.HandlerFunc {
+func SelectionHandler(experiments *bandit.Experiments) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		defer r.Body.Close()
 		w.Header().Set("Content-Type", "text/json")
 
-		name := r.URL.Query().Get(":experiment")
-		trial, ok := trials[name]
+		name := r.URL.Query().Get(":name")
+
+		e, ok := (*experiments)[name]
 		if ok != true {
 			http.Error(w, "invalid experiment", http.StatusBadRequest)
 			return
 		}
 
-		variant, err := trial.Select()
+		variant, err := e.Select()
 		if err != nil {
 			http.Error(w, "could not select variant", http.StatusInternalServerError)
 			return
@@ -66,7 +68,7 @@ func SelectionHandler(trials bandit.Trials) http.HandlerFunc {
 
 		json, err := json.Marshal(APIResponse{
 			UID:        "0",
-			Experiment: trial.Experiment.Name,
+			Experiment: e.Name,
 			URL:        variant.URL,
 			Tag:        variant.Tag,
 		})
@@ -76,7 +78,7 @@ func SelectionHandler(trials bandit.Trials) http.HandlerFunc {
 			return
 		}
 
-		bandit.LogSelection("0", trial.Experiment, variant)
+		bandit.LogSelection("0", *e, variant)
 		w.Write(json)
 	}
 }
@@ -85,7 +87,7 @@ func SelectionHandler(trials bandit.Trials) http.HandlerFunc {
 // through your main logging pipeline, but the handler is here in case you
 // can't do that. This handler is currently updates the supplied bandits
 // directly, which makes it unsuitable for real use.
-func LogRewardHandler(trials bandit.Trials) http.HandlerFunc {
+func LogRewardHandler(experiments *bandit.Experiments) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		defer r.Body.Close()
 		w.Header().Set("Content-Type", "text/application")
@@ -108,7 +110,7 @@ func LogRewardHandler(trials bandit.Trials) http.HandlerFunc {
 			return
 		}
 
-		experiment, variant, err := trials.GetVariant(tag)
+		e, variant, err := experiments.GetVariant(tag)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -116,10 +118,10 @@ func LogRewardHandler(trials bandit.Trials) http.HandlerFunc {
 
 		// Update the bandit in memory. This mechanism is not practical and will
 		// be converted into a batch update scheme soon.
-		b := trials[experiment.Name].Bandit
+		b := (*experiments)[e.Name].Bandit
 		b.Update(variant.Ordinal, fReward)
 
-		bandit.LogReward("0", experiment, variant, fReward)
+		bandit.LogReward("0", e, variant, fReward)
 		w.WriteHeader(http.StatusOK)
 	}
 }

@@ -6,13 +6,13 @@ package bandit
 import "testing"
 
 func TestExperiment(t *testing.T) {
-	experiments, err := ParseExperiments("experiments.tsv")
+	es, err := NewExperiments("experiments.tsv")
 	if err != nil {
 		t.Fatalf("while reading experiment fixture: %s", err.Error())
 	}
 
 	expected := 2
-	if got := len(experiments["shape-20130822"].Variants); got != expected {
+	if got := len((*es)["shape-20130822"].Variants); got != expected {
 		t.Fatalf("expected %d variants, got %d", expected, got)
 	}
 }

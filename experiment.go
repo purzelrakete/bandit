@@ -6,17 +6,41 @@ package bandit
 import (
 	"encoding/csv"
 	"fmt"
+	"log"
 	"os"
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 )
+
+// NewExperiment loads experiment `name` from the experiments tsv `tsv`.
+func NewExperiment(tsv, name string) (*Experiment, error) {
+	es, err := NewExperiments(tsv)
+	if err != nil {
+		return &Experiment{}, err
+	}
+
+	e, ok := (*es)[name]
+	if !ok {
+		return &Experiment{}, fmt.Errorf("could not find %s", name)
+	}
+
+	return e, nil
+}
 
 // Experiment is a single experiment. Variants are in ascending ordinal
 // sorting, where ordinals are contiguous and start at 1.
 type Experiment struct {
 	Name     string
+	Bandit   Bandit
 	Variants Variants
+}
+
+// Select calls SelectArm on the bandit and returns the associated variant
+func (e *Experiment) Select() (Variant, error) {
+	selected := e.Bandit.SelectArm()
+	return e.GetVariant(selected)
 }
 
 // GetVariant selects the appropriate variant given it's 1 indexed ordinal
@@ -29,7 +53,7 @@ func (e *Experiment) GetVariant(ordinal int) (Variant, error) {
 }
 
 // GetTaggedVariant selects the appropriate variant given it's tag
-func (e Experiment) GetTaggedVariant(tag string) (Variant, error) {
+func (e *Experiment) GetTaggedVariant(tag string) (Variant, error) {
 	for _, variant := range e.Variants {
 		if variant.Tag == tag {
 			return variant, nil
@@ -37,6 +61,31 @@ func (e Experiment) GetTaggedVariant(tag string) (Variant, error) {
 	}
 
 	return Variant{}, fmt.Errorf("tag '%s' is not in experiment %s", tag, e.Name)
+}
+
+// InitDelayedBandit adds a delayed bandit to this experiment.
+func (e *Experiment) InitDelayedBandit(snapshot string, poll time.Duration) error {
+	c := make(chan Counters)
+	go func() {
+		t := time.NewTicker(poll)
+		for _ = range t.C {
+			counters, err := GetSnapshot(snapshot)
+			if err != nil {
+				log.Fatalf("could not get snapshot: %s", err.Error())
+			}
+
+			c <- counters
+		}
+	}()
+
+	b, _ := NewSoftmax(len(e.Variants), 0.1) // 0.1 cannot return an error
+	d, err := NewDelayedBandit(b, c)
+	if err != nil {
+		return err
+	}
+
+	e.Bandit = d
+	return nil
 }
 
 // Variant describes endpoints which are mapped onto bandit arms.
@@ -53,69 +102,11 @@ func (v Variants) Len() int           { return len(v) }
 func (v Variants) Less(i, j int) bool { return v[i].Ordinal < v[j].Ordinal }
 func (v Variants) Swap(i, j int)      { v[i], v[j] = v[j], v[i] }
 
-// BanditFactory returns an initialized bandit
-type BanditFactory func(arms int) (Bandit, error)
-
-// Trial is a bandit set up against an experiment.
-type Trial struct {
-	Bandit     Bandit
-	Experiment Experiment
-}
-
-// Select calls SelectArm on the bandit and returns the associated variant
-func (t *Trial) Select() (Variant, error) {
-	selected := t.Bandit.SelectArm()
-	return t.Experiment.GetVariant(selected)
-}
-
-// NewTrials returns a complete set of experiment, bandit tuples (bandit.Trial).
-func NewTrials(experimentsTSV string, f BanditFactory) (Trials, error) {
-	experiments, err := ParseExperiments(experimentsTSV)
-	if err != nil {
-		return Trials{}, fmt.Errorf("could not read experiments: %s", err.Error())
-	}
-
-	trials := make(Trials)
-	for name, experiment := range experiments {
-		b, err := f(len(experiment.Variants))
-		if err != nil {
-			return Trials{}, fmt.Errorf(err.Error())
-		}
-
-		trials[name] = Trial{
-			Bandit:     b,
-			Experiment: experiment,
-		}
-	}
-
-	return trials, nil
-}
-
-// Trials maps experiment names to Trial setups.
-type Trials map[string]Trial
-
-// GetVariant returns the Experiment and variant pointed to by a string tag.
-func (t *Trials) GetVariant(tag string) (Experiment, Variant, error) {
-	for _, trial := range *t {
-		for _, variant := range trial.Experiment.Variants {
-			if variant.Tag == tag {
-				return trial.Experiment, variant, nil
-			}
-		}
-	}
-
-	return Experiment{}, Variant{}, fmt.Errorf("could not find variant '%s'", tag)
-}
-
-// Experiments is an index of names to experiment
-type Experiments map[string]Experiment
-
-// ParseExperiments reads in a tsv file and converts it to a list of
-// experiments.
-func ParseExperiments(filename string) (Experiments, error) {
+// NewExperiments reads in a tsv file and converts it to a map of experiments.
+func NewExperiments(filename string) (*Experiments, error) {
 	file, err := os.Open(filename)
 	if err != nil {
-		return Experiments{}, fmt.Errorf("need a valid input file: %v", err)
+		return &Experiments{}, fmt.Errorf("need a valid input file: %v", err)
 	}
 
 	defer file.Close()
@@ -124,7 +115,7 @@ func ParseExperiments(filename string) (Experiments, error) {
 	reader.Comma = '\t'
 	records, err := reader.ReadAll()
 	if err != nil {
-		return Experiments{}, fmt.Errorf("could not read tsv: %s ", err)
+		return &Experiments{}, fmt.Errorf("could not read tsv: %s ", err)
 	}
 
 	// intermediary data structure groups variants
@@ -133,26 +124,26 @@ func ParseExperiments(filename string) (Experiments, error) {
 	variants := make(experimentVariants)
 	for i, record := range records {
 		if l := len(record); l != 4 {
-			return Experiments{}, fmt.Errorf("record is not %v long: %v", l, record)
+			return &Experiments{}, fmt.Errorf("record is not %v long: %v", l, record)
 		}
 
 		ordinal, err := strconv.Atoi(record[1])
 		if err != nil {
-			return Experiments{}, fmt.Errorf("invalid ordinal on line %n: %s", i, err)
+			return &Experiments{}, fmt.Errorf("invalid ordinal on line %n: %s", i, err)
 		}
 
 		name := record[0]
 		if words := strings.Fields(name); len(words) != 1 {
-			return Experiments{}, fmt.Errorf("experiment has whitespace: %s", name)
+			return &Experiments{}, fmt.Errorf("experiment has whitespace: %s", name)
 		}
 
 		tag := record[3]
 		if words := strings.Fields(tag); len(words) != 1 {
-			return Experiments{}, fmt.Errorf("tag has whitespace: %s", tag)
+			return &Experiments{}, fmt.Errorf("tag has whitespace: %s", tag)
 		}
 
 		if !strings.HasPrefix(tag, name+":") {
-			return Experiments{}, fmt.Errorf("tag must start with '%s:'", name)
+			return &Experiments{}, fmt.Errorf("tag must start with '%s:'", name)
 		}
 
 		variants[name] = append(variants[name], Variant{
@@ -166,7 +157,9 @@ func ParseExperiments(filename string) (Experiments, error) {
 	experiments := make(Experiments)
 	for name, variants := range variants {
 		sort.Sort(variants)
-		experiments[name] = Experiment{
+		b, _ := NewSoftmax(len(variants), 0.1) // default to softmax.
+		experiments[name] = &Experiment{
+			Bandit:   b,
 			Name:     name,
 			Variants: variants,
 		}
@@ -176,10 +169,37 @@ func ParseExperiments(filename string) (Experiments, error) {
 	for name, variants := range variants {
 		for i := 0; i < len(variants); i++ {
 			if ord := variants[i].Ordinal; ord != i+1 {
-				return Experiments{}, fmt.Errorf("%s: variant %d noncontiguous", name, ord)
+				return &Experiments{}, fmt.Errorf("%s: variant %d noncontiguous", name, ord)
 			}
 		}
 	}
 
-	return experiments, nil
+	return &experiments, nil
+}
+
+// Experiments is an index of names to experiment
+type Experiments map[string]*Experiment
+
+// GetVariant returns the Experiment and variant pointed to by a string tag.
+func (e *Experiments) GetVariant(tag string) (Experiment, Variant, error) {
+	for _, experiment := range *e {
+		for _, variant := range experiment.Variants {
+			if variant.Tag == tag {
+				return *experiment, variant, nil
+			}
+		}
+	}
+
+	return Experiment{}, Variant{}, fmt.Errorf("could not find variant '%s'", tag)
+}
+
+// InitDelayedBandit initializes all bandits with delayed Softmax(0.1).
+func (e *Experiments) InitDelayedBandit(snapshot string, poll time.Duration) error {
+	for _, e := range *e {
+		if err := e.InitDelayedBandit(snapshot, poll); err != nil {
+			return fmt.Errorf("delayed bandit setup failed: %s", err.Error())
+		}
+	}
+
+	return nil
 }
