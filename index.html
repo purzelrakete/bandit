@@ -56,7 +56,7 @@ godoc</a>.</p>
 
 <p>You need at go1.1.1 or higher. Build the project by running <code>make</code>.</p>
 
-<p>You can run a simple demonstration of the HTTP API with <code>$GOPATH/bin/example</code>.
+<p>You can run a simple demonstration of the HTTP API with <code>bandit-example</code>.
 Go to http://localhost:8080/ to test the performance of squares against
 circles. If you perfer circles, you should start to see more circles being
 served to you over time.</p>
@@ -72,7 +72,7 @@ a web api. It is helpful to have a logging pipeline in place.</p>
 
 <p>A Bandit is used to select arms and update arms with reward information:</p>
 
-<div class="highlight"><pre><span class="kd">type</span> <span class="nx">Bandit</span> <span class="kd">interface</span> <span class="p">{</span>
+<div class="highlight highlight-go"><pre><span class="kd">type</span> <span class="nx">Bandit</span> <span class="kd">interface</span> <span class="p">{</span>
   <span class="nx">SelectArm</span><span class="p">()</span> <span class="kt">int</span>
   <span class="nx">Update</span><span class="p">(</span><span class="nx">arm</span> <span class="kt">int</span><span class="p">,</span> <span class="nx">reward</span> <span class="kt">float64</span><span class="p">)</span>
 <span class="p">}</span>
@@ -113,8 +113,9 @@ language.</p>
 <h3>
 <a name="javascript-and-the-http-api" class="anchor" href="#javascript-and-the-http-api"><span class="octicon octicon-link"></span></a>Javascript and the HTTP API</h3>
 
-<p>Run <code>$GOPATH/bin/api -port 80 -apiExperiments experiments.tsv</code> to start the
-endpoint with the provided test experiments.</p>
+<p>Build the project by running <code>make</code>, then run <code>bandit-api -port 80
+-apiExperiments experiments.tsv</code> to start the endpoint with the provided test
+experiments.</p>
 
 <p>In this scenario, the application makes a request to the api endpoint and
 then a second request to your api.</p>
@@ -129,7 +130,7 @@ then a second request to your api.</p>
 
 <p>Get a variant from the HTTP API first:</p>
 
-<pre><code>GET https://api/trials/widgets?uid=11 HTTP/1.0
+<pre><code>GET https://api/experiements/widgets?uid=11 HTTP/1.0
 </code></pre>
 
 <p>The API responds with a variant:</p>
@@ -166,40 +167,38 @@ a backend request to the HTTP API. Use the returned variant to vary.</p>
 <h3>
 <a name="running-experiments-in-go-with-the-bandit-library" class="anchor" href="#running-experiments-in-go-with-the-bandit-library"><span class="octicon octicon-link"></span></a>Running experiments in go with the bandit library</h3>
 
-<p>You can load an experiment with an associated bandit as a Trial.</p>
+<p>LoYou can load an experiment with an associated bandit as an Experiment.</p>
 
-<pre><code>                                     .------------.
-                 .--------.          |  snapshot  |       periodic job
-       --------&gt; | Bandit | &lt;------  |    file    | &lt;---  aggregates logs
-      |          .--------.          .------------.       into counters
-   .-------.
-   | Trial |
-   .-------.     .------------.       .----------.
-      |          | Experiment | --*-&gt; |  Variant |
-       --------&gt; .------------.       .----------.
-                 | name       |       | tag      |
-                 .------------.       | url      |
-                                      .----------.
+<pre><code>                          .------------.
+       .--------.         |  snapshot  |       periodic job
+       | Bandit | &lt;------ |    file    | &lt;---  aggregates logs
+       .--------.         .------------.       into counters
+           ^
+           |
+      .------------.       .----------.
+      | Experiment | --*-&gt; |  Variant |
+      .------------.       .----------.
+      | name       |       | tag      |
+      .------------.       | url      |
+                           .----------.
 </code></pre>
 
-<p>Set your handler up with a bandit.Trial</p>
+<p>Set your experiment up like this:</p>
 
-<div class="highlight"><pre><span class="kn">import</span> <span class="s">"github.com/purzelrakete/bandit"</span>
-
-<span class="nx">trials</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">bandit</span><span class="p">.</span><span class="nx">NewDelayedTrials</span><span class="p">(</span><span class="nx">experiments</span><span class="p">,</span> <span class="nx">snapshot</span><span class="p">,</span> <span class="mi">1</span><span class="o">*</span><span class="nx">time</span><span class="p">.</span><span class="nx">Minute</span><span class="p">)</span>
+<div class="highlight highlight-go"><pre><span class="nx">es</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">bandit</span><span class="p">.</span><span class="nx">NewExperiments</span><span class="p">(</span><span class="o">*</span><span class="nx">apiExperiments</span><span class="p">)</span>
 <span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
-  <span class="nx">log</span><span class="p">.</span><span class="nx">Fatalf</span><span class="p">(</span><span class="s">"could not set up trial: %s"</span><span class="p">,</span> <span class="nx">err</span><span class="p">.</span><span class="nx">Error</span><span class="p">())</span>
+    <span class="nx">log</span><span class="p">.</span><span class="nx">Fatalf</span><span class="p">(</span><span class="s">"could not construct experiments: %s"</span><span class="p">,</span> <span class="nx">err</span><span class="p">.</span><span class="nx">Error</span><span class="p">())</span>
 <span class="p">}</span>
 
-<span class="nx">t</span><span class="p">,</span> <span class="nx">ok</span> <span class="o">:=</span> <span class="nx">trails</span><span class="p">[</span><span class="s">"shape-20130822"</span><span class="p">]</span>
-<span class="k">if</span> <span class="p">!</span><span class="nx">ok</span> <span class="p">{</span>
-  <span class="nx">log</span><span class="p">.</span><span class="nx">Fatalf</span><span class="p">(</span><span class="s">"could not find campaign"</span><span class="p">)</span>
+<span class="k">if</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">es</span><span class="p">.</span><span class="nx">InitDelayedBandit</span><span class="p">(</span><span class="o">*</span><span class="nx">apiSnapshot</span><span class="p">,</span> <span class="mi">2</span><span class="o">*</span><span class="nx">time</span><span class="p">.</span><span class="nx">Minute</span><span class="p">);</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+    <span class="nx">log</span><span class="p">.</span><span class="nx">Fatalf</span><span class="p">(</span><span class="s">"could initialize bandits: %s"</span><span class="p">,</span> <span class="nx">err</span><span class="p">.</span><span class="nx">Error</span><span class="p">())</span>
 <span class="p">}</span>
 
 <span class="nx">m</span> <span class="o">:=</span> <span class="nx">pat</span><span class="p">.</span><span class="nx">New</span><span class="p">()</span>
-<span class="nx">m</span><span class="p">.</span><span class="nx">Get</span><span class="p">(</span><span class="s">"/widget"</span><span class="p">,</span> <span class="nx">MyEndpoint</span><span class="p">(</span><span class="nx">t</span><span class="p">))</span>
+<span class="nx">m</span><span class="p">.</span><span class="nx">Get</span><span class="p">(</span><span class="s">"/experiments/:name"</span><span class="p">,</span> <span class="nx">http</span><span class="p">.</span><span class="nx">HandlerFunc</span><span class="p">(</span><span class="nx">bhttp</span><span class="p">.</span><span class="nx">SelectionHandler</span><span class="p">(</span><span class="nx">es</span><span class="p">)))</span>
 <span class="nx">http</span><span class="p">.</span><span class="nx">Handle</span><span class="p">(</span><span class="s">"/"</span><span class="p">,</span> <span class="nx">m</span><span class="p">)</span>
 
+<span class="c1">// serve</span>
 <span class="nx">log</span><span class="p">.</span><span class="nx">Fatal</span><span class="p">(</span><span class="nx">http</span><span class="p">.</span><span class="nx">ListenAndServe</span><span class="p">(</span><span class="o">*</span><span class="nx">apiBind</span><span class="p">,</span> <span class="kc">nil</span><span class="p">))</span>
 </pre></div>
 
@@ -225,7 +224,8 @@ detailed information.</p>
 
 <p>Bandit includes the facility to simulate and plot experiemnts. You should run
 your own simulations before putting experiments into production. See <code>mc.go</code>
-for details. Too plot the provided simulations, run $GOPATH/bin/plot.</p>
+for details. Too plot the provided simulations, build the project by running
+<code>make</code>, then run bandit-plot.</p>
 
 <p>Here's an example plot:</p>
 
