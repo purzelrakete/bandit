@@ -1,2 +1,2 @@
-shape-20130822	1	http://localhost:8080/widget?shape=square	shape-20130822:s1-square
-shape-20130822	2	http://localhost:8080/widget?shape=circle	shape-20130822:c8-circle
+shape-20130822	1	http://localhost:8080/widget?shape=square	squares with λ = 0.1
+shape-20130822	2	http://localhost:8080/widget?shape=circle	circles with λ = 0.1

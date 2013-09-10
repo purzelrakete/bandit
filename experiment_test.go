@@ -11,9 +11,19 @@ func TestExperiment(t *testing.T) {
 		t.Fatalf("while reading experiment fixture: %s", err.Error())
 	}
 
+	e, ok := (*es)["shape-20130822"]
+	if !ok {
+		t.Fatalf("could not find test campaign")
+	}
+
 	expected := 2
-	if got := len((*es)["shape-20130822"].Variants); got != expected {
+	if got := len(e.Variants); got != expected {
 		t.Fatalf("expected %d variants, got %d", expected, got)
+	}
+
+	expectedTag := "shape-20130822:1"
+	if got := e.Variants[0].Tag; got != expectedTag {
+		t.Fatalf("expected variant tag %s, got %s", expectedTag, got)
 	}
 }
 

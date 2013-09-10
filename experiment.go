@@ -117,9 +117,10 @@ func (e *Experiment) InitDelayedBandit(snapshot string, poll time.Duration) erro
 
 // Variant describes endpoints which are mapped onto bandit arms.
 type Variant struct {
-	Ordinal int    // 1 indexed arm ordinal
-	URL     string // the url associated with this variant, for out of band
-	Tag     string // this tag is used throughout the lifecycle of the experiment
+	Ordinal     int    // 1 indexed arm ordinal
+	URL         string // the url associated with this variant, for out of band
+	Tag         string // this tag is used throughout the lifecycle of the experiment
+	Description string // freitext
 }
 
 // Variants is a set of variants sorted by ordinal.
@@ -164,19 +165,12 @@ func NewExperiments(filename string) (*Experiments, error) {
 			return &Experiments{}, fmt.Errorf("experiment has whitespace: %s", name)
 		}
 
-		tag := record[3]
-		if words := strings.Fields(tag); len(words) != 1 {
-			return &Experiments{}, fmt.Errorf("tag has whitespace: %s", tag)
-		}
-
-		if !strings.HasPrefix(tag, name+":") {
-			return &Experiments{}, fmt.Errorf("tag must start with '%s:'", name)
-		}
-
+		description := record[3]
 		variants[name] = append(variants[name], Variant{
-			Ordinal: ordinal,
-			URL:     record[2],
-			Tag:     tag,
+			Ordinal:     ordinal,
+			URL:         record[2],
+			Tag:         fmt.Sprintf("%s:%s", name, record[1]),
+			Description: description,
 		})
 	}
 
