@@ -38,9 +38,14 @@ type Experiment struct {
 }
 
 // Select calls SelectArm on the bandit and returns the associated variant
-func (e *Experiment) Select() (Variant, error) {
+func (e *Experiment) Select() Variant {
 	selected := e.Bandit.SelectArm()
-	return e.GetVariant(selected)
+	if selected > len(e.Variants) {
+		panic("selected impossible arm")
+	}
+
+	v, _ := e.GetVariant(selected)
+	return v
 }
 
 // SelectTimestamped selects the appropriate variant given it's
@@ -51,8 +56,7 @@ func (e *Experiment) Select() (Variant, error) {
 // the blank string, Select() is called instead.
 func (e *Experiment) SelectTimestamped(timestampedTag string, ttl time.Duration) (Variant, int64, error) {
 	if timestampedTag == "" {
-		v, err := e.Select()
-		return v, time.Now().Unix(), err
+		return e.Select(), time.Now().Unix(), nil
 	}
 
 	tag, ts, err := TimestampedTagToTag(timestampedTag)
@@ -67,8 +71,7 @@ func (e *Experiment) SelectTimestamped(timestampedTag string, ttl time.Duration)
 	}
 
 	// return a new selection
-	v, err := e.Select()
-	return v, time.Now().Unix(), err
+	return e.Select(), time.Now().Unix(), nil
 }
 
 // GetVariant selects the appropriate variant given it's 1 indexed ordinal
