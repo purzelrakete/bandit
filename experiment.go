@@ -54,14 +54,16 @@ func (e *Experiment) Select() Variant {
 // is smaller than `d`, the given tagged is used to return a variant. If it is
 // larger, Select() is called instead.  If the `timestampedTag` argument is
 // the blank string, Select() is called instead.
-func (e *Experiment) SelectTimestamped(timestampedTag string, ttl time.Duration) (Variant, int64, error) {
+func (e *Experiment) SelectTimestamped(
+	timestampedTag string,
+	ttl time.Duration) (Variant, int64, error) {
 	if timestampedTag == "" {
 		return e.Select(), time.Now().Unix(), nil
 	}
 
 	tag, ts, err := TimestampedTagToTag(timestampedTag)
 	if err != nil {
-		return Variant{}, 0, fmt.Errorf("could not decode timestamped tag: %s", err.Error())
+		return Variant{}, 0, fmt.Errorf("bad timestamped tag: %s", err.Error())
 	}
 
 	// return the given timestamped tag
