@@ -27,10 +27,10 @@ func TestExperiment(t *testing.T) {
 	}
 }
 
-func TestPinToTag(t *testing.T) {
-	tag, ts, err := PinToTag("shape-20130822:c8-circle:1378823906")
+func TestTimestampedTagToTag(t *testing.T) {
+	tag, ts, err := TimestampedTagToTag("shape-20130822:c8-circle:1378823906")
 	if err != nil {
-		t.Fatal("failed to parse pin: %s", err.Error())
+		t.Fatal("failed to parse timstamped tag: %s", err.Error())
 	}
 
 	if expected := "shape-20130822:c8-circle"; tag != expected {

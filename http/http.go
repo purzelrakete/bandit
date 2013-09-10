@@ -59,8 +59,8 @@ func SelectionHandler(es *bandit.Experiments, ttl time.Duration) http.HandlerFun
 			return
 		}
 
-		pin := r.URL.Query().Get(":tag")
-		variant, ts, err := e.SelectPinned(pin, ttl)
+		timestampedTag := r.URL.Query().Get(":tag")
+		variant, ts, err := e.SelectTimestamped(timestampedTag, ttl)
 		if err != nil {
 			http.Error(w, "could not select variant", http.StatusInternalServerError)
 			return
@@ -91,15 +91,15 @@ func LogRewardHandler(es *bandit.Experiments) http.HandlerFunc {
 		defer r.Body.Close()
 		w.Header().Set("Content-Type", "text/application")
 
-		pin := r.URL.Query().Get("tag")
-		if pin == "" {
+		timestampedTag := r.URL.Query().Get("tag")
+		if timestampedTag == "" {
 			http.Error(w, "cannot reward without tag", http.StatusBadRequest)
 			return
 		}
 
-		tag, _, err := bandit.PinToTag(pin)
+		tag, _, err := bandit.TimestampedTagToTag(timestampedTag)
 		if err != nil {
-			http.Error(w, "could not covert pin to tag", http.StatusBadRequest)
+			http.Error(w, "could not covert timestampedTag to tag", http.StatusBadRequest)
 			return
 		}
 
