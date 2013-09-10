@@ -8,15 +8,15 @@ package http
 
 import (
 	"encoding/json"
-
+	"fmt"
 	"github.com/purzelrakete/bandit"
 	"net/http"
 	"strconv"
+	"time"
 )
 
 // APIResponse is the json response on the HTTP API endpoint
 type APIResponse struct {
-	UID        string `json:"uid"`
 	Experiment string `json:"experiment"`
 	URL        string `json:"url"`
 	Tag        string `json:"tag"`
@@ -47,30 +47,29 @@ type APIResponse struct {
 //
 // This two phase approach can be collapsed by using the bandit directly
 // inside a golang api endpoint.
-func SelectionHandler(experiments *bandit.Experiments) http.HandlerFunc {
+func SelectionHandler(es *bandit.Experiments, ttl time.Duration) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		defer r.Body.Close()
 		w.Header().Set("Content-Type", "text/json")
 
 		name := r.URL.Query().Get(":name")
-
-		e, ok := (*experiments)[name]
+		e, ok := (*es)[name]
 		if ok != true {
 			http.Error(w, "invalid experiment", http.StatusBadRequest)
 			return
 		}
 
-		variant, err := e.Select()
+		pin := r.URL.Query().Get(":tag")
+		variant, ts, err := e.SelectPinned(pin, ttl)
 		if err != nil {
 			http.Error(w, "could not select variant", http.StatusInternalServerError)
 			return
 		}
 
 		json, err := json.Marshal(APIResponse{
-			UID:        "0",
 			Experiment: e.Name,
 			URL:        variant.URL,
-			Tag:        variant.Tag,
+			Tag:        fmt.Sprintf("%s:%s", variant.Tag, strconv.FormatInt(ts, 10)),
 		})
 
 		if err != nil {
@@ -78,7 +77,7 @@ func SelectionHandler(experiments *bandit.Experiments) http.HandlerFunc {
 			return
 		}
 
-		bandit.LogSelection("0", *e, variant)
+		bandit.LogSelection(*e, variant)
 		w.Write(json)
 	}
 }
@@ -87,14 +86,20 @@ func SelectionHandler(experiments *bandit.Experiments) http.HandlerFunc {
 // through your main logging pipeline, but the handler is here in case you
 // can't do that. This handler is currently updates the supplied bandits
 // directly, which makes it unsuitable for real use.
-func LogRewardHandler(experiments *bandit.Experiments) http.HandlerFunc {
+func LogRewardHandler(es *bandit.Experiments) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		defer r.Body.Close()
 		w.Header().Set("Content-Type", "text/application")
 
-		tag := r.URL.Query().Get("tag")
-		if tag == "" {
+		pin := r.URL.Query().Get("tag")
+		if pin == "" {
 			http.Error(w, "cannot reward without tag", http.StatusBadRequest)
+			return
+		}
+
+		tag, _, err := bandit.PinToTag(pin)
+		if err != nil {
+			http.Error(w, "could not covert pin to tag", http.StatusBadRequest)
 			return
 		}
 
@@ -110,18 +115,16 @@ func LogRewardHandler(experiments *bandit.Experiments) http.HandlerFunc {
 			return
 		}
 
-		e, variant, err := experiments.GetVariant(tag)
+		e, variant, err := es.GetVariant(tag)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		// Update the bandit in memory. This mechanism is not practical and will
-		// be converted into a batch update scheme soon.
-		b := (*experiments)[e.Name].Bandit
+		b := (*es)[e.Name].Bandit
 		b.Update(variant.Ordinal, fReward)
 
-		bandit.LogReward("0", e, variant, fReward)
+		bandit.LogReward(e, variant, fReward)
 		w.WriteHeader(http.StatusOK)
 	}
 }

@@ -17,6 +17,7 @@ var (
 	apiExperiments = flag.String("experiments", "experiments.tsv", "experiments tsv filename")
 	apiBind        = flag.String("port", ":8080", "interface / port to bind to")
 	apiSnapshot    = flag.String("snapshot", "snapshot.dsv", "campaign snapshot file")
+	apiPinTTL      = flag.Duration("pin-ttl", 0, "ttl life of a pinned variant")
 )
 
 func init() {
@@ -34,7 +35,7 @@ func main() {
 	}
 
 	m := pat.New()
-	m.Get("/experiments/:name", http.HandlerFunc(bhttp.SelectionHandler(es)))
+	m.Get("/experiments/:name", http.HandlerFunc(bhttp.SelectionHandler(es, *apiPinTTL)))
 	http.Handle("/", m)
 
 	// serve

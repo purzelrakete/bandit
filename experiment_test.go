@@ -16,3 +16,18 @@ func TestExperiment(t *testing.T) {
 		t.Fatalf("expected %d variants, got %d", expected, got)
 	}
 }
+
+func TestPinToTag(t *testing.T) {
+	tag, ts, err := PinToTag("shape-20130822:c8-circle:1378823906")
+	if err != nil {
+		t.Fatal("failed to parse pin: %s", err.Error())
+	}
+
+	if expected := "shape-20130822:c8-circle"; tag != expected {
+		t.Fatalf("expected %s but got %s", expected, tag)
+	}
+
+	if expected := int64(1378823906); ts != expected {
+		t.Fatalf("expected %d but got %d", expected, ts)
+	}
+}

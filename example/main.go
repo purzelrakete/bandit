@@ -16,6 +16,7 @@ import (
 var (
 	exExperiments = flag.String("experiments", "experiments.tsv", "experiments tsv filename")
 	exBind        = flag.String("bind", ":8080", "interface and port to bind to")
+	exPinTTL      = flag.Duration("pin-ttl", 0, "ttl life of a pinned variant")
 )
 
 func init() {
@@ -47,7 +48,7 @@ func main() {
 
 	// routes
 	mux := pat.New()
-	mux.Get("/experiments/:name", bhttp.SelectionHandler(e))
+	mux.Get("/es/:name", bhttp.SelectionHandler(e, *exPinTTL))
 	mux.Get("/widget", http.HandlerFunc(widget))
 	mux.Get("/feedback", bhttp.LogRewardHandler(e))
 	mux.Get("/", http.HandlerFunc(index))

@@ -17,10 +17,10 @@ godoc](http://godoc.org/github.com/purzelrakete/bandit).
 
 You need at go1.1.1 or higher. Build the project by running `make`.
 
-You can run a simple demonstration of the HTTP API with `bandit-example`.
-Go to http://localhost:8080/ to test the performance of squares against
-circles. If you perfer circles, you should start to see more circles being
-served to you over time.
+You can run a simple demonstration of the HTTP API with `bandit-example`.  Go
+to http://localhost:8080/ to test the performance of squares against circles.
+If you perfer circles, you should start to see more circles being served to
+you over time.
 
 ## When to use bandit
 
@@ -174,6 +174,9 @@ switch t.Select().Tag {
 }
 ```
 
+Your response must include the Tag somwhere so the client can tag subsequent
+rewards. If you do not do this, you will not be able to calculate rewards.
+
 ## Bandit Algorithms
 
 You can currently choose between Epsilon Greedy and Softmax. See the godoc for
@@ -192,8 +195,9 @@ Here's an example plot:
 
 # Status
 
-This API is currently *not stable*. Consider this a 0.0.0 release that is
-subject to change at any time.
+Version: 0.0.0-alpha.1
+
+The API is currently *not stable* and is subject to change at any time.
 
 ## TODO
 

@@ -31,12 +31,12 @@ func SnapshotMapper(e *Experiment, r io.Reader, w io.Writer) func() {
 
 				variant, err := e.GetTaggedVariant(fields[5])
 				if err != nil {
-					log.Fatalf("invalid variant on line '%s': %s", line, err.Error())
+					log.Fatalf("invalid variant on line '%s': %s", fields[5], err.Error())
 				}
 
 				reward, err := strconv.ParseFloat(fields[6], 32)
 				if err != nil {
-					log.Fatalf("non-float reward on line '%s': %s", line, err.Error())
+					log.Fatalf("non-float reward on line '%s': %s", fields[6], err.Error())
 				}
 
 				fmt.Fprintf(w, "%d %f\n", variant.Ordinal, reward)

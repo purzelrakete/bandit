@@ -43,6 +43,33 @@ func (e *Experiment) Select() (Variant, error) {
 	return e.GetVariant(selected)
 }
 
+// SelectPinned selects the appropriate variant given it's pin. A pin is
+// a string in the form <tag>:<timestamp>. If the duration between <timestamp>
+// and the current time is smaller than `d`, the given tagged is used to
+// return a variant. If it is larger, Select() is called instead.
+// If the `pin` argument is the blank string, Select() is called instead.
+func (e *Experiment) SelectPinned(pin string, ttl time.Duration) (Variant, int64, error) {
+	if pin == "" {
+		v, err := e.Select()
+		return v, time.Now().Unix(), err
+	}
+
+	tag, ts, err := PinToTag(pin)
+	if err != nil {
+		return Variant{}, 0, fmt.Errorf("could not decode pin: %s", err.Error())
+	}
+
+	// return the given pin
+	if ttl > time.Since(time.Unix(ts, 0)) {
+		v, err := e.GetTaggedVariant(tag)
+		return v, ts, err
+	}
+
+	// return a new selection
+	v, err := e.Select()
+	return v, time.Now().Unix(), err
+}
+
 // GetVariant selects the appropriate variant given it's 1 indexed ordinal
 func (e *Experiment) GetVariant(ordinal int) (Variant, error) {
 	if l := len(e.Variants); ordinal < 0 || ordinal > l {
@@ -202,4 +229,20 @@ func (e *Experiments) InitDelayedBandit(snapshot string, poll time.Duration) err
 	}
 
 	return nil
+}
+
+// PinToTag docodes a pin in the form <tag>:<timestamp> into a (tag, ts)
+func PinToTag(pin string) (string, int64, error) {
+	sep := strings.LastIndex(pin, ":")
+	if sep == -1 {
+		return "", 0, fmt.Errorf("invalid pin, does not end in :<timestamp>")
+	}
+
+	tag, at := pin[:sep], pin[sep+1:]
+	ts, err := strconv.ParseInt(at, 10, 64)
+	if err != nil {
+		return "", 0, fmt.Errorf("invalid ttl: %s", err.Error())
+	}
+
+	return tag, ts, nil
 }

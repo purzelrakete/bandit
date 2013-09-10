@@ -16,11 +16,10 @@ const (
 
 // LogSelection captures all selected arms. This log can be used in conjunction
 // with reward logs to fully rebuild bandits.
-func LogSelection(uid string, experiment Experiment, selected Variant) {
+func LogSelection(experiment Experiment, selected Variant) {
 	record := []string{
 		banditSelection,
 		experiment.Name,
-		uid,
 		selected.Tag,
 	}
 
@@ -29,11 +28,10 @@ func LogSelection(uid string, experiment Experiment, selected Variant) {
 
 // LogReward captures all selected arms. This log can be used in conjunction
 // with reward logs to fully rebuild bandits.
-func LogReward(uid string, experiment Experiment, selected Variant, reward float64) {
+func LogReward(experiment Experiment, selected Variant, reward float64) {
 	record := []string{
 		banditReward,
 		experiment.Name,
-		uid,
 		selected.Tag,
 		fmt.Sprintf("%f", reward),
 	}

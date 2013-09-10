@@ -45,7 +45,7 @@
       }
 
       function color(h) { return 'hsl(' + Math.random() * h + ', 80%, 90%)'; }
-      function select() { $.ajax({ url: '/experiments/shape-20130822' }).done(update); }
+      function select(tag) { $.ajax({ url: "/es/shape-20130822", data: { tag: tag } }).done(update); }
       function update(variant) {
         $.ajax({ url: variant.url, dataType: 'jsonp' }).done(render);
         $('.feedback').data('tag', variant.tag);
@@ -54,11 +54,11 @@
       $('.feedback').click(function() {
         var logger = $(this).attr('href');
         var tag = $(this).data('tag');
-        $.ajax({ url: logger, data: { tag: tag }, success: select });
+        $.ajax({ url: logger, data: { tag: tag }, success: select(tag) });
         return false;
       });
 
-      select(); // initial state
+      select(''); // initial state
     });
   </script>
 </body>
