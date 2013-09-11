@@ -3,7 +3,6 @@ package bandit
 import (
 	"fmt"
 	"io"
-
 	"net/http"
 	"os"
 )
@@ -73,10 +72,12 @@ type httpOpener struct {
 func (o *httpOpener) Open() (io.ReadCloser, error) {
 	resp, err := http.Get(o.URL)
 	if err != nil {
+		resp.Body.Close()
 		return nil, fmt.Errorf("http GET failed: %s", err.Error())
 	}
 
 	if resp.StatusCode != http.StatusOK {
+		resp.Body.Close()
 		return nil, fmt.Errorf("http GET not 200: %s", resp.StatusCode)
 	}
 
@@ -97,6 +98,7 @@ type fileOpener struct {
 func (o *fileOpener) Open() (io.ReadCloser, error) {
 	reader, err := os.Open(o.Filename)
 	if err != nil {
+		reader.Close()
 		return nil, err
 	}
 
