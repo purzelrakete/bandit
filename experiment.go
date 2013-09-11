@@ -56,24 +56,27 @@ func (e *Experiment) Select() Variant {
 // the blank string, Select() is called instead.
 func (e *Experiment) SelectTimestamped(
 	timestampedTag string,
-	ttl time.Duration) (Variant, int64, error) {
+	ttl time.Duration) (Variant, string, error) {
+	now := time.Now().Unix()
+
 	if timestampedTag == "" {
-		return e.Select(), time.Now().Unix(), nil
+		selected := e.Select()
+		return selected, makeTimestampedTag(selected, now), nil
 	}
 
 	tag, ts, err := TimestampedTagToTag(timestampedTag)
 	if err != nil {
-		return Variant{}, 0, fmt.Errorf("bad timestamped tag: %s", err.Error())
+		return Variant{}, "", fmt.Errorf("bad timestamped tag: %s", err.Error())
 	}
 
 	// return the given timestamped tag
 	if ttl > time.Since(time.Unix(ts, 0)) {
 		v, err := e.GetTaggedVariant(tag)
-		return v, ts, err
+		return v, makeTimestampedTag(v, ts), err
 	}
 
-	// return a new selection
-	return e.Select(), time.Now().Unix(), nil
+	selected := e.Select()
+	return selected, makeTimestampedTag(selected, now), nil
 }
 
 // GetVariant selects the appropriate variant given it's 1 indexed ordinal
@@ -94,6 +97,11 @@ func (e *Experiment) GetTaggedVariant(tag string) (Variant, error) {
 	}
 
 	return Variant{}, fmt.Errorf("tag '%s' is not in experiment %s", tag, e.Name)
+}
+
+// makeTimestampedTag returns the variant tag as <tag>:<timestampNow>
+func makeTimestampedTag(v Variant, now int64) string {
+	return fmt.Sprintf("%s:%s", v.Tag, strconv.FormatInt(now, 10))
 }
 
 // InitDelayedBandit adds a delayed bandit to this experiment.

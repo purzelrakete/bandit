@@ -8,7 +8,7 @@ package http
 
 import (
 	"encoding/json"
-	"fmt"
+
 	"github.com/purzelrakete/bandit"
 	"net/http"
 	"strconv"
@@ -60,7 +60,7 @@ func SelectionHandler(es *bandit.Experiments, ttl time.Duration) http.HandlerFun
 		}
 
 		timestampedTag := r.URL.Query().Get(":tag")
-		variant, ts, err := e.SelectTimestamped(timestampedTag, ttl)
+		variant, newTag, err := e.SelectTimestamped(timestampedTag, ttl)
 		if err != nil {
 			http.Error(w, "could not select variant", http.StatusInternalServerError)
 			return
@@ -69,7 +69,7 @@ func SelectionHandler(es *bandit.Experiments, ttl time.Duration) http.HandlerFun
 		json, err := json.Marshal(APIResponse{
 			Experiment: e.Name,
 			URL:        variant.URL,
-			Tag:        fmt.Sprintf("%s:%s", variant.Tag, strconv.FormatInt(ts, 10)),
+			Tag:        newTag,
 		})
 
 		if err != nil {
