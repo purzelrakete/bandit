@@ -105,12 +105,13 @@ func makeTimestampedTag(v Variant, now int64) string {
 }
 
 // InitDelayedBandit adds a delayed bandit to this experiment.
-func (e *Experiment) InitDelayedBandit(snapshot string, poll time.Duration) error {
+func (e *Experiment) InitDelayedBandit(o Opener, poll time.Duration) error {
 	c := make(chan Counters)
 	go func() {
 		t := time.NewTicker(poll)
 		for _ = range t.C {
-			counters, err := GetSnapshot(snapshot)
+			counters, err := GetSnapshot(o)
+			fmt.Println(counters)
 			if err != nil {
 				log.Fatalf("could not get snapshot: %s", err.Error())
 			}
@@ -229,9 +230,9 @@ func (e *Experiments) GetVariant(tag string) (Experiment, Variant, error) {
 }
 
 // InitDelayedBandit initializes all bandits with delayed Softmax(0.1).
-func (e *Experiments) InitDelayedBandit(snapshot string, poll time.Duration) error {
+func (e *Experiments) InitDelayedBandit(o Opener, poll time.Duration) error {
 	for _, e := range *e {
-		if err := e.InitDelayedBandit(snapshot, poll); err != nil {
+		if err := e.InitDelayedBandit(o, poll); err != nil {
 			return fmt.Errorf("delayed bandit setup failed: %s", err.Error())
 		}
 	}
