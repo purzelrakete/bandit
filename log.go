@@ -5,9 +5,8 @@ package bandit
 
 import (
 	"fmt"
-	"time"
-
 	"strings"
+	"time"
 )
 
 const (

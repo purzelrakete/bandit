@@ -106,14 +106,17 @@ func makeTimestampedTag(v Variant, now int64) string {
 
 // InitDelayedBandit adds a delayed bandit to this experiment.
 func (e *Experiment) InitDelayedBandit(o Opener, poll time.Duration) error {
+	if _, err := GetSnapshot(o); err != nil { // try once
+		fmt.Errorf("could not get snapshot: %s", err.Error())
+	}
+
 	c := make(chan Counters)
 	go func() {
 		t := time.NewTicker(poll)
 		for _ = range t.C {
 			counters, err := GetSnapshot(o)
-			fmt.Println(counters)
 			if err != nil {
-				log.Fatalf("could not get snapshot: %s", err.Error())
+				log.Println("BanditError: could not get snapshot: %s", err.Error())
 			}
 
 			c <- counters
