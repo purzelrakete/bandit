@@ -6,8 +6,9 @@ github.com/purzelrakete/bandit/http
 
 BINS := \
 github.com/purzelrakete/bandit/api \
-github.com/purzelrakete/bandit/plot \
-github.com/purzelrakete/bandit/example
+github.com/purzelrakete/bandit/example \
+github.com/purzelrakete/bandit/job \
+github.com/purzelrakete/bandit/plot
 
 PKGS := $(LIBS) $(BINS)
 
@@ -17,6 +18,7 @@ build:
 	go build -v $(LIBS)
 	go build -o bandit-api github.com/purzelrakete/bandit/api
 	go build -o bandit-example github.com/purzelrakete/bandit/example
+	go build -o bandit-job github.com/purzelrakete/bandit/job
 	go build -o bandit-plot github.com/purzelrakete/bandit/plot
 
 test:

@@ -23,7 +23,7 @@ func NewExperiment(tsv, name string) (*Experiment, error) {
 
 	e, ok := (*es)[name]
 	if !ok {
-		return &Experiment{}, fmt.Errorf("could not find %s", name)
+		return &Experiment{}, fmt.Errorf("could not find '%s' experiment", name)
 	}
 
 	return e, nil
