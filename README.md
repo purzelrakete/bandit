@@ -179,8 +179,8 @@ rewards. If you do not do this, you will not be able to calculate rewards.
 
 ## Bandit Algorithms
 
-You can currently choose between Epsilon Greedy and Softmax. See the godoc for
-detailed information.
+You can currently choose between Epsilon Greedy, UCB1 and Softmax. See the
+godoc for detailed information.
 
 ## Simulation
 
