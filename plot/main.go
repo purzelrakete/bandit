@@ -78,6 +78,16 @@ func main() {
 		bandits: softmaxes,
 	})
 
+	// ucb1
+	ucb1s := bandits{
+		bandit.NewUCB1(len(μs)),
+	}
+
+	groups = append(groups, group{
+		name:    "UCB1",
+		bandits: ucb1s,
+	})
+
 	// mixed
 	mixed := bandits{}
 	greedy, err := bandit.NewEpsilonGreedy(len(μs), 0.1)
@@ -103,6 +113,9 @@ func main() {
 	delayed := bandit.NewSimulatedDelayedBandit(inner, len(μs), flushAfter)
 
 	mixed = append(mixed, delayed)
+
+	// ucb1 into mixed
+	mixed = append(mixed, bandit.NewUCB1(len(μs)))
 
 	groups = append(groups, group{
 		name:    "Comparative",

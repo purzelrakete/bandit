@@ -119,6 +119,54 @@ func (s *softmax) Version() string {
 	return fmt.Sprintf("Softmax(tau=%.2f)", s.tau)
 }
 
+// NewUCB1 returns a UCB1 bandit
+func NewUCB1(arms int) Bandit {
+	return &uCB1{
+		Counters: NewCounters(arms),
+	}
+}
+
+// uCB1
+type uCB1 struct {
+	Counters
+}
+
+// SelectArm returns 1 indexed arm to be tried next.
+func (s *uCB1) SelectArm() int {
+	for i, count := range s.counts {
+		if count == 0 {
+			return i + 1
+		}
+	}
+
+	var totalCounts int
+	for _, count := range s.counts {
+		totalCounts += count
+	}
+
+	ucbValues := make([]float64, s.arms)
+	for i := 0; i < s.arms; i++ {
+		bonus := math.Sqrt((2 * math.Log(float64(totalCounts))) / float64(s.counts[i]))
+		ucbValues[i] = s.values[i] + bonus
+	}
+
+	var arm int
+	var max float64
+	for i, val := range ucbValues {
+		if max < val {
+			arm = i
+			max = val
+		}
+	}
+
+	return arm + 1
+}
+
+// Version returns information on this bandit
+func (s *uCB1) Version() string {
+	return fmt.Sprintf("UCB1")
+}
+
 // Counters maintain internal bandit state
 type Counters struct {
 	sync.Mutex

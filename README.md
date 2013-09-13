@@ -201,7 +201,6 @@ The API is currently *not stable* and is subject to change at any time.
 
 ## TODO
 
-- UCB1 implementation
 - UCB with extensions for delayed rewards
 - Sticky assignements
 
