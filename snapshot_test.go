@@ -8,12 +8,12 @@ import (
 
 func TestSnapshot(t *testing.T) {
 	log := []string{
-		"2013/08/22 14:20:05 BanditSelection shape-20130822 shape-20130822:2",
-		"2013/08/22 14:20:06 BanditReward shape-20130822 shape-20130822:2 1.0",
-		"2013/08/22 14:20:07 BanditSelection shape-20130822 shape-20130822:2",
-		"2013/08/22 14:20:08 BanditReward shape-20130822 shape-20130822:2 0.0",
-		"2013/08/22 14:20:09 BanditSelection plants-20121111 plants-20121111:1",
-		"2013/08/22 14:20:10 BanditReward plant-20121111 plants-20121111:1 1.0",
+		"2013/08/22 14:20:05 BanditSelection shape-20130822:2",
+		"2013/08/22 14:20:06 BanditReward shape-20130822:2 1.0",
+		"2013/08/22 14:20:07 BanditSelection shape-20130822:2",
+		"2013/08/22 14:20:08 BanditReward shape-20130822:2 0.0",
+		"2013/08/22 14:20:09 BanditSelection plants-20121111:1",
+		"2013/08/22 14:20:10 BanditReward plants-20121111:1 1.0",
 	}
 
 	es, err := NewExperiments("experiments.tsv")
