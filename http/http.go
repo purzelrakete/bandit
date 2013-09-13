@@ -8,6 +8,7 @@ package http
 
 import (
 	"encoding/json"
+	"log"
 
 	"github.com/purzelrakete/bandit"
 	"net/http"
@@ -77,7 +78,7 @@ func SelectionHandler(es *bandit.Experiments, ttl time.Duration) http.HandlerFun
 			return
 		}
 
-		bandit.LogSelection(*e, variant)
+		log.Println(bandit.SelectionLine(*e, variant))
 		w.Write(json)
 	}
 }
@@ -124,7 +125,7 @@ func LogRewardHandler(es *bandit.Experiments) http.HandlerFunc {
 		b := (*es)[e.Name].Bandit
 		b.Update(variant.Ordinal, fReward)
 
-		bandit.LogReward(e, variant, fReward)
+		log.Println(bandit.RewardLine(e, variant, fReward))
 		w.WriteHeader(http.StatusOK)
 	}
 }

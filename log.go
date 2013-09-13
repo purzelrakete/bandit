@@ -5,7 +5,8 @@ package bandit
 
 import (
 	"fmt"
-	"log"
+	"time"
+
 	"strings"
 )
 
@@ -14,27 +15,29 @@ const (
 	banditReward    = "BanditReward"
 )
 
-// LogSelection captures all selected arms. This log can be used in conjunction
+// SelectionLine captures all selected arms. This log can be used in conjunction
 // with reward logs to fully rebuild bandits.
-func LogSelection(experiment Experiment, selected Variant) {
+func SelectionLine(experiment Experiment, selected Variant) string {
 	record := []string{
+		fmt.Sprintf("%d", time.Now().Unix()),
 		banditSelection,
 		experiment.Name,
 		selected.Tag,
 	}
 
-	log.Println(strings.Join(record, " "))
+	return strings.Join(record, " ")
 }
 
-// LogReward captures all selected arms. This log can be used in conjunction
+// RewardLine captures all selected arms. This log can be used in conjunction
 // with reward logs to fully rebuild bandits.
-func LogReward(experiment Experiment, selected Variant, reward float64) {
+func RewardLine(experiment Experiment, selected Variant, reward float64) string {
 	record := []string{
+		fmt.Sprintf("%d", time.Now().Unix()),
 		banditReward,
 		experiment.Name,
 		selected.Tag,
 		fmt.Sprintf("%f", reward),
 	}
 
-	log.Println(strings.Join(record, " "))
+	return strings.Join(record, " ")
 }

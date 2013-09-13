@@ -16,7 +16,7 @@ import (
 // reward) tuples onto the given writer, for the specified experiment only.
 func SnapshotMapper(e *Experiment, r io.Reader, w io.Writer) func() {
 	reward := banditReward + " " + e.Name
-	rewardLen := 5
+	rewardLen := 4
 
 	return func() {
 		scanner := bufio.NewScanner(r)
@@ -28,12 +28,12 @@ func SnapshotMapper(e *Experiment, r io.Reader, w io.Writer) func() {
 					log.Fatalf("line does not have %d fields: '%s'", rewardLen, line)
 				}
 
-				variant, err := e.GetTaggedVariant(fields[3])
+				variant, err := e.GetTaggedVariant(fields[2])
 				if err != nil {
 					log.Fatalf("invalid variant on line '%s': %s", fields[5], err.Error())
 				}
 
-				reward, err := strconv.ParseFloat(fields[4], 32)
+				reward, err := strconv.ParseFloat(fields[3], 32)
 				if err != nil {
 					log.Fatalf("non-float reward on line '%s': %s", fields[6], err.Error())
 				}
