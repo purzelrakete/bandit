@@ -38,37 +38,51 @@
           <span class="credits right">Hosted on GitHub Pages &mdash; Theme by <a href="https://twitter.com/michigangraham">mattgraham</a></span>
         </div>
 
-        <p><a href="https://travis-ci.org/purzelrakete/bandit"><img src="https://travis-ci.org/purzelrakete/bandit.png?branch=master" alt="Build Status"></a>
-<a href="https://coveralls.io/r/purzelrakete/bandit"><img src="https://coveralls.io/repos/purzelrakete/bandit/badge.png" alt="Coverage Status"></a></p>
-
-<p>A golang multiarmed bandit. Use it in your project to run A/B tests while
-controlling the tradeoff between exploring new arms and exploiting the
-currently best arm. It can be used inside a go project or from other languages
-through an HTTP API and works well on high volume websites or APIs.</p>
-
-<p>Bandit is based on John Myles White's <a href="http://shop.oreilly.com/product/0636920027393.do">Bandit Algorithms for Website
+        <p>A mulitarmed bandit to A/B test go projects, or other languages via an HTTP
+API. It uses a log based data flow. Based on John Myles White's <a href="http://shop.oreilly.com/product/0636920027393.do">Bandit
+Algorithms for Website
 Optimization</a>. Full
 documentation is available <a href="http://godoc.org/github.com/purzelrakete/bandit">on
 godoc</a>.</p>
 
+<p>Build bandit with <code>make</code>. You need &gt;= go 1.1.1..</p>
+
 <h2>
 <a name="try-bandit" class="anchor" href="#try-bandit"><span class="octicon octicon-link"></span></a>Try Bandit</h2>
 
-<p>You need at go1.1.1 or higher. Build the project by running <code>make</code>.</p>
+<p><code>bandit-example</code> runs a toy demonstration of the HTTP API which you can see at
+http://localhost:8080:</p>
 
-<p>You can run a simple demonstration of the HTTP API with <code>bandit-example</code>.
-Go to http://localhost:8080/ to test the performance of squares against
-circles. If you perfer circles, you should start to see more circles being
-served to you over time.</p>
+<p><img src="http://goo.gl/oaCF3o" alt="example"></p>
 
 <h2>
-<a name="when-to-use-bandit" class="anchor" href="#when-to-use-bandit"><span class="octicon octicon-link"></span></a>When to use bandit</h2>
+<a name="data-flow" class="anchor" href="#data-flow"><span class="octicon octicon-link"></span></a>Data Flow</h2>
 
-<p>This library is intended to be used to instrument a high volume website or
-a web api. It is helpful to have a logging pipeline in place.</p>
+<p>Bandit operates a delayed bandit with log data. This means that reward data
+(ie clickthroughs) do not reach the bandit in real time. Instead they are
+aggregated into snapshots by bandit-job. Each bandit instance then polls for
+this snapshot periodically.</p>
+
+<pre><code>              select
+  bandit     -----&gt;       log       ---&gt;  bandit-job
+  instance    reward      storage         perodically writes
+    ^        -----&gt;                            |
+    |                                          |
+    .-----------------  snapshot &lt;-------------.
+        bandit polls
+</code></pre>
+
+<p><code>bandit-job</code> expects log lines in the following format:</p>
+
+<pre><code>1379257984 BanditSelection shape-20130822:1
+1379257987 BanditReward shape-20130822:1 0.000000
+</code></pre>
+
+<p>Notice that the reward line includes the variant Tag. It is up to you to
+transport this tag through your system.</p>
 
 <h2>
-<a name="design" class="anchor" href="#design"><span class="octicon octicon-link"></span></a>Design</h2>
+<a name="types" class="anchor" href="#types"><span class="octicon octicon-link"></span></a>Types</h2>
 
 <p>A Bandit is used to select arms and update arms with reward information:</p>
 
@@ -78,54 +92,53 @@ a web api. It is helpful to have a logging pipeline in place.</p>
 <span class="p">}</span>
 </pre></div>
 
-<p>A delayed Bandit has no Update implementation. Instead it maintains static
-rewards counters for each arm, and periodically updates those counters from an
-externally generated snapshot.  This snapshot contains the number of arms
-followed by the mean reward for each arm:</p>
+<p>You will probably not use bandits directly. Instead, a Bandit is put to work
+inside an Experiment. You set up experiments (ie signup form buttons) with as
+many variants as you like (ie blue button, red button):</p>
 
-<pre><code>2 0.4 0.3
-</code></pre>
-
-<p>You are expected to generate this reward snapshot yourself using log
-information. If you adhere to the provided log format, you can use
-bandit.SnapshotMapper and bandit.SnapshotReducer to either run a hadoop
-streaming job or simply pipe the two commands together in your shell. Have
-a look at <code>log.go</code> to see the format:</p>
-
-<pre><code>2013/08/22 14:20:05 BanditSelection shape-20130822 0 shape-20130822:c8-circle
-2013/08/22 14:20:06 BanditReward shape-20130822 0 shape-20130822:c8-circle 1.0
-</code></pre>
-
-<p>To use a bandit, you first have to define an experiment and it's variants.
-This is currently configured as a tsv with name, url, tag:</p>
-
-<pre><code>shape-20130822  1   http://localhost:8080/widget?shape=square   shape-20130822:s1-square
-shape-20130822  2   http://localhost:8080/widget?shape=circle   shape-20130822:c8-circle
+<pre><code>                          .------------.
+       .--------.         |  snapshot  |       periodic job
+       | Bandit | &lt;------ |    file    | &lt;---  aggregates logs
+       .--------.         .------------.       into counters
+           ^
+           |
+      .------------.       .----------.
+      | Experiment | --*-&gt; |  Variant |
+      .------------.       .----------.
+      | name       |       | tag      |
+      .------------.       | url      |
+                           .----------.
 </code></pre>
 
 <h2>
 <a name="running-experiments" class="anchor" href="#running-experiments"><span class="octicon octicon-link"></span></a>Running experiments</h2>
 
-<p>Choose the best method for your project depending on whether you have a client
-side javascript application, a go project, or a project in some other
+<p>To use a bandit, you first have to define an experiment and it's variants.
+This is currently configured as a TSV with name, url, tag. See experiments.tsv
+for an example.</p>
+
+<p>Choose the best integration for your project depending on whether you have
+a client side javascript application, a go project, or a project in some other
 language.</p>
 
 <h3>
 <a name="javascript-and-the-http-api" class="anchor" href="#javascript-and-the-http-api"><span class="octicon octicon-link"></span></a>Javascript and the HTTP API</h3>
 
-<p>Build the project by running <code>make</code>, then run <code>bandit-api -port 80
--apiExperiments experiments.tsv</code> to start the endpoint with the provided test
-experiments.</p>
+<p>Run <code>bandit-api -port 80 -apiExperiments experiments.tsv</code> to start the
+endpoint with the provided test experiments.</p>
 
 <p>In this scenario, the application makes a request to the api endpoint and
 then a second request to your api.</p>
 
-<pre><code>   .--------------.        .-----------------.
-   |  javascript  | -----&gt; | bandit HTTP API |
-   .--------------.        .-----------------.
+<pre><code>   .--------------.        .--------------------------.
+   |  javascript  | -----&gt; | bandit HTTP API (select) |
+   .--------------.        .--------------------------.
           |                .------------.
-          ---------------&gt; |  your api  |
-                           .------------.
+          ---------------&gt; |  your API  |
+          |                .------------.
+          |                .---------------------------.
+          ---------------&gt; |  bandit HTTP API (reward) |
+                           .---------------------------.
 </code></pre>
 
 <p>Get a variant from the HTTP API first:</p>
@@ -159,43 +172,29 @@ Content-Type: text/json
 <p>Launch the HTTP API as above. When you get a request to your endpoint, make
 a backend request to the HTTP API. Use the returned variant to vary.</p>
 
-<pre><code>          .------------.       .-----------------.
-    ----&gt; |  your api  | ----&gt; | bandit HTTP API |
-          .------------.       .-----------------.
-</code></pre>
-
 <h3>
 <a name="running-experiments-in-go-with-the-bandit-library" class="anchor" href="#running-experiments-in-go-with-the-bandit-library"><span class="octicon octicon-link"></span></a>Running experiments in go with the bandit library</h3>
 
-<p>LoYou can load an experiment with an associated bandit as an Experiment.</p>
+<p>Integrate with as follows:</p>
 
-<pre><code>                          .------------.
-       .--------.         |  snapshot  |       periodic job
-       | Bandit | &lt;------ |    file    | &lt;---  aggregates logs
-       .--------.         .------------.       into counters
-           ^
-           |
-      .------------.       .----------.
-      | Experiment | --*-&gt; |  Variant |
-      .------------.       .----------.
-      | name       |       | tag      |
-      .------------.       | url      |
-                           .----------.
-</code></pre>
-
-<p>Set your experiment up like this:</p>
+<ol>
+<li>Load an experiment.</li>
+<li>Initialize your own variant code if necessary.</li>
+<li>Serve. In each request, select a variant with the experiment and serve it.</li>
+</ol><p>You can load an experiment with an associated bandit as an Experiment:</p>
 
 <div class="highlight highlight-go"><pre><span class="nx">es</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">bandit</span><span class="p">.</span><span class="nx">NewExperiments</span><span class="p">(</span><span class="o">*</span><span class="nx">apiExperiments</span><span class="p">)</span>
 <span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
-    <span class="nx">log</span><span class="p">.</span><span class="nx">Fatalf</span><span class="p">(</span><span class="s">"could not construct experiments: %s"</span><span class="p">,</span> <span class="nx">err</span><span class="p">.</span><span class="nx">Error</span><span class="p">())</span>
+  <span class="nx">log</span><span class="p">.</span><span class="nx">Fatalf</span><span class="p">(</span><span class="s">"could not construct experiments: %s"</span><span class="p">,</span> <span class="nx">err</span><span class="p">.</span><span class="nx">Error</span><span class="p">())</span>
 <span class="p">}</span>
 
-<span class="k">if</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">es</span><span class="p">.</span><span class="nx">InitDelayedBandit</span><span class="p">(</span><span class="o">*</span><span class="nx">apiSnapshot</span><span class="p">,</span> <span class="mi">2</span><span class="o">*</span><span class="nx">time</span><span class="p">.</span><span class="nx">Minute</span><span class="p">);</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
-    <span class="nx">log</span><span class="p">.</span><span class="nx">Fatalf</span><span class="p">(</span><span class="s">"could initialize bandits: %s"</span><span class="p">,</span> <span class="nx">err</span><span class="p">.</span><span class="nx">Error</span><span class="p">())</span>
+<span class="nx">opener</span> <span class="o">:=</span> <span class="nx">bandit</span><span class="p">.</span><span class="nx">NewFileOpener</span><span class="p">(</span><span class="o">*</span><span class="nx">apiSnapshot</span><span class="p">)</span>
+<span class="k">if</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">es</span><span class="p">.</span><span class="nx">InitDelayedBandit</span><span class="p">(</span><span class="nx">opener</span><span class="p">,</span> <span class="o">*</span><span class="nx">apiSnaphotPoll</span><span class="p">);</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+  <span class="nx">log</span><span class="p">.</span><span class="nx">Fatalf</span><span class="p">(</span><span class="s">"could initialize bandits: %s"</span><span class="p">,</span> <span class="nx">err</span><span class="p">.</span><span class="nx">Error</span><span class="p">())</span>
 <span class="p">}</span>
 
 <span class="nx">m</span> <span class="o">:=</span> <span class="nx">pat</span><span class="p">.</span><span class="nx">New</span><span class="p">()</span>
-<span class="nx">m</span><span class="p">.</span><span class="nx">Get</span><span class="p">(</span><span class="s">"/experiments/:name"</span><span class="p">,</span> <span class="nx">http</span><span class="p">.</span><span class="nx">HandlerFunc</span><span class="p">(</span><span class="nx">bhttp</span><span class="p">.</span><span class="nx">SelectionHandler</span><span class="p">(</span><span class="nx">es</span><span class="p">)))</span>
+<span class="nx">m</span><span class="p">.</span><span class="nx">Get</span><span class="p">(</span><span class="s">"/experiments/:name"</span><span class="p">,</span> <span class="nx">http</span><span class="p">.</span><span class="nx">HandlerFunc</span><span class="p">(</span><span class="nx">bhttp</span><span class="p">.</span><span class="nx">SelectionHandler</span><span class="p">(</span><span class="nx">es</span><span class="p">,</span> <span class="o">*</span><span class="nx">apiPinTTL</span><span class="p">)))</span>
 <span class="nx">http</span><span class="p">.</span><span class="nx">Handle</span><span class="p">(</span><span class="s">"/"</span><span class="p">,</span> <span class="nx">m</span><span class="p">)</span>
 
 <span class="c1">// serve</span>
@@ -203,45 +202,45 @@ a backend request to the HTTP API. Use the returned variant to vary.</p>
 </pre></div>
 
 <p>You can iterate over available Variants in your endpoint setup via
-t.Experiment.Variants. Then begin serving requests. For example:</p>
+t.Experiment.Variants. Use this to intialize your viariants, or just switch:</p>
 
-<pre><code>switch t.Select().Tag {
-  case "shape-20130822:s1-square":
+<pre><code>var msg string
+switch t.Select().Tag {
+  case "shape-20130822:1":
     msg = "hello square"
-  case "shape-20130822:c8-circle":
+  case "shape-20130822:2":
     msg = "hello circle"
 }
 </code></pre>
 
+<p>Your response must include the Tag somwhere so the client can tag subsequent
+rewards. If you do not do this, you will not be able to calculate rewards.</p>
+
 <h2>
 <a name="bandit-algorithms" class="anchor" href="#bandit-algorithms"><span class="octicon octicon-link"></span></a>Bandit Algorithms</h2>
 
-<p>You can currently choose between Epsilon Greedy and Softmax. See the godoc for
-detailed information.</p>
+<p>You can currently choose between Epsilon Greedy, UCB1 and Softmax. See the
+godoc for detailed information.</p>
 
 <h2>
 <a name="simulation" class="anchor" href="#simulation"><span class="octicon octicon-link"></span></a>Simulation</h2>
 
-<p>Bandit includes the facility to simulate and plot experiemnts. You should run
-your own simulations before putting experiments into production. See <code>mc.go</code>
-for details. Too plot the provided simulations, build the project by running
-<code>make</code>, then run bandit-plot.</p>
-
-<p>Here's an example plot:</p>
-
-<p><img src="https://dl.dropboxusercontent.com/u/1704851/bandit.svg" alt="plot"></p>
+<p>The <code>bandit/sim</code> package includes the facility to simulate and plot
+experiemnts. You should run your own simulations before putting experiments
+into production. See the sim package for details. You can run bandit-plot
+to see some out of the box simulations.</p>
 
 <h1>
 <a name="status" class="anchor" href="#status"><span class="octicon octicon-link"></span></a>Status</h1>
 
-<p>This API is currently <em>not stable</em>. Consider this a 0.0.0 release that is
-subject to change at any time.</p>
+<p>Version: 0.0.0-alpha.1</p>
+
+<p>The API is currently <em>not stable</em> and is subject to change at any time.</p>
 
 <h2>
 <a name="todo" class="anchor" href="#todo"><span class="octicon octicon-link"></span></a>TODO</h2>
 
 <ul>
-<li>UCB1 implementation</li>
 <li>UCB with extensions for delayed rewards</li>
 <li>Sticky assignements</li>
 </ul><h1>
@@ -255,8 +254,9 @@ subject to change at any time.</p>
 
 <ul>
 <li>John Myles White</li>
-<li>Peter Bourgon</li>
 <li>Josh Devins</li>
+<li>Ozgür Demir</li>
+<li>Peter Bourgon</li>
 <li>Sean Braithwaite</li>
 </ul>
       </section>
