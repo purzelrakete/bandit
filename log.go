@@ -20,7 +20,6 @@ func SelectionLine(experiment Experiment, selected Variant) string {
 	record := []string{
 		fmt.Sprintf("%d", time.Now().Unix()),
 		banditSelection,
-		experiment.Name,
 		selected.Tag,
 	}
 
@@ -33,7 +32,6 @@ func RewardLine(experiment Experiment, selected Variant, reward float64) string 
 	record := []string{
 		fmt.Sprintf("%d", time.Now().Unix()),
 		banditReward,
-		experiment.Name,
 		selected.Tag,
 		fmt.Sprintf("%f", reward),
 	}

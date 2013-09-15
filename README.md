@@ -3,31 +3,50 @@
 [![Build Status](https://travis-ci.org/purzelrakete/bandit.png?branch=master)](https://travis-ci.org/purzelrakete/bandit)
 [![Coverage Status](https://coveralls.io/repos/purzelrakete/bandit/badge.png)](https://coveralls.io/r/purzelrakete/bandit)
 
-A golang multiarmed bandit. Use it in your project to run A/B tests while
-controlling the tradeoff between exploring new arms and exploiting the
-currently best arm. It can be used inside a go project or from other languages
-through an HTTP API and works well on high volume websites or APIs.
-
-Bandit is based on John Myles White's [Bandit Algorithms for Website
+A mulitarmed bandit to A/B test go projects, or other languages via an HTTP
+API. It uses a log based data flow. Based on John Myles White's [Bandit
+Algorithms for Website
 Optimization](http://shop.oreilly.com/product/0636920027393.do). Full
 documentation is available [on
 godoc](http://godoc.org/github.com/purzelrakete/bandit).
 
+Build bandit with `make`. You need >= go 1.1.1..
+
 ## Try Bandit
 
-You need at go1.1.1 or higher. Build the project by running `make`.
+`bandit-example` runs a toy demonstration of the HTTP API which you can see at
+http://localhost:8080:
 
-You can run a simple demonstration of the HTTP API with `bandit-example`.  Go
-to http://localhost:8080/ to test the performance of squares against circles.
-If you perfer circles, you should start to see more circles being served to
-you over time.
+![example](http://goo.gl/oaCF3o)
 
-## When to use bandit
+## Data Flow
 
-This library is intended to be used to instrument a high volume website or
-a web api. It is helpful to have a logging pipeline in place.
+Bandit operates a delayed bandit with log data. This means that reward data
+(ie clickthroughs) do not reach the bandit in real time. Instead they are
+aggregated into snapshots by bandit-job. Each bandit instance then polls for
+this snapshot periodically.
 
-## Design
+```
+              select
+  bandit     ----->       log       --->  bandit-job
+  instance    reward      storage         perodically writes
+    ^        ----->                            |
+    |                                          |
+    .-----------------  snapshot <-------------.
+        bandit polls
+```
+
+`bandit-job` expects log lines in the following format:
+
+```
+1379257984 BanditSelection shape-20130822:1
+1379257987 BanditReward shape-20130822:1 0.000000
+```
+
+Notice that the reward line includes the variant Tag. It is up to you to
+transport this tag through your system.
+
+## Types
 
 A Bandit is used to select arms and update arms with reward information:
 
@@ -38,56 +57,53 @@ type Bandit interface {
 }
 ```
 
-A delayed Bandit has no Update implementation. Instead it maintains static
-rewards counters for each arm, and periodically updates those counters from an
-externally generated snapshot.  This snapshot contains the number of arms
-followed by the mean reward for each arm:
+You will probably not use bandits directly. Instead, a Bandit is put to work
+inside an Experiment. You set up experiments (ie signup form buttons) with as
+many variants as you like (ie blue button, red button):
 
 ```
-2 0.4 0.3
-```
-
-You are expected to generate this reward snapshot yourself using log
-information. If you adhere to the provided log format, you can use
-bandit.SnapshotMapper and bandit.SnapshotReducer to either run a hadoop
-streaming job or simply pipe the two commands together in your shell. Have
-a look at `log.go` to see the format:
-
-```
-2013/08/22 14:20:05 BanditSelection shape-20130822 0 shape-20130822:c8-circle
-2013/08/22 14:20:06 BanditReward shape-20130822 0 shape-20130822:c8-circle 1.0
-```
-
-To use a bandit, you first have to define an experiment and it's variants.
-This is currently configured as a tsv with name, url, tag:
-
-```
-shape-20130822	1	http://localhost:8080/widget?shape=square	shape-20130822:s1-square
-shape-20130822	2	http://localhost:8080/widget?shape=circle	shape-20130822:c8-circle
+                          .------------.
+       .--------.         |  snapshot  |       periodic job
+       | Bandit | <------ |    file    | <---  aggregates logs
+       .--------.         .------------.       into counters
+           ^
+           |
+      .------------.       .----------.
+      | Experiment | --*-> |  Variant |
+      .------------.       .----------.
+      | name       |       | tag      |
+      .------------.       | url      |
+                           .----------.
 ```
 
 ## Running experiments
 
-Choose the best method for your project depending on whether you have a client
-side javascript application, a go project, or a project in some other
+To use a bandit, you first have to define an experiment and it's variants.
+This is currently configured as a TSV with name, url, tag. See experiments.tsv
+for an example.
+
+Choose the best integration for your project depending on whether you have
+a client side javascript application, a go project, or a project in some other
 language.
 
 ### Javascript and the HTTP API
 
-Build the project by running `make`, then run `bandit-api -port 80
--apiExperiments experiments.tsv` to start the endpoint with the provided test
-experiments.
+Run `bandit-api -port 80 -apiExperiments experiments.tsv` to start the
+endpoint with the provided test experiments.
 
 In this scenario, the application makes a request to the api endpoint and
 then a second request to your api.
 
 ```
-   .--------------.        .-----------------.
-   |  javascript  | -----> | bandit HTTP API |
-   .--------------.        .-----------------.
+   .--------------.        .--------------------------.
+   |  javascript  | -----> | bandit HTTP API (select) |
+   .--------------.        .--------------------------.
           |                .------------.
-          ---------------> |  your api  |
-                           .------------.
+          ---------------> |  your API  |
+          |                .------------.
+          |                .---------------------------.
+          ---------------> |  bandit HTTP API (reward) |
+                           .---------------------------.
 ```
 
 Get a variant from the HTTP API first:
@@ -117,45 +133,29 @@ See the exampe binary and example/index.html for a running example of this.
 Launch the HTTP API as above. When you get a request to your endpoint, make
 a backend request to the HTTP API. Use the returned variant to vary.
 
-```
-          .------------.       .-----------------.
-    ----> |  your api  | ----> | bandit HTTP API |
-          .------------.       .-----------------.
-```
-
 ### Running experiments in go with the bandit library
 
-LoYou can load an experiment with an associated bandit as an Experiment.
+Integrate with as follows:
 
-```
-                          .------------.
-       .--------.         |  snapshot  |       periodic job
-       | Bandit | <------ |    file    | <---  aggregates logs
-       .--------.         .------------.       into counters
-           ^
-           |
-      .------------.       .----------.
-      | Experiment | --*-> |  Variant |
-      .------------.       .----------.
-      | name       |       | tag      |
-      .------------.       | url      |
-                           .----------.
-```
+1. Load an experiment.
+2. Initialize your own variant code if necessary.
+3. Serve. In each request, select a variant with the experiment and serve it.
 
-Set your experiment up like this:
+You can load an experiment with an associated bandit as an Experiment:
 
 ```go
 es, err := bandit.NewExperiments(*apiExperiments)
 if err != nil {
-	log.Fatalf("could not construct experiments: %s", err.Error())
+  log.Fatalf("could not construct experiments: %s", err.Error())
 }
 
-if err := es.InitDelayedBandit(*apiSnapshot, 2*time.Minute); err != nil {
-	log.Fatalf("could initialize bandits: %s", err.Error())
+opener := bandit.NewFileOpener(*apiSnapshot)
+if err := es.InitDelayedBandit(opener, *apiSnaphotPoll); err != nil {
+  log.Fatalf("could initialize bandits: %s", err.Error())
 }
 
 m := pat.New()
-m.Get("/experiments/:name", http.HandlerFunc(bhttp.SelectionHandler(es)))
+m.Get("/experiments/:name", http.HandlerFunc(bhttp.SelectionHandler(es, *apiPinTTL)))
 http.Handle("/", m)
 
 // serve
@@ -163,13 +163,14 @@ log.Fatal(http.ListenAndServe(*apiBind, nil))
 ```
 
 You can iterate over available Variants in your endpoint setup via
-t.Experiment.Variants. Then begin serving requests. For example:
+t.Experiment.Variants. Use this to intialize your viariants, or just switch:
 
 ```
+var msg string
 switch t.Select().Tag {
-  case "shape-20130822:s1-square":
+  case "shape-20130822:1":
     msg = "hello square"
-  case "shape-20130822:c8-circle":
+  case "shape-20130822:2":
     msg = "hello circle"
 }
 ```
@@ -184,14 +185,10 @@ godoc for detailed information.
 
 ## Simulation
 
-Bandit includes the facility to simulate and plot experiemnts. You should run
-your own simulations before putting experiments into production. See `mc.go`
-for details. Too plot the provided simulations, build the project by running
-`make`, then run bandit-plot.
-
-Here's an example plot:
-
-![plot](https://dl.dropboxusercontent.com/u/1704851/bandit.svg)
+The `bandit/sim` package includes the facility to simulate and plot
+experiemnts. You should run your own simulations before putting experiments
+into production. See the sim package for details. You can run bandit-plot
+to see some out of the box simulations.
 
 # Status
 
