@@ -116,7 +116,7 @@ func (e *Experiment) InitDelayedBandit(o Opener, poll time.Duration) error {
 		for _ = range t.C {
 			counters, err := GetSnapshot(o)
 			if err != nil {
-				log.Println("BanditError: could not get snapshot: %s", err.Error())
+				log.Printf("BanditError: could not get snapshot: %s", err.Error())
 			}
 
 			c <- counters

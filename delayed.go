@@ -98,7 +98,6 @@ type fileOpener struct {
 func (o *fileOpener) Open() (io.ReadCloser, error) {
 	reader, err := os.Open(o.Filename)
 	if err != nil {
-		reader.Close()
 		return nil, err
 	}
 

@@ -7,7 +7,6 @@ import (
 	"code.google.com/p/plotinum/plot"
 	"code.google.com/p/plotinum/plotter"
 	"fmt"
-
 	"github.com/purzelrakete/bandit/sim"
 	"image/color"
 	"strings"

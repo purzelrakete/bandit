@@ -8,9 +8,11 @@ import (
 )
 
 var (
-	jobExperimentName = flag.String("experiment-name", "default", "name of the experiment to run")
-	jobExperiments    = flag.String("experiments", "experiments.tsv", "experiments tsv filename")
-	jobKind           = flag.String("kind", "", "kind ∈ {map,reduce}")
+	jobExperimentName = flag.String("experiment-name", "default", "name of experiment")
+	jobExperiments    = flag.String("experiments", "experiments.tsv", "experiments tsv")
+	jobKind           = flag.String("kind", "", "kind ∈ {map,reduce,poll}")
+	jobLogfile        = flag.String("log-file", "bandit-log.txt", "log file to read")
+	jobLogPoll        = flag.Duration("log-poll", 1e13, "produce snapshots with this fq")
 )
 
 func init() {
@@ -28,8 +30,12 @@ func main() {
 		bandit.SnapshotMapper(e, os.Stdin, os.Stdout)()
 	case "reduce":
 		bandit.SnapshotReducer(e, os.Stdin, os.Stdout)()
+	case "poll":
+		if err := simple(e, *jobLogfile, *jobExperimentName+".dsv", *jobLogPoll); err != nil {
+			log.Fatalf("could not start polling job: %s", err.Error())
+		}
 	case "":
-		log.Fatalf("please provide a job kind ∈ {map,reduce}")
+		log.Fatalf("please provide a job kind ∈ {map,reduce,poll}")
 	default:
 		log.Fatalf("unkown job kind: %s", *jobKind)
 	}
