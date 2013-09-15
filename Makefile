@@ -39,4 +39,4 @@ deps:
 clean:
 	go clean $(PKGS)
 	find . -type f -perm -o+rx -name 'bandit-*' -delete
-	find . -type f -perm -o+rx -name '*.svg' -delete
+	find . -type f -name '*.svg' -delete
