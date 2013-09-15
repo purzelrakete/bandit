@@ -178,6 +178,13 @@ switch t.Select().Tag {
 Your response must include the Tag somwhere so the client can tag subsequent
 rewards. If you do not do this, you will not be able to calculate rewards.
 
+## Aggregating Logs
+
+In a production setting logs are aggregated as described in "Data Flow". You
+can use `bandit-job` as a streaming map reduce job with `bandit-job -kind map`
+and `bandit-job -kind reduce`. You can also run over the logs wiht `bandit-job
+-kind poll`. See `bandit-job -h` for information.
+
 ## Bandit Algorithms
 
 You can currently choose between Epsilon Greedy, UCB1 and Softmax. See the
