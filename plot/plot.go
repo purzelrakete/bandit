@@ -7,7 +7,8 @@ import (
 	"code.google.com/p/plotinum/plot"
 	"code.google.com/p/plotinum/plotter"
 	"fmt"
-	"github.com/purzelrakete/bandit"
+
+	"github.com/purzelrakete/bandit/sim"
 	"image/color"
 	"strings"
 )
@@ -64,19 +65,19 @@ func xys(data []float64) plotter.XYs {
 }
 
 // bandits
-type bandits []bandit.Bandit
+type bandits []sim.Bandit
 
 // simulations
-type simulations []bandit.Simulation
+type simulations []sim.Simulation
 
 // arms
-type arms []bandit.Arm
+type arms []sim.Arm
 
 // simulate runs a Monte Carlo simulation with given arms and bandits
 func simulate(bs bandits, arms arms, sims, horizon int) (simulations, error) {
 	ret := simulations{}
 	for _, b := range bs {
-		s, err := bandit.MonteCarlo(sims, horizon, arms, b)
+		s, err := sim.MonteCarlo(sims, horizon, arms, b)
 		if err != nil {
 			return simulations{}, fmt.Errorf(err.Error())
 		}
@@ -94,7 +95,7 @@ type group struct {
 }
 
 // summarize summarizes simulations and coverts the to graph
-func summarize(sims simulations, summary bandit.Summary) graph {
+func summarize(sims simulations, summary sim.Summary) graph {
 	lines := make(graph)
 	for _, sim := range sims {
 		lines[sim.Description] = summary(&sim)

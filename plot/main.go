@@ -7,6 +7,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/purzelrakete/bandit"
+	"github.com/purzelrakete/bandit/sim"
 	"log"
 	"strconv"
 	"strings"
@@ -40,7 +41,7 @@ func main() {
 	// bernoulli arms. this is the hidden distribution.
 	arms := arms{}
 	for _, μ := range μs {
-		arms = append(arms, bandit.Bernoulli(μ))
+		arms = append(arms, sim.Bernoulli(μ))
 	}
 
 	// groups of graphs to draw
@@ -129,7 +130,7 @@ func main() {
 			log.Fatal(err.Error())
 		}
 
-		graph := summarize(s, bandit.Accuracy(bestArms))
+		graph := summarize(s, sim.Accuracy(bestArms))
 		draw(graph, group.name+" Accuracy", "Time", "P(selecting best arm)")
 
 		s, err = simulate(group.bandits, arms, *mcSims, *mcHorizon)
@@ -137,7 +138,7 @@ func main() {
 			log.Fatal(err.Error())
 		}
 
-		graph = summarize(s, bandit.Performance)
+		graph = summarize(s, sim.Performance)
 		draw(graph, group.name+" Performance", "Time", "P(selecting best arm)")
 
 		s, err = simulate(group.bandits, arms, *mcSims, *mcHorizon)
@@ -145,7 +146,7 @@ func main() {
 			log.Fatal(err.Error())
 		}
 
-		graph = summarize(s, bandit.Cumulative)
+		graph = summarize(s, sim.Cumulative)
 		draw(graph, group.name+" Cumulative", "Time", "P(selecting best arm)")
 	}
 }

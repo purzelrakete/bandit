@@ -23,6 +23,7 @@ type Bandit interface {
 	Update(arm int, reward float64)
 	Version() string
 	Reset(*Counters) error
+	Init()
 }
 
 // epsilonGreedy randomly selects arms with a probability of ε. The rest of
@@ -217,4 +218,12 @@ func (c *Counters) Reset(snapshot *Counters) error {
 	c.values = snapshot.values
 
 	return nil
+}
+
+// Init reset the bandit to initial state.
+func (c *Counters) Init() {
+	c.Lock()
+	defer c.Unlock()
+
+	c.Reset(&Counters{})
 }

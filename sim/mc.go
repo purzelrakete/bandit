@@ -1,12 +1,20 @@
 // Copyright 2013 SoundCloud, Rany Keddo. All rights reserved.  Use of this
 // source code is governed by a license that can be found in the LICENSE file.
 
-package bandit
+package sim
 
 import (
 	"math/rand"
 	"time"
 )
+
+// Bandit can select arm or update information
+type Bandit interface {
+	SelectArm() int
+	Update(arm int, reward float64)
+	Version() string
+	Init()
+}
 
 // Arm simulates a single bandit arm pull with every execution. Returns {0,1}.
 type Arm func() float64
@@ -38,7 +46,7 @@ func MonteCarlo(sims, trials int, arms []Arm, b Bandit) (Simulation, error) {
 
 	for sim := 0; sim < sims; sim++ {
 		s.Description = b.Version()
-		b.Reset(&Counters{})
+		b.Init()
 
 		for trial := 0; trial < trials; trial++ {
 			selected := b.SelectArm()
