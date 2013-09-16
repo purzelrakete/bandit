@@ -193,14 +193,14 @@ a backend request to the HTTP API. Use the returned variant to vary.</p>
 Use this to intialize your viariants if you wish. You could also switch
 directly on tags:</p>
 
-<pre><code>var msg string
-switch e.Select().Tag {
-  case "shape-20130822:1":
-    msg = "hello square"
-  case "shape-20130822:2":
-    msg = "hello circle"
-}
-</code></pre>
+<div class="highlight highlight-go"><pre><span class="kd">var</span> <span class="nx">msg</span> <span class="kt">string</span>
+<span class="k">switch</span> <span class="nx">e</span><span class="p">.</span><span class="nx">Select</span><span class="p">().</span><span class="nx">Tag</span> <span class="p">{</span>
+  <span class="k">case</span> <span class="s">"shape-20130822:1"</span><span class="p">:</span>
+    <span class="nx">msg</span> <span class="p">=</span> <span class="s">"hello square"</span>
+  <span class="k">case</span> <span class="s">"shape-20130822:2"</span><span class="p">:</span>
+    <span class="nx">msg</span> <span class="p">=</span> <span class="s">"hello circle"</span>
+<span class="p">}</span>
+</pre></div>
 
 <p>Your response must include the Tag somwhere so the client can tag subsequent
 rewards. If you do not do this, you will not be able to calculate rewards.</p>
