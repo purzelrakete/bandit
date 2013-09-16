@@ -161,7 +161,7 @@ You can iterate over available Variants in your endpoint setup via e.Variants.
 Use this to intialize your viariants if you wish. You could also switch
 directly on tags:
 
-```
+```go
 var msg string
 switch e.Select().Tag {
   case "shape-20130822:1":
