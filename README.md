@@ -149,8 +149,8 @@ if err != nil {
   log.Fatalf("could not construct experiment: %s", err.Error())
 }
 
-opener := bandit.NewFileOpener(*apiSnapshot)
-if err := e.InitDelayedBandit(opener, *apiSnaphotPoll); err != nil {
+opener := bandit.NewFileOpener("shape-20130822.dsv")
+if err := e.InitDelayedBandit(opener, 3 * time.Hours); err != nil {
   log.Fatalf("could initialize bandits: %s", err.Error())
 }
 
