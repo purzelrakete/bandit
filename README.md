@@ -144,30 +144,26 @@ Integrate with as follows:
 You can load an experiment with an associated bandit as an Experiment:
 
 ```go
-es, err := bandit.NewExperiments(*apiExperiments)
+e, err := bandit.NewExperiment("experiments.tsv", "shape-20130822")
 if err != nil {
-  log.Fatalf("could not construct experiments: %s", err.Error())
+  log.Fatalf("could not construct experiment: %s", err.Error())
 }
 
 opener := bandit.NewFileOpener(*apiSnapshot)
-if err := es.InitDelayedBandit(opener, *apiSnaphotPoll); err != nil {
+if err := e.InitDelayedBandit(opener, *apiSnaphotPoll); err != nil {
   log.Fatalf("could initialize bandits: %s", err.Error())
 }
 
-m := pat.New()
-m.Get("/experiments/:name", http.HandlerFunc(bhttp.SelectionHandler(es, *apiPinTTL)))
-http.Handle("/", m)
-
-// serve
-log.Fatal(http.ListenAndServe(*apiBind, nil))
+fmt.Println(e.Variants)
 ```
 
-You can iterate over available Variants in your endpoint setup via
-t.Experiment.Variants. Use this to intialize your viariants, or just switch:
+You can iterate over available Variants in your endpoint setup via e.Variants.
+Use this to intialize your viariants if you wish. You could also switch
+directly on tags:
 
 ```
 var msg string
-switch t.Select().Tag {
+switch e.Select().Tag {
   case "shape-20130822:1":
     msg = "hello square"
   case "shape-20130822:2":
