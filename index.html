@@ -28,7 +28,10 @@
     <div id="content-wrapper">
       <div class="inner clearfix">
         <section id="main-content">
-          <p>A mulitarmed bandit to A/B test go projects, or other languages via an HTTP
+          <p><a href="https://travis-ci.org/purzelrakete/bandit"><img src="https://travis-ci.org/purzelrakete/bandit.png?branch=master" alt="Build Status"></a>
+<a href="https://coveralls.io/r/purzelrakete/bandit"><img src="https://coveralls.io/repos/purzelrakete/bandit/badge.png" alt="Coverage Status"></a></p>
+
+<p>A mulitarmed bandit to A/B test go projects, or other languages via an HTTP
 API. It uses a log based data flow. Based on John Myles White's <a href="http://shop.oreilly.com/product/0636920027393.do">Bandit
 Algorithms for Website
 Optimization</a>. Full
@@ -205,6 +208,14 @@ switch t.Select().Tag {
 
 <p>Your response must include the Tag somwhere so the client can tag subsequent
 rewards. If you do not do this, you will not be able to calculate rewards.</p>
+
+<h2>
+<a name="aggregating-logs" class="anchor" href="#aggregating-logs"><span class="octicon octicon-link"></span></a>Aggregating Logs</h2>
+
+<p>In a production setting logs are aggregated as described in "Data Flow". You
+can use <code>bandit-job</code> as a streaming map reduce job with <code>bandit-job -kind map</code>
+and <code>bandit-job -kind reduce</code>. You can also run over the logs wiht <code>bandit-job
+-kind poll</code>. See <code>bandit-job -h</code> for information.</p>
 
 <h2>
 <a name="bandit-algorithms" class="anchor" href="#bandit-algorithms"><span class="octicon octicon-link"></span></a>Bandit Algorithms</h2>
