@@ -7,16 +7,16 @@ import (
 	"encoding/csv"
 	"fmt"
 	"log"
-	"os"
+
 	"sort"
 	"strconv"
 	"strings"
 	"time"
 )
 
-// NewExperiment loads experiment `name` from the experiments tsv `tsv`.
-func NewExperiment(tsv, name string) (*Experiment, error) {
-	es, err := NewExperiments(tsv)
+// NewExperiment loads experiment `name` from the experiments source.
+func NewExperiment(o Opener, name string) (*Experiment, error) {
+	es, err := NewExperiments(o)
 	if err != nil {
 		return &Experiment{}, err
 	}
@@ -149,8 +149,8 @@ func (v Variants) Less(i, j int) bool { return v[i].Ordinal < v[j].Ordinal }
 func (v Variants) Swap(i, j int)      { v[i], v[j] = v[j], v[i] }
 
 // NewExperiments reads in a tsv file and converts it to a map of experiments.
-func NewExperiments(filename string) (*Experiments, error) {
-	file, err := os.Open(filename)
+func NewExperiments(o Opener) (*Experiments, error) {
+	file, err := o.Open()
 	if err != nil {
 		return &Experiments{}, fmt.Errorf("need a valid input file: %v", err)
 	}

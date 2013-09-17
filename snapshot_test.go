@@ -16,7 +16,7 @@ func TestSnapshot(t *testing.T) {
 		"1379069158 BanditReward plants-20121111:1 1.0",
 	}
 
-	es, err := NewExperiments("experiments.tsv")
+	es, err := NewExperiments(NewFileOpener("experiments.tsv"))
 	if err != nil {
 		t.Fatalf("while reading campaign fixture: %s", err.Error())
 	}

@@ -6,7 +6,7 @@ package bandit
 import "testing"
 
 func TestExperiment(t *testing.T) {
-	es, err := NewExperiments("experiments.tsv")
+	es, err := NewExperiments(NewFileOpener("experiments.tsv"))
 	if err != nil {
 		t.Fatalf("while reading experiment fixture: %s", err.Error())
 	}

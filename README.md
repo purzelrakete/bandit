@@ -139,13 +139,15 @@ a backend request to the HTTP API. Use the returned variant to vary.
 First, load an experiment.
 
 ```go
-e, err := bandit.NewExperiment("experiments.tsv", "shape-20130822")
+
+experiments := bandit.NewFileOpener("experiments.tsv")
+e, err := bandit.NewExperiment(experiments, "shape-20130822")
 if err != nil {
   log.Fatalf("could not construct experiment: %s", err.Error())
 }
 
-opener := bandit.NewFileOpener("shape-20130822.tsv")
-if err := e.InitDelayedBandit(opener, 3 * time.Hours); err != nil {
+snapshot := bandit.NewFileOpener("shape-20130822.tsv")
+if err := e.InitDelayedBandit(snapshot, 3 * time.Hours); err != nil {
   log.Fatalf("could initialize bandits: %s", err.Error())
 }
 

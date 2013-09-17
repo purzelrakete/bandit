@@ -20,7 +20,8 @@ func init() {
 }
 
 func main() {
-	e, err := bandit.NewExperiment(*jobExperiments, *jobExperimentName)
+	o := bandit.NewFileOpener(*jobExperiments)
+	e, err := bandit.NewExperiment(o, *jobExperimentName)
 	if err != nil {
 		log.Fatalf("could parse experiment: %s", err.Error())
 	}

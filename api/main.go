@@ -25,7 +25,7 @@ func init() {
 }
 
 func main() {
-	es, err := bandit.NewExperiments(*apiExperiments)
+	es, err := bandit.NewExperiments(bandit.NewFileOpener(*apiExperiments))
 	if err != nil {
 		log.Fatalf("could not construct experiments: %s", err.Error())
 	}

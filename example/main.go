@@ -41,7 +41,7 @@ func widget(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	e, err := bandit.NewExperiments(*exExperiments)
+	e, err := bandit.NewExperiments(bandit.NewFileOpener(*exExperiments))
 	if err != nil {
 		log.Fatalf("could not construct experiments: %s", err.Error())
 	}
