@@ -31,38 +31,33 @@
           <p><a href="https://travis-ci.org/purzelrakete/bandit"><img src="https://travis-ci.org/purzelrakete/bandit.png?branch=master" alt="Build Status"></a>
 <a href="https://coveralls.io/r/purzelrakete/bandit"><img src="https://coveralls.io/repos/purzelrakete/bandit/badge.png" alt="Coverage Status"></a></p>
 
-<p>A mulitarmed bandit to A/B test go projects, or other languages via an HTTP
-API. It uses a log based data flow. Based on John Myles White's <a href="http://shop.oreilly.com/product/0636920027393.do">Bandit
-Algorithms for Website
-Optimization</a>. Full
-documentation is available <a href="http://godoc.org/github.com/purzelrakete/bandit">on
-godoc</a>.</p>
+<p>A mulitarmed bandit to A/B test go projects, or other languages via an HTTP API.
+It uses a log-based data flow.
+Based on John Myles White's <a href="http://shop.oreilly.com/product/0636920027393.do">Bandit Algorithms for Website Optimization</a>.
+Full documentation is available <a href="http://godoc.org/github.com/purzelrakete/bandit">on godoc</a>.</p>
 
-<p>Build bandit with <code>make</code>. You need &gt;= go 1.1.1..</p>
-
-<h2>
-<a name="try-bandit" class="anchor" href="#try-bandit"><span class="octicon octicon-link"></span></a>Try Bandit</h2>
-
-<p><code>bandit-example</code> runs a toy demonstration of the HTTP API which you can see at
-http://localhost:8080:</p>
-
-<p><img src="http://goo.gl/oaCF3o" alt="example"></p>
+<p>Build bandit with <code>make</code>. You need go &gt;= 1.1.1..</p>
 
 <h2>
 <a name="data-flow" class="anchor" href="#data-flow"><span class="octicon octicon-link"></span></a>Data Flow</h2>
 
-<p>Bandit operates a delayed bandit with log data. This means that reward data
-(ie clickthroughs) do not reach the bandit in real time. Instead they are
-aggregated into snapshots by bandit-job. Each bandit instance then polls for
-this snapshot periodically.</p>
+<p>A bandit instance is embedded into e.g. an HTTP server. Incoming requests select
+a variant from an experiment, and then log that selection. Subsequent positive
+feedback from that selection, e.g. a click, is also logged.</p>
 
-<pre><code>              select
-  bandit     -----&gt;       log       ---&gt;  bandit-job
-  instance    reward      storage         perodically writes
-    ^        -----&gt;                            |
-    |                                          |
-    .-----------------  snapshot &lt;-------------.
-        bandit polls
+<p>Periodically, <code>bandit-job</code> aggregates selections and rewards from the logs, re-
+calculates variant distribution, and emits a snapshot file to some  shared
+storage. The bandit polls for updates to that snapshot file and hot-reloads the
+distribution on change.</p>
+
+<pre><code>+----------+           +----------+                +------------+
+| Bandit   |--select--&gt;| Log      |- - periodic - &gt;| bandit-job |
+| instance |--reward--&gt;| storage  |                |            |
++----------+           +----------+                +------------+
+     ^                                                    |
+     |                 +----------+                       |
+     '---------poll----| Snapshot |&lt;----------------------'
+                       +----------+
 </code></pre>
 
 <p><code>bandit-job</code> expects log lines in the following format:</p>
@@ -71,7 +66,7 @@ this snapshot periodically.</p>
 1379257987 BanditReward shape-20130822:1 0.000000
 </code></pre>
 
-<p>Notice that the reward line includes the variant Tag. It is up to you to
+<p>Notice that the reward line includes the variant tag. It is up to you to
 transport this tag through your system.</p>
 
 <h2>
@@ -86,28 +81,29 @@ transport this tag through your system.</p>
 </pre></div>
 
 <p>You will probably not use bandits directly. Instead, a Bandit is put to work
-inside an Experiment. You set up experiments (ie signup form buttons) with as
-many variants as you like (ie blue button, red button):</p>
+inside an Experiment. You set up experiments (e.g. signup form buttons) with as
+many variants as you like (e.g. blue button, red button):</p>
 
-<pre><code>                          .------------.
-       .--------.         |  snapshot  |       periodic job
-       | Bandit | &lt;------ |    file    | &lt;---  aggregates logs
-       .--------.         .------------.       into counters
-           ^
-           |
-      .------------.       .----------.
-      | Experiment | --*-&gt; |  Variant |
-      .------------.       .----------.
-      | name       |       | tag      |
-      .------------.       | url      |
-                           .----------.
+<pre><code>  +--------+            +---------------+      periodic job
+  | Bandit | 1 &lt;----- 1 | Snapshot file | &lt;--- aggregates logs
+  +--------+            +---------------+      into counters
+      1
+      ^
+      |
+      1
++------------+         +---------+
+| Experiment | 1 --&gt; * | Variant |
+|------------|         |---------|
+| name       |         | tag     |
++------------+         | url     |
+                       +---------+
 </code></pre>
 
 <h2>
-<a name="running-experiments" class="anchor" href="#running-experiments"><span class="octicon octicon-link"></span></a>Running experiments</h2>
+<a name="integrating-and-running-experiments" class="anchor" href="#integrating-and-running-experiments"><span class="octicon octicon-link"></span></a>Integrating and running experiments</h2>
 
-<p>To use a bandit, you first have to define an experiment and it's variants.
-This is currently configured as a TSV with name, url, tag. See experiments.tsv
+<p>To use a bandit, you first have to define an experiment and its variants. This
+is currently configured as a TSV with a name, URL, and tag. See experiments.tsv
 for an example.</p>
 
 <p>Choose the best integration for your project depending on whether you have
@@ -115,23 +111,27 @@ a client side javascript application, a go project, or a project in some other
 language.</p>
 
 <h3>
-<a name="javascript-and-the-http-api" class="anchor" href="#javascript-and-the-http-api"><span class="octicon octicon-link"></span></a>Javascript and the HTTP API</h3>
+<a name="integration-with-javascript-and-the-http-api" class="anchor" href="#integration-with-javascript-and-the-http-api"><span class="octicon octicon-link"></span></a>Integration with Javascript and the HTTP API</h3>
 
 <p>Run <code>bandit-api -port 80 -apiExperiments experiments.tsv</code> to start the
 endpoint with the provided test experiments.</p>
 
-<p>In this scenario, the application makes a request to the api endpoint and
-then a second request to your api.</p>
+<p>In this scenario, the application makes a request to the API endpoint and
+then a second request to your API.</p>
 
-<pre><code>   .--------------.        .--------------------------.
-   |  javascript  | -----&gt; | bandit HTTP API (select) |
-   .--------------.        .--------------------------.
-          |                .------------.
-          ---------------&gt; |  your API  |
-          |                .------------.
-          |                .---------------------------.
-          ---------------&gt; |  bandit HTTP API (reward) |
-                           .---------------------------.
+<pre><code>             Bandit HTTP API
+Javascript   Select   Reward   Your API
+----------   ------   ------   --------
+     |--------&gt;|                  |
+     |&lt;--------|                  |
+     |                            |
+     |---------------------------&gt;|
+     |&lt;---------------------------|
+     :
+   later
+     :
+     |-----------------&gt;|
+     |&lt;-----------------|
 </code></pre>
 
 <p>Get a variant from the HTTP API first:</p>
@@ -157,58 +157,45 @@ Content-Type: text/json
 <pre><code>GET https://api/widget?color=blue HTTP/1.0
 </code></pre>
 
-<p>See the exampe binary and example/index.html for a running example of this.</p>
+<p>See the exampe binary and example/index.html for a running example.</p>
 
 <h3>
-<a name="project-in-another-language-using-the-http-api" class="anchor" href="#project-in-another-language-using-the-http-api"><span class="octicon octicon-link"></span></a>Project in another language using the HTTP API</h3>
+<a name="integration-in-another-language-using-the-http-api" class="anchor" href="#integration-in-another-language-using-the-http-api"><span class="octicon octicon-link"></span></a>Integration in another language using the HTTP API</h3>
 
 <p>Launch the HTTP API as above. When you get a request to your endpoint, make
 a backend request to the HTTP API. Use the returned variant to vary.</p>
 
 <h3>
-<a name="running-experiments-in-go-with-the-bandit-library" class="anchor" href="#running-experiments-in-go-with-the-bandit-library"><span class="octicon octicon-link"></span></a>Running experiments in go with the bandit library</h3>
+<a name="integration-with-go-projects" class="anchor" href="#integration-with-go-projects"><span class="octicon octicon-link"></span></a>Integration with Go projects</h3>
 
-<p>Integrate with as follows:</p>
+<p>First, load an experiment.</p>
 
-<ol>
-<li>Load an experiment.</li>
-<li>Initialize your own variant code if necessary.</li>
-<li>Serve. In each request, select a variant with the experiment and serve it.</li>
-</ol><p>You can load an experiment with an associated bandit as an Experiment:</p>
-
-<div class="highlight highlight-go"><pre><span class="nx">e</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">bandit</span><span class="p">.</span><span class="nx">NewExperiment</span><span class="p">(</span><span class="s">"experiments.tsv"</span><span class="p">,</span> <span class="s">"shape-20130822"</span><span class="p">)</span>
+<div class="highlight highlight-go"><pre>
+<span class="nx">experiments</span> <span class="o">:=</span> <span class="nx">bandit</span><span class="p">.</span><span class="nx">NewFileOpener</span><span class="p">(</span><span class="s">"experiments.tsv"</span><span class="p">)</span>
+<span class="nx">e</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">bandit</span><span class="p">.</span><span class="nx">NewExperiment</span><span class="p">(</span><span class="nx">experiments</span><span class="p">,</span> <span class="s">"shape-20130822"</span><span class="p">)</span>
 <span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
   <span class="nx">log</span><span class="p">.</span><span class="nx">Fatalf</span><span class="p">(</span><span class="s">"could not construct experiment: %s"</span><span class="p">,</span> <span class="nx">err</span><span class="p">.</span><span class="nx">Error</span><span class="p">())</span>
 <span class="p">}</span>
 
-<span class="nx">opener</span> <span class="o">:=</span> <span class="nx">bandit</span><span class="p">.</span><span class="nx">NewFileOpener</span><span class="p">(</span><span class="s">"shape-20130822.dsv"</span><span class="p">)</span>
-<span class="k">if</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">e</span><span class="p">.</span><span class="nx">InitDelayedBandit</span><span class="p">(</span><span class="nx">opener</span><span class="p">,</span> <span class="mi">3</span> <span class="o">*</span> <span class="nx">time</span><span class="p">.</span><span class="nx">Hours</span><span class="p">);</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+<span class="nx">snapshot</span> <span class="o">:=</span> <span class="nx">bandit</span><span class="p">.</span><span class="nx">NewFileOpener</span><span class="p">(</span><span class="s">"shape-20130822.tsv"</span><span class="p">)</span>
+<span class="k">if</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">e</span><span class="p">.</span><span class="nx">InitDelayedBandit</span><span class="p">(</span><span class="nx">snapshot</span><span class="p">,</span> <span class="mi">3</span> <span class="o">*</span> <span class="nx">time</span><span class="p">.</span><span class="nx">Hours</span><span class="p">);</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
   <span class="nx">log</span><span class="p">.</span><span class="nx">Fatalf</span><span class="p">(</span><span class="s">"could initialize bandits: %s"</span><span class="p">,</span> <span class="nx">err</span><span class="p">.</span><span class="nx">Error</span><span class="p">())</span>
 <span class="p">}</span>
 
 <span class="nx">fmt</span><span class="p">.</span><span class="nx">Println</span><span class="p">(</span><span class="nx">e</span><span class="p">.</span><span class="nx">Variants</span><span class="p">)</span>
 </pre></div>
 
-<p>You can iterate over available Variants in your endpoint setup via e.Variants.
-Use this to intialize your viariants if you wish. You could also switch
-directly on tags:</p>
+<p>Initialize your own variant code if necessary. Then, serve. In each request,
+select a variant via the experiment and serve it. Be sure to include the tag
+in the response, so your clients can pass it back with rewards.</p>
 
-<div class="highlight highlight-go"><pre><span class="kd">var</span> <span class="nx">msg</span> <span class="kt">string</span>
-<span class="k">switch</span> <span class="nx">e</span><span class="p">.</span><span class="nx">Select</span><span class="p">().</span><span class="nx">Tag</span> <span class="p">{</span>
-  <span class="k">case</span> <span class="s">"shape-20130822:1"</span><span class="p">:</span>
-    <span class="nx">msg</span> <span class="p">=</span> <span class="s">"hello square"</span>
-  <span class="k">case</span> <span class="s">"shape-20130822:2"</span><span class="p">:</span>
-    <span class="nx">msg</span> <span class="p">=</span> <span class="s">"hello circle"</span>
-<span class="p">}</span>
-</pre></div>
-
-<p>Your response must include the Tag somwhere so the client can tag subsequent
-rewards. If you do not do this, you will not be able to calculate rewards.</p>
+<h1>
+<a name="miscellaneous-information" class="anchor" href="#miscellaneous-information"><span class="octicon octicon-link"></span></a>Miscellaneous information</h1>
 
 <h2>
 <a name="aggregating-logs" class="anchor" href="#aggregating-logs"><span class="octicon octicon-link"></span></a>Aggregating Logs</h2>
 
-<p>In a production setting logs are aggregated as described in "Data Flow". You
+<p>In a production setting logs are aggregated as described in Data Flow. You
 can use <code>bandit-job</code> as a streaming map reduce job with <code>bandit-job -kind map</code>
 and <code>bandit-job -kind reduce</code>. You can also run over the logs wiht <code>bandit-job
 -kind poll</code>. See <code>bandit-job -h</code> for information.</p>
