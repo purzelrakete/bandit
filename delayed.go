@@ -72,15 +72,12 @@ type httpOpener struct {
 func (o *httpOpener) Open() (io.ReadCloser, error) {
 	resp, err := http.Get(o.URL)
 	if err != nil {
-		resp.Body.Close()
 		return nil, fmt.Errorf("http GET failed: %s", err.Error())
 	}
-
 	if resp.StatusCode != http.StatusOK {
 		resp.Body.Close()
 		return nil, fmt.Errorf("http GET not 200: %s", resp.StatusCode)
 	}
-
 	return resp.Body, nil
 }
 

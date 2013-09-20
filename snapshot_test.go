@@ -47,7 +47,7 @@ func TestParseSnapshot(t *testing.T) {
 
 	s, err := ParseSnapshot(input)
 	if err != nil {
-		t.Fatalf("could not parse snapshot file: ", err.Error())
+		t.Fatalf("could not parse snapshot file: %s", err)
 	}
 
 	expectedArms := 2

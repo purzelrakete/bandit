@@ -175,7 +175,7 @@ func NewExperiments(o Opener) (*Experiments, error) {
 
 		ordinal, err := strconv.Atoi(record[1])
 		if err != nil {
-			return &Experiments{}, fmt.Errorf("invalid ordinal on line %n: %s", i, err)
+			return &Experiments{}, fmt.Errorf("invalid ordinal on line %d: %s", i, err)
 		}
 
 		name := record[0]

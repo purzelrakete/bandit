@@ -30,7 +30,7 @@ func TestExperiment(t *testing.T) {
 func TestTimestampedTagToTag(t *testing.T) {
 	tag, ts, err := TimestampedTagToTag("shape-20130822:c8-circle:1378823906")
 	if err != nil {
-		t.Fatal("failed to parse timstamped tag: %s", err.Error())
+		t.Fatalf("failed to parse timstamped tag: %s", err.Error())
 	}
 
 	if expected := "shape-20130822:c8-circle"; tag != expected {
