@@ -8,6 +8,8 @@ It uses a log-based data flow.
 Based on John Myles White's [Bandit Algorithms for Website Optimization](http://shop.oreilly.com/product/0636920027393.do).
 Full documentation is available [on godoc](http://godoc.org/github.com/purzelrakete/bandit).
 
+For a general introduction to [Multiarmed Bandits] see [1].
+
 Build bandit with `make`. You need go >= 1.1.1..
 
 ## Data Flow
@@ -204,4 +206,5 @@ Thanks to for advice and opinions to
 - Peter Bourgon
 - Sean Braithwaite
 
-[1]: http://dl.acm.org/citation.cfm?id=1677012" "Explore/Exploit Schemes for Web Content Optimzation"
+[1]: http://goo.gl/wQkSg "Multiarmed Bandits"
+[2]: http://dl.acm.org/citation.cfm?id=1677012 "Explore/Exploit Schemes for Web Content Optimzation"
