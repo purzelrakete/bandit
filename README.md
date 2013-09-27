@@ -197,12 +197,12 @@ The API is currently *not stable* and is subject to change at any time.
 Developed by
 
 - Rany Keddo (@purzelrakete)
+- Ozgür Demir (@ozgurdemir)
 
 Thanks to for advice and opinions to
 
 - John Myles White
 - Josh Devins
-- Ozgür Demir
 - Peter Bourgon
 - Sean Braithwaite
 
