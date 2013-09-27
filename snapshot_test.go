@@ -6,7 +6,6 @@ import (
 	"testing"
 )
 
-// test mappers
 func TestSnapshotMapper(t *testing.T) {
 	log := []string{
 		"1379069548 BanditSelection shape-20130822:2",
@@ -28,22 +27,26 @@ func TestSnapshotMapper(t *testing.T) {
 		t.Fatalf("could not find shapes campaign.")
 	}
 
+	stats := []Stats{
+		newCountSelects(c),
+		newSumRewards(c),
+	}
+
 	r, w := strings.NewReader(strings.Join(log, "\n")), new(bytes.Buffer)
-	mapper := SnapshotMapper(c, r, w)
+	mapper := SnapshotMapper(c, stats, r, w)
 	mapper()
 	mapped := w.String()
 
-	expected := []string{
+	expected := strings.Join([]string{
 		"BanditSelection_2 1",
 		"BanditSelection_2 1",
 		"BanditReward_2 1.0",
 		"BanditReward_2 0.0",
 		"",
-	}
-	expectedMerged := strings.Join(expected, "\n")
+	}, "\n")
 
-	if got := mapped; got != expectedMerged {
-		t.Fatalf("expected '%s' but got '%s'", expectedMerged, got)
+	if got := mapped; got != expected {
+		t.Fatalf("expected '%s' but got '%s'", expected, got)
 	}
 }
 
@@ -68,20 +71,24 @@ func TestSnapshotReducer(t *testing.T) {
 		t.Fatalf("could not find shapes campaign.")
 	}
 
+	stats := []Stats{
+		newCountSelects(c),
+		newSumRewards(c),
+	}
+
 	r, w := strings.NewReader(strings.Join(log, "\n")), new(bytes.Buffer)
-	reducer := SnapshotReducer(c, r, w)
+	reducer := SnapshotReducer(c, stats, r, w)
 	reducer()
 	reduced := strings.TrimRight(w.String(), "\n ")
 
-	expected := []string{
+	expected := strings.Join([]string{
 		"BanditReward 1 1.000000",
 		"BanditSelection 1 2.000000",
 		"BanditSelection 2 2.000000",
-	}
-	expectedMerged := strings.Join(expected, "\n")
+	}, "\n")
 
-	if got := reduced; got != expectedMerged {
-		t.Fatalf("expected '%s' but got '%s'", expectedMerged, got)
+	if got := reduced; got != expected {
+		t.Fatalf("expected '%s' but got '%s'", expected, got)
 	}
 }
 
@@ -106,24 +113,28 @@ func TestSnapshotMapperReducer(t *testing.T) {
 		t.Fatalf("could not find shapes campaign.")
 	}
 
+	stats := []Stats{
+		newCountSelects(c),
+		newSumRewards(c),
+	}
+
 	r, w := strings.NewReader(strings.Join(log, "\n")), new(bytes.Buffer)
-	mapper := SnapshotMapper(c, r, w)
+	mapper := SnapshotMapper(c, stats, r, w)
 	mapper()
 	mapped := w.String()
-	
+
 	r, w = strings.NewReader(mapped), new(bytes.Buffer)
-	reducer := SnapshotReducer(c, r, w)
+	reducer := SnapshotReducer(c, stats, r, w)
 	reducer()
 	reduced := strings.TrimRight(w.String(), "\n ")
-	
-	expected := []string{
+
+	expected := strings.Join([]string{
 		"BanditReward 2 1.000000",
 		"BanditSelection 2 2.000000",
-	}
-	expectedMerged := strings.Join(expected, "\n")
+	}, "\n")
 
-	if got := reduced; got != expectedMerged {
-		t.Fatalf("expected '%s' but got '%s'", expectedMerged, got)
+	if got := reduced; got != expected {
+		t.Fatalf("expected '%s' but got '%s'", expected, got)
 	}
 }
 
@@ -150,4 +161,3 @@ func TestParseSnapshot(t *testing.T) {
 		t.Fatalf("expected arms to be %f but got %f", expectedReward, got)
 	}
 }
-

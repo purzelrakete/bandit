@@ -9,7 +9,7 @@ import (
 
 // Stats aggregates statistics from line based input
 type Stats interface {
-	mapLine(string) (string, string, bool)
+	mapLine(string) (string, string, bool) // line -> (key, value, matches)
 	reduceLine(string)
 	result() (map[int]float64, bool)
 	getPrefix() string
