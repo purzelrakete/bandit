@@ -7,7 +7,6 @@ import (
 	"bufio"
 	"fmt"
 	"io"
-	"log"
 	"strconv"
 	"strings"
 )
@@ -15,30 +14,19 @@ import (
 // SnapshotMapper returns a hadoop streaming mapper function. Emits (arm,
 // reward) tuples onto the given writer, for the specified experiment only.
 func SnapshotMapper(e *Experiment, r io.Reader, w io.Writer) func() {
-	reward := banditReward + " " + e.Name
-	rewardLen := 4
+	stats := []Stats{
+		newSumRewards(e),
+		newCountSelects(e),
+	}
 
 	return func() {
 		scanner := bufio.NewScanner(r)
 		for scanner.Scan() {
 			line := scanner.Text()
-			if strings.Index(line, reward) >= 0 {
-				fields := strings.Fields(line)
-				if len(fields) != rewardLen {
-					log.Fatalf("line does not have %d fields: '%s'", rewardLen, line)
+			for _, stat := range stats {
+				if key, value, ok := stat.mapLine(line); ok {
+					fmt.Fprintf(w, "%s %s\n", key, value)
 				}
-
-				variant, err := e.GetTaggedVariant(fields[2])
-				if err != nil {
-					log.Fatalf("invalid variant on line '%s': %s", fields[5], err.Error())
-				}
-
-				reward, err := strconv.ParseFloat(fields[3], 32)
-				if err != nil {
-					log.Fatalf("non-float reward on line '%s': %s", fields[6], err.Error())
-				}
-
-				fmt.Fprintf(w, "%d %f\n", variant.Ordinal, reward)
 			}
 		}
 	}
@@ -47,29 +35,33 @@ func SnapshotMapper(e *Experiment, r io.Reader, w io.Writer) func() {
 // SnapshotReducer returns a hadoop streaming reducer function. Emits one
 // SnapshotLine for the specificed experiment.
 func SnapshotReducer(e *Experiment, r io.Reader, w io.Writer) func() {
-	return func() {
-		arms := len(e.Variants)
-		c := NewCounters(arms)
-		scanner := bufio.NewScanner(r)
+	stats := []Stats{
+		newSumRewards(e),
+		newCountSelects(e),
+	}
 
+	return func() {
+		scanner := bufio.NewScanner(r)
 		for scanner.Scan() {
 			line := scanner.Text()
-			fields := strings.Fields(line)
-
-			variant, err := strconv.ParseInt(fields[0], 10, 16)
-			if err != nil {
-				log.Fatalf("non-integral arm on line '%s': %s", line, err.Error())
+			for _, stat := range stats {
+				stat.reduceLine(line)
 			}
-
-			reward, err := strconv.ParseFloat(fields[1], 32)
-			if err != nil {
-				log.Fatalf("non-float reward on line '%s': %s", line, err.Error())
-			}
-
-			c.Update(int(variant), reward)
 		}
 
-		fmt.Fprintln(w, SnapshotLine(c))
+		for _, stat := range stats {
+			if values, ok := stat.result(); ok {
+				for key, value := range values {
+					fmt.Fprintf(w, "%s %d %f\n", stat.getPrefix(), key + 1, value)
+				}
+			}
+		}
+	}
+}
+
+func SnapshotCollect(e *Experiment, r io.Reader, w io.Writer) func() {
+	return func() {
+
 	}
 }
 

@@ -111,7 +111,7 @@ func (s *softmax) SelectArm() int {
 			break
 		}
 	}
-
+	s.counts[draw]++
 	return draw + 1
 }
 
@@ -133,22 +133,23 @@ type uCB1 struct {
 }
 
 // SelectArm returns 1 indexed arm to be tried next.
-func (s *uCB1) SelectArm() int {
-	for i, count := range s.counts {
+func (u *uCB1) SelectArm() int {
+	for i, count := range u.counts {
 		if count == 0 {
+			u.counts[i]++
 			return i + 1
 		}
 	}
 
 	var totalCounts int
-	for _, count := range s.counts {
+	for _, count := range u.counts {
 		totalCounts += count
 	}
 
-	ucbValues := make([]float64, s.arms)
-	for i := 0; i < s.arms; i++ {
-		bonus := math.Sqrt((2 * math.Log(float64(totalCounts))) / float64(s.counts[i]))
-		ucbValues[i] = s.values[i] + bonus
+	ucbValues := make([]float64, u.arms)
+	for i := 0; i < u.arms; i++ {
+		bonus := math.Sqrt((2 * math.Log(float64(totalCounts))) / float64(u.counts[i]))
+		ucbValues[i] = u.values[i] + bonus
 	}
 
 	var arm int
@@ -159,7 +160,7 @@ func (s *uCB1) SelectArm() int {
 			max = val
 		}
 	}
-
+	u.counts[arm]++
 	return arm + 1
 }
 
@@ -194,7 +195,6 @@ func (c *Counters) Update(arm int, reward float64) {
 	defer c.Unlock()
 
 	arm--
-	c.counts[arm]++
 	count := c.counts[arm]
 	c.values[arm] = ((c.values[arm] * float64(count-1)) + reward) / float64(count)
 }
