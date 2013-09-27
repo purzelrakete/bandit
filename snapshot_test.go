@@ -18,18 +18,8 @@ func TestSnapshotMapper(t *testing.T) {
 		"1379069258 BanditReward plants-20121111:1 1.0",
 	}
 
-	es, err := NewExperiments(NewFileOpener("experiments.tsv"))
-	if err != nil {
-		t.Fatalf("while reading campaign fixture: %s", err.Error())
-	}
-
-	c, ok := (*es)["shape-20130822"]
-	if !ok {
-		t.Fatalf("could not find shapes campaign.")
-	}
-
 	r, w := strings.NewReader(strings.Join(log, "\n")), new(bytes.Buffer)
-	mapper := SnapshotMapper(c, r, w)
+	mapper := SnapshotMapper("shape-20130822", r, w)
 	mapper()
 	mapped := w.String()
 
@@ -58,18 +48,8 @@ func TestSnapshotReducer(t *testing.T) {
 		"",
 	}
 
-	es, err := NewExperiments(NewFileOpener("experiments.tsv"))
-	if err != nil {
-		t.Fatalf("while reading campaign fixture: %s", err.Error())
-	}
-
-	c, ok := (*es)["shape-20130822"]
-	if !ok {
-		t.Fatalf("could not find shapes campaign.")
-	}
-
 	r, w := strings.NewReader(strings.Join(log, "\n")), new(bytes.Buffer)
-	reducer := SnapshotReducer(c, r, w)
+	reducer := SnapshotReducer("shape-20130822", r, w)
 	reducer()
 	reduced := strings.TrimRight(w.String(), "\n ")
 
@@ -96,23 +76,13 @@ func TestSnapshotMapperReducer(t *testing.T) {
 		"1379069258 BanditReward plants-20121111:1 1.0",
 	}
 
-	es, err := NewExperiments(NewFileOpener("experiments.tsv"))
-	if err != nil {
-		t.Fatalf("while reading campaign fixture: %s", err.Error())
-	}
-
-	c, ok := (*es)["shape-20130822"]
-	if !ok {
-		t.Fatalf("could not find shapes campaign.")
-	}
-
 	r, w := strings.NewReader(strings.Join(log, "\n")), new(bytes.Buffer)
-	mapper := SnapshotMapper(c, r, w)
+	mapper := SnapshotMapper("shape-20130822", r, w)
 	mapper()
 	mapped := w.String()
 	
 	r, w = strings.NewReader(mapped), new(bytes.Buffer)
-	reducer := SnapshotReducer(c, r, w)
+	reducer := SnapshotReducer("shape-20130822", r, w)
 	reducer()
 	reduced := strings.TrimRight(w.String(), "\n ")
 	

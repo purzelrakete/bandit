@@ -18,14 +18,14 @@ type Stats interface {
 type countSelects struct {
 	selects    map[int]float64
 	prefix     string
-	experiment *Experiment
+	experimentName string
 }
 
-func newCountSelects(e *Experiment) Stats {
+func newCountSelects(name string) Stats {
 	return &countSelects{
-		prefix:     "BanditSelection",
-		experiment: e,
-		selects:    make(map[int]float64),
+		prefix:         "BanditSelection",
+		experimentName: name,
+		selects:        make(map[int]float64),
 	}
 }
 
@@ -35,7 +35,7 @@ func (c *countSelects) getPrefix() string {
 
 // Mapper to count selects from a log file
 func (c *countSelects) mapLine(line string) (string, string, bool) {
-	selection := banditSelection + " " + c.experiment.Name
+	selection := banditSelection + " " + c.experimentName
 	selectionLen := 3
 	if strings.Index(line, selection) >= 0 {
 		fields := strings.Fields(line)
@@ -43,12 +43,13 @@ func (c *countSelects) mapLine(line string) (string, string, bool) {
 			log.Fatalf("line does not have %d fields: '%s'", selectionLen, line)
 		}
 
-		variant, err := c.experiment.GetTaggedVariant(fields[2])
+		splittedString := strings.Split(fields[2],":")
+		variant, err := strconv.ParseInt(splittedString[1], 10, 0)
 		if err != nil {
 			log.Fatalf("invalid variant in line '%s': %s", line, err.Error())
 		}
 
-		return fmt.Sprintf("%s_%d", c.prefix, variant.Ordinal), "1", true
+		return fmt.Sprintf("%s_%d", c.prefix, variant), "1", true
 	}
 	return "", "", false
 }
@@ -75,16 +76,16 @@ func (c *countSelects) result() (map[int]float64, bool) {
 
 // structure with functions to sum rewards from log lines
 type sumRewards struct {
-	prefix     string
-	experiment *Experiment
-	rewards    map[int]float64
+	prefix         string
+	experimentName string
+	rewards        map[int]float64
 }
 
-func newSumRewards(e *Experiment) Stats {
+func newSumRewards(name string) Stats {
 	return &sumRewards{
-		prefix:     "BanditReward",
-		experiment: e,
-		rewards:    make(map[int]float64),
+		prefix:         "BanditReward",
+		experimentName: name,
+		rewards:        make(map[int]float64),
 	}
 }
 
@@ -94,7 +95,7 @@ func (s *sumRewards) getPrefix() string {
 
 // sumRewards mapper emmits a key, value for each Reward line in log file
 func (s *sumRewards) mapLine(line string) (string, string, bool) {
-	reward := banditReward + " " + s.experiment.Name
+	reward := banditReward + " " + s.experimentName
 	rewardLen := 4
 	if strings.Index(line, reward) >= 0 {
 		fields := strings.Fields(line)
@@ -102,12 +103,13 @@ func (s *sumRewards) mapLine(line string) (string, string, bool) {
 			log.Fatalf("line does not have %d fields: '%s'", rewardLen, line)
 		}
 
-		variant, err := s.experiment.GetTaggedVariant(fields[2])
+		splittedString := strings.Split(fields[2],":")
+		variant, err := strconv.ParseInt(splittedString[1], 10, 0)
 		if err != nil {
 			log.Fatalf("invalid variant on line '%s': %s", line, err.Error())
 		}
 
-		return fmt.Sprintf("%s_%d", s.prefix, variant.Ordinal), fields[3], true
+		return fmt.Sprintf("%s_%d", s.prefix, variant), fields[3], true
 	}
 	return "", "", false
 }

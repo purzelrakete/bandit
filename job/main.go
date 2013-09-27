@@ -9,7 +9,6 @@ import (
 
 var (
 	jobExperimentName = flag.String("experiment-name", "default", "name of experiment")
-	jobExperiments    = flag.String("experiments", "experiments.tsv", "experiments tsv")
 	jobKind           = flag.String("kind", "", "kind ∈ {map,reduce,poll}")
 	jobLogfile        = flag.String("log-file", "bandit-log.txt", "log file to read")
 	jobLogPoll        = flag.Duration("log-poll", 1e13, "produce snapshots with this fq")
@@ -20,19 +19,13 @@ func init() {
 }
 
 func main() {
-	o := bandit.NewFileOpener(*jobExperiments)
-	e, err := bandit.NewExperiment(o, *jobExperimentName)
-	if err != nil {
-		log.Fatalf("could parse experiment: %s", err.Error())
-	}
-
 	switch *jobKind {
 	case "map":
-		bandit.SnapshotMapper(e, os.Stdin, os.Stdout)()
+		bandit.SnapshotMapper(*jobExperimentName, os.Stdin, os.Stdout)()
 	case "reduce":
-		bandit.SnapshotReducer(e, os.Stdin, os.Stdout)()
+		bandit.SnapshotReducer(*jobExperimentName, os.Stdin, os.Stdout)()
 	case "poll":
-		if err := simple(e, *jobLogfile, *jobExperimentName+".dsv", *jobLogPoll); err != nil {
+		if err := simple(*jobExperimentName, *jobLogfile, *jobExperimentName+".dsv", *jobLogPoll); err != nil {
 			log.Fatalf("could not start polling job: %s", err.Error())
 		}
 	case "":
