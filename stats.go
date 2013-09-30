@@ -12,6 +12,7 @@ type Stats interface {
 	mapLine(string) (string, string, bool) // line -> (key, value, matches)
 	reduceLine(string)
 	result() (map[int]float64, bool)
+	collect(string)
 	getPrefix() string
 }
 
@@ -21,7 +22,7 @@ type countSelects struct {
 	experiment *Experiment
 }
 
-func newCountSelects(e *Experiment) Stats {
+func NewCountSelects(e *Experiment) Stats {
 	return &countSelects{
 		prefix:     "BanditSelection",
 		experiment: e,
@@ -66,6 +67,21 @@ func (c *countSelects) reduceLine(line string) {
 	}
 }
 
+func (c *countSelects) collect(line string) {
+	if strings.Index(line, c.prefix) >= 0 {
+		fields := strings.Fields(line)
+		variant, err := strconv.Atoi(fields[1])
+		if err != nil {
+			log.Fatalf("non-integral arm on line '%s': %s", line, err.Error())
+		}
+		selects, err := strconv.ParseFloat(fields[2], 32)
+		if err != nil {
+			log.Fatalf("non-float selects on line '%s': %s", line, err.Error())
+		}
+		c.selects[variant] = selects
+	}
+}
+
 func (c *countSelects) result() (map[int]float64, bool) {
 	if len(c.selects) > 0 {
 		return c.selects, true
@@ -80,7 +96,7 @@ type sumRewards struct {
 	rewards    map[int]float64
 }
 
-func newSumRewards(e *Experiment) Stats {
+func NewSumRewards(e *Experiment) Stats {
 	return &sumRewards{
 		prefix:     "BanditReward",
 		experiment: e,
@@ -136,4 +152,19 @@ func (s *sumRewards) result() (map[int]float64, bool) {
 		return s.rewards, true
 	}
 	return map[int]float64{}, false
+}
+
+func (s *sumRewards) collect(line string) {
+	if strings.Index(line, s.prefix) >= 0 {
+		fields := strings.Fields(line)
+		variant, err := strconv.Atoi(fields[1])
+		if err != nil {
+			log.Fatalf("non-integral arm on line '%s': %s", line, err.Error())
+		}
+		reward, err := strconv.ParseFloat(fields[2], 32)
+		if err != nil {
+			log.Fatalf("non-float reward on line '%s': %s", line, err.Error())
+		}
+		s.rewards[variant] = reward
+	}
 }

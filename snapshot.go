@@ -50,13 +50,23 @@ func SnapshotReducer(e *Experiment, s []Stats, r io.Reader, w io.Writer) func() 
 }
 
 // SnapshotCollect
-func SnapshotCollect(e *Experiment, r io.Reader, w io.Writer) func() {
+func SnapshotCollect(e *Experiment, s []Stats, r io.Reader, w io.Writer) func() {
 	return func() {
 		scanner := bufio.NewScanner(r)
 		for scanner.Scan() {
 			line := scanner.Text()
 			for _, stat := range s {
-				stat.combine(line)
+				stat.collect(line)
+			}
+		}
+
+		for _, stat := range s {
+			if values, ok := stat.result(); ok {
+				fmt.Fprintf(w, "%s %d", stat.getPrefix(), len(values))
+				for key, value := range values {
+					fmt.Fprintf(w, " %d:%f", key, value)
+				}
+				fmt.Fprintf(w, "\n")
 			}
 		}
 	}

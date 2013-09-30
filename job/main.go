@@ -26,9 +26,9 @@ func main() {
 		log.Fatalf("could parse experiment: %s", err.Error())
 	}
 
-	stats := []Stats{
-		newSumRewards(e),
-		newCountSelects(e),
+	stats := []bandit.Stats{
+		bandit.NewSumRewards(e),
+		bandit.NewCountSelects(e),
 	}
 
 	switch *jobKind {
@@ -36,8 +36,10 @@ func main() {
 		bandit.SnapshotMapper(e, stats, os.Stdin, os.Stdout)()
 	case "reduce":
 		bandit.SnapshotReducer(e, stats, os.Stdin, os.Stdout)()
+	case "collect":
+		bandit.SnapshotCollect(e, stats, os.Stdin, os.Stdout)()
 	case "poll":
-		if err := simple(e, *jobLogfile, *jobExperimentName+".dsv", *jobLogPoll); err != nil {
+		if err := simple(e, stats, *jobLogfile, *jobExperimentName+".dsv", *jobLogPoll); err != nil {
 			log.Fatalf("could not start polling job: %s", err.Error())
 		}
 	case "":

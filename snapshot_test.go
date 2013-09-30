@@ -28,8 +28,8 @@ func TestSnapshotMapper(t *testing.T) {
 	}
 
 	stats := []Stats{
-		newCountSelects(c),
-		newSumRewards(c),
+		NewCountSelects(c),
+		NewSumRewards(c),
 	}
 
 	r, w := strings.NewReader(strings.Join(log, "\n")), new(bytes.Buffer)
@@ -72,8 +72,8 @@ func TestSnapshotReducer(t *testing.T) {
 	}
 
 	stats := []Stats{
-		newCountSelects(c),
-		newSumRewards(c),
+		NewSumRewards(c),
+		NewCountSelects(c),
 	}
 
 	r, w := strings.NewReader(strings.Join(log, "\n")), new(bytes.Buffer)
@@ -114,8 +114,8 @@ func TestSnapshotMapperReducer(t *testing.T) {
 	}
 
 	stats := []Stats{
-		newCountSelects(c),
-		newSumRewards(c),
+		NewSumRewards(c),
+		NewCountSelects(c),
 	}
 
 	r, w := strings.NewReader(strings.Join(log, "\n")), new(bytes.Buffer)
@@ -136,6 +136,45 @@ func TestSnapshotMapperReducer(t *testing.T) {
 	if got := reduced; got != expected {
 		t.Fatalf("expected '%s' but got '%s'", expected, got)
 	}
+}
+
+func TestSnapshotCollect(t *testing.T) {
+	log := []string{
+		"BanditReward 2 1.000000",
+		"BanditSelection 2 2.000000",
+		"BanditReward 1 2.000000",
+		"BanditSelection 1 4.000000",
+	}
+
+	es, err := NewExperiments(NewFileOpener("experiments.tsv"))
+	if err != nil {
+		t.Fatalf("while reading campaign fixture: %s", err.Error())
+	}
+
+	c, ok := (*es)["shape-20130822"]
+	if !ok {
+		t.Fatalf("could not find shapes campaign.")
+	}
+
+	stats := []Stats{
+		NewSumRewards(c),
+		NewCountSelects(c),
+	}
+
+	r, w := strings.NewReader(strings.Join(log, "\n")), new(bytes.Buffer)
+	collect := SnapshotCollect(c, stats, r, w)
+	collect()
+	collected := strings.TrimRight(w.String(), "\n ")
+
+	expected := strings.Join([]string{
+		"BanditReward 2 2:1.000000 1:2.000000",
+		"BanditSelection 2 2:2.000000 1:4.000000",
+	}, "\n")
+
+	if got := collected; got != expected {
+		t.Fatalf("expected '%s' but got '%s'", expected, got)
+	}
+
 }
 
 func TestParseSnapshot(t *testing.T) {
