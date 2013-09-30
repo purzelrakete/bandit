@@ -6,7 +6,6 @@ import (
 	"testing"
 )
 
-// test mappers
 func TestSnapshotMapper(t *testing.T) {
 	log := []string{
 		"1379069548 BanditSelection shape-20130822:2",
@@ -18,22 +17,27 @@ func TestSnapshotMapper(t *testing.T) {
 		"1379069258 BanditReward plants-20121111:1 1.0",
 	}
 
+	stats := []Stats{
+		NewCountSelects("shape-20130822"),
+		NewSumRewards("shape-20130822"),
+	}
+
 	r, w := strings.NewReader(strings.Join(log, "\n")), new(bytes.Buffer)
-	mapper := SnapshotMapper("shape-20130822", r, w)
+	mapper := SnapshotMapper("shape-20130822", stats, r, w)
+
 	mapper()
 	mapped := w.String()
 
-	expected := []string{
+	expected := strings.Join([]string{
 		"BanditSelection_2 1",
 		"BanditSelection_2 1",
 		"BanditReward_2 1.0",
 		"BanditReward_2 0.0",
 		"",
-	}
-	expectedMerged := strings.Join(expected, "\n")
+	}, "\n")
 
-	if got := mapped; got != expectedMerged {
-		t.Fatalf("expected '%s' but got '%s'", expectedMerged, got)
+	if got := mapped; got != expected {
+		t.Fatalf("expected '%s' but got '%s'", expected, got)
 	}
 }
 
@@ -48,20 +52,25 @@ func TestSnapshotReducer(t *testing.T) {
 		"",
 	}
 
+	stats := []Stats{
+		NewSumRewards("shape-20130822"),
+		NewCountSelects("shape-20130822"),
+	}
+
 	r, w := strings.NewReader(strings.Join(log, "\n")), new(bytes.Buffer)
-	reducer := SnapshotReducer("shape-20130822", r, w)
+	reducer := SnapshotReducer("shape-20130822", stats, r, w)
+
 	reducer()
 	reduced := strings.TrimRight(w.String(), "\n ")
 
-	expected := []string{
+	expected := strings.Join([]string{
 		"BanditReward 1 1.000000",
 		"BanditSelection 1 2.000000",
 		"BanditSelection 2 2.000000",
-	}
-	expectedMerged := strings.Join(expected, "\n")
+	}, "\n")
 
-	if got := reduced; got != expectedMerged {
-		t.Fatalf("expected '%s' but got '%s'", expectedMerged, got)
+	if got := reduced; got != expected {
+		t.Fatalf("expected '%s' but got '%s'", expected, got)
 	}
 }
 
@@ -76,25 +85,71 @@ func TestSnapshotMapperReducer(t *testing.T) {
 		"1379069258 BanditReward plants-20121111:1 1.0",
 	}
 
+	stats := []Stats{
+		NewSumRewards("shape-20130822"),
+		NewCountSelects("shape-20130822"),
+	}
+
 	r, w := strings.NewReader(strings.Join(log, "\n")), new(bytes.Buffer)
-	mapper := SnapshotMapper("shape-20130822", r, w)
+	mapper := SnapshotMapper("shape-20130822", stats, r, w)
+
 	mapper()
 	mapped := w.String()
-	
+
 	r, w = strings.NewReader(mapped), new(bytes.Buffer)
-	reducer := SnapshotReducer("shape-20130822", r, w)
+
+	reducer := SnapshotReducer("shape-20130822", stats, r, w)
+
 	reducer()
 	reduced := strings.TrimRight(w.String(), "\n ")
-	
-	expected := []string{
+
+	expected := strings.Join([]string{
 		"BanditReward 2 1.000000",
 		"BanditSelection 2 2.000000",
-	}
-	expectedMerged := strings.Join(expected, "\n")
+	}, "\n")
 
-	if got := reduced; got != expectedMerged {
-		t.Fatalf("expected '%s' but got '%s'", expectedMerged, got)
+	if got := reduced; got != expected {
+		t.Fatalf("expected '%s' but got '%s'", expected, got)
 	}
+}
+
+func TestSnapshotCollect(t *testing.T) {
+	log := []string{
+		"BanditReward 2 1.000000",
+		"BanditSelection 2 2.000000",
+		"BanditReward 1 2.000000",
+		"BanditSelection 1 4.000000",
+	}
+
+	es, err := NewExperiments(NewFileOpener("experiments.tsv"))
+	if err != nil {
+		t.Fatalf("while reading campaign fixture: %s", err.Error())
+	}
+
+	c, ok := (*es)["shape-20130822"]
+	if !ok {
+		t.Fatalf("could not find shapes campaign.")
+	}
+
+	stats := []Stats{
+		NewSumRewards("shape-20130822"),
+		NewCountSelects("shape-20130822"),
+	}
+
+	r, w := strings.NewReader(strings.Join(log, "\n")), new(bytes.Buffer)
+	collect := SnapshotCollect(c, stats, r, w)
+	collect()
+	collected := strings.TrimRight(w.String(), "\n ")
+
+	expected := strings.Join([]string{
+		"BanditReward 2 2:1.000000 1:2.000000",
+		"BanditSelection 2 2:2.000000 1:4.000000",
+	}, "\n")
+
+	if got := collected; got != expected {
+		t.Fatalf("expected '%s' but got '%s'", expected, got)
+	}
+
 }
 
 func TestParseSnapshot(t *testing.T) {
@@ -120,4 +175,3 @@ func TestParseSnapshot(t *testing.T) {
 		t.Fatalf("expected arms to be %f but got %f", expectedReward, got)
 	}
 }
-

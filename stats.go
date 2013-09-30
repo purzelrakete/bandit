@@ -9,19 +9,20 @@ import (
 
 // Stats aggregates statistics from line based input
 type Stats interface {
-	mapLine(string) (string, string, bool)
+	mapLine(string) (string, string, bool) // line -> (key, value, matches)
 	reduceLine(string)
 	result() (map[int]float64, bool)
+	collect(string)
 	getPrefix() string
 }
 
 type countSelects struct {
-	selects    map[int]float64
-	prefix     string
+	selects        map[int]float64
+	prefix         string
 	experimentName string
 }
 
-func newCountSelects(name string) Stats {
+func NewCountSelects(name string) Stats {
 	return &countSelects{
 		prefix:         "BanditSelection",
 		experimentName: name,
@@ -43,7 +44,7 @@ func (c *countSelects) mapLine(line string) (string, string, bool) {
 			log.Fatalf("line does not have %d fields: '%s'", selectionLen, line)
 		}
 
-		splittedString := strings.Split(fields[2],":")
+		splittedString := strings.Split(fields[2], ":")
 		variant, err := strconv.ParseInt(splittedString[1], 10, 0)
 		if err != nil {
 			log.Fatalf("invalid variant in line '%s': %s", line, err.Error())
@@ -67,6 +68,21 @@ func (c *countSelects) reduceLine(line string) {
 	}
 }
 
+func (c *countSelects) collect(line string) {
+	if strings.Index(line, c.prefix) >= 0 {
+		fields := strings.Fields(line)
+		variant, err := strconv.Atoi(fields[1])
+		if err != nil {
+			log.Fatalf("non-integral arm on line '%s': %s", line, err.Error())
+		}
+		selects, err := strconv.ParseFloat(fields[2], 32)
+		if err != nil {
+			log.Fatalf("non-float selects on line '%s': %s", line, err.Error())
+		}
+		c.selects[variant] = selects
+	}
+}
+
 func (c *countSelects) result() (map[int]float64, bool) {
 	if len(c.selects) > 0 {
 		return c.selects, true
@@ -81,7 +97,7 @@ type sumRewards struct {
 	rewards        map[int]float64
 }
 
-func newSumRewards(name string) Stats {
+func NewSumRewards(name string) Stats {
 	return &sumRewards{
 		prefix:         "BanditReward",
 		experimentName: name,
@@ -103,7 +119,7 @@ func (s *sumRewards) mapLine(line string) (string, string, bool) {
 			log.Fatalf("line does not have %d fields: '%s'", rewardLen, line)
 		}
 
-		splittedString := strings.Split(fields[2],":")
+		splittedString := strings.Split(fields[2], ":")
 		variant, err := strconv.ParseInt(splittedString[1], 10, 0)
 		if err != nil {
 			log.Fatalf("invalid variant on line '%s': %s", line, err.Error())
@@ -138,4 +154,19 @@ func (s *sumRewards) result() (map[int]float64, bool) {
 		return s.rewards, true
 	}
 	return map[int]float64{}, false
+}
+
+func (s *sumRewards) collect(line string) {
+	if strings.Index(line, s.prefix) >= 0 {
+		fields := strings.Fields(line)
+		variant, err := strconv.Atoi(fields[1])
+		if err != nil {
+			log.Fatalf("non-integral arm on line '%s': %s", line, err.Error())
+		}
+		reward, err := strconv.ParseFloat(fields[2], 32)
+		if err != nil {
+			log.Fatalf("non-float reward on line '%s': %s", line, err.Error())
+		}
+		s.rewards[variant] = reward
+	}
 }

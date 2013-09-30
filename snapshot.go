@@ -13,17 +13,12 @@ import (
 
 // SnapshotMapper returns a hadoop streaming mapper function. Emits (arm,
 // reward) tuples onto the given writer, for the specified experiment only.
-func SnapshotMapper(experimentName string, r io.Reader, w io.Writer) func() {
-	stats := []Stats{
-		newSumRewards(experimentName),
-		newCountSelects(experimentName),
-	}
-
+func SnapshotMapper(experimentName string, s []Stats, r io.Reader, w io.Writer) func() {
 	return func() {
 		scanner := bufio.NewScanner(r)
 		for scanner.Scan() {
 			line := scanner.Text()
-			for _, stat := range stats {
+			for _, stat := range s {
 				if key, value, ok := stat.mapLine(line); ok {
 					fmt.Fprintf(w, "%s %s\n", key, value)
 				}
@@ -34,34 +29,46 @@ func SnapshotMapper(experimentName string, r io.Reader, w io.Writer) func() {
 
 // SnapshotReducer returns a hadoop streaming reducer function. Emits one
 // SnapshotLine for the specificed experiment.
-func SnapshotReducer(experimentName string, r io.Reader, w io.Writer) func() {
-	stats := []Stats{
-		newSumRewards(experimentName),
-		newCountSelects(experimentName),
-	}
-
+func SnapshotReducer(experimentName string, s []Stats, r io.Reader, w io.Writer) func() {
 	return func() {
 		scanner := bufio.NewScanner(r)
 		for scanner.Scan() {
 			line := scanner.Text()
-			for _, stat := range stats {
+			for _, stat := range s {
 				stat.reduceLine(line)
 			}
 		}
 
-		for _, stat := range stats {
+		for _, stat := range s {
 			if values, ok := stat.result(); ok {
 				for key, value := range values {
-					fmt.Fprintf(w, "%s %d %f\n", stat.getPrefix(), key + 1, value)
+					fmt.Fprintf(w, "%s %d %f\n", stat.getPrefix(), key+1, value)
 				}
 			}
 		}
 	}
 }
 
-func SnapshotCollect(e *Experiment, r io.Reader, w io.Writer) func() {
+// SnapshotCollect
+func SnapshotCollect(e *Experiment, s []Stats, r io.Reader, w io.Writer) func() {
 	return func() {
+		scanner := bufio.NewScanner(r)
+		for scanner.Scan() {
+			line := scanner.Text()
+			for _, stat := range s {
+				stat.collect(line)
+			}
+		}
 
+		for _, stat := range s {
+			if values, ok := stat.result(); ok {
+				fmt.Fprintf(w, "%s %d", stat.getPrefix(), len(values))
+				for key, value := range values {
+					fmt.Fprintf(w, " %d:%f", key, value)
+				}
+				fmt.Fprintf(w, "\n")
+			}
+		}
 	}
 }
 
