@@ -11,7 +11,7 @@ import (
 )
 
 // Simple produces a snapshot every `poll` duration. FIXME: O(N) memory
-func simple(experimentName string, s []bandit.Stats, logFile, snapshotFile string, poll time.Duration) error {
+func simple(experimentName string, s *bandit.Statistics, logFile, snapshotFile string, poll time.Duration) error {
 	opener := bandit.NewFileOpener(logFile)
 	file, err := opener.Open()
 	if err != nil {

@@ -19,10 +19,7 @@ func init() {
 }
 
 func main() {
-	stats := []bandit.Stats{
-		bandit.NewSumRewards(*jobExperimentName),
-		bandit.NewCountSelects(*jobExperimentName),
-	}
+	stats := bandit.NewStatistics(*jobExperimentName)
 
 	switch *jobKind {
 	case "map":
@@ -30,7 +27,7 @@ func main() {
 	case "reduce":
 		bandit.SnapshotReducer(*jobExperimentName, stats, os.Stdin, os.Stdout)()
 	case "collect":
-		bandit.SnapshotCollect(*jobExperimentName, stats, os.Stdin, os.Stdout)()
+		bandit.SnapshotCollect(stats, os.Stdin, os.Stdout)()
 	case "poll":
 		if err := simple(*jobExperimentName, stats, *jobLogfile, *jobExperimentName+".dsv", *jobLogPoll); err != nil {
 			log.Fatalf("could not start polling job: %s", err.Error())
