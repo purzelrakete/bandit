@@ -17,10 +17,7 @@ func TestSnapshotMapper(t *testing.T) {
 		"1379069258 BanditReward plants-20121111:1 1.0",
 	}
 
-	stats := []Stats{
-		NewCountSelects("shape-20130822"),
-		NewSumRewards("shape-20130822"),
-	}
+	stats := NewStatistics("shape-20130822")
 
 	r, w := strings.NewReader(strings.Join(log, "\n")), new(bytes.Buffer)
 	mapper := SnapshotMapper("shape-20130822", stats, r, w)
@@ -52,10 +49,7 @@ func TestSnapshotReducer(t *testing.T) {
 		"",
 	}
 
-	stats := []Stats{
-		NewSumRewards("shape-20130822"),
-		NewCountSelects("shape-20130822"),
-	}
+	stats := NewStatistics("shape-20130822")
 
 	r, w := strings.NewReader(strings.Join(log, "\n")), new(bytes.Buffer)
 	reducer := SnapshotReducer("shape-20130822", stats, r, w)
@@ -85,10 +79,7 @@ func TestSnapshotMapperReducer(t *testing.T) {
 		"1379069258 BanditReward plants-20121111:1 1.0",
 	}
 
-	stats := []Stats{
-		NewSumRewards("shape-20130822"),
-		NewCountSelects("shape-20130822"),
-	}
+	stats := NewStatistics("shape-20130822")
 
 	r, w := strings.NewReader(strings.Join(log, "\n")), new(bytes.Buffer)
 	mapper := SnapshotMapper("shape-20130822", stats, r, w)
@@ -121,32 +112,41 @@ func TestSnapshotCollect(t *testing.T) {
 		"BanditSelection 1 4.000000",
 	}
 
-	es, err := NewExperiments(NewFileOpener("experiments.tsv"))
-	if err != nil {
-		t.Fatalf("while reading campaign fixture: %s", err.Error())
-	}
-
-	c, ok := (*es)["shape-20130822"]
-	if !ok {
-		t.Fatalf("could not find shapes campaign.")
-	}
-
-	stats := []Stats{
-		NewSumRewards("shape-20130822"),
-		NewCountSelects("shape-20130822"),
-	}
+	stats := NewStatistics("shape-20130822")
 
 	r, w := strings.NewReader(strings.Join(log, "\n")), new(bytes.Buffer)
-	collect := SnapshotCollect(c, stats, r, w)
+	collect := SnapshotCollect(stats, r, w)
 	collect()
 	collected := strings.TrimRight(w.String(), "\n ")
 
-	expected := strings.Join([]string{
-		"BanditReward 2 2:1.000000 1:2.000000",
-		"BanditSelection 2 2:2.000000 1:4.000000",
-	}, "\n")
+	expected := "2 0.500000 0.500000"
 
 	if got := collected; got != expected {
+		t.Fatalf("expected '%s' but got '%s'", expected, got)
+	}
+
+}
+
+func TestSnapshotCounter(t *testing.T) {
+	log := []string{
+		"BanditReward 2 1.000000",
+		"BanditSelection 2 4.000000",
+		"BanditReward 1 2.000000",
+		"BanditSelection 1 4.000000",
+	}
+
+	stats := NewStatistics("shape-20130822")
+
+	r, w := strings.NewReader(strings.Join(log, "\n")), new(bytes.Buffer)
+	collect := SnapshotCollect(stats, r, w)
+	collect()
+	counters := stats.getCounters()
+
+	expected := "2 0.500000 0.250000"
+
+	snapshot := SnapshotLine(counters)
+
+	if got := snapshot; got != expected {
 		t.Fatalf("expected '%s' but got '%s'", expected, got)
 	}
 

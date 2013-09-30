@@ -7,6 +7,39 @@ import (
 	"strings"
 )
 
+type Statistics struct {
+	experimentName string
+	stats          []Stats
+}
+
+func NewStatistics(experimentName string) *Statistics {
+	return &Statistics{
+		experimentName: experimentName,
+		stats: []Stats{
+			newSumRewards(experimentName),
+			newCountSelects(experimentName),
+		},
+	}
+}
+
+func (s *Statistics) getCounters() Counters {
+	if rewards, ok := s.stats[0].result(); ok {
+		if selects, ok := s.stats[1].result(); ok {
+			if len(selects) != len(rewards) {
+				log.Fatalf("rewards and selects do not have same number of arms: %d : %d", len(selects), len(rewards))
+			}
+			counters := NewCounters(len(selects))
+			for key, _ := range rewards {
+				index := key - 1
+				counters.counts[index] = int(selects[key])
+				counters.values[index] = rewards[key] / selects[key]
+			}
+			return counters
+		}
+	}
+	return NewCounters(0)
+}
+
 // Stats aggregates statistics from line based input
 type Stats interface {
 	mapLine(string) (string, string, bool) // line -> (key, value, matches)
@@ -22,7 +55,7 @@ type countSelects struct {
 	experimentName string
 }
 
-func NewCountSelects(name string) Stats {
+func newCountSelects(name string) Stats {
 	return &countSelects{
 		prefix:         "BanditSelection",
 		experimentName: name,
@@ -97,7 +130,7 @@ type sumRewards struct {
 	rewards        map[int]float64
 }
 
-func NewSumRewards(name string) Stats {
+func newSumRewards(name string) Stats {
 	return &sumRewards{
 		prefix:         "BanditReward",
 		experimentName: name,
