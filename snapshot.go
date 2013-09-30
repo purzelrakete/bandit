@@ -50,7 +50,7 @@ func SnapshotReducer(experimentName string, s []Stats, r io.Reader, w io.Writer)
 }
 
 // SnapshotCollect
-func SnapshotCollect(e *Experiment, s []Stats, r io.Reader, w io.Writer) func() {
+func SnapshotCollect(experimentName string, s []Stats, r io.Reader, w io.Writer) func() {
 	return func() {
 		scanner := bufio.NewScanner(r)
 		for scanner.Scan() {

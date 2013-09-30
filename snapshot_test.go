@@ -121,23 +121,13 @@ func TestSnapshotCollect(t *testing.T) {
 		"BanditSelection 1 4.000000",
 	}
 
-	es, err := NewExperiments(NewFileOpener("experiments.tsv"))
-	if err != nil {
-		t.Fatalf("while reading campaign fixture: %s", err.Error())
-	}
-
-	c, ok := (*es)["shape-20130822"]
-	if !ok {
-		t.Fatalf("could not find shapes campaign.")
-	}
-
 	stats := []Stats{
 		NewSumRewards("shape-20130822"),
 		NewCountSelects("shape-20130822"),
 	}
 
 	r, w := strings.NewReader(strings.Join(log, "\n")), new(bytes.Buffer)
-	collect := SnapshotCollect(c, stats, r, w)
+	collect := SnapshotCollect("shape-20130822", stats, r, w)
 	collect()
 	collected := strings.TrimRight(w.String(), "\n ")
 
