@@ -11,6 +11,8 @@ import (
 	"strings"
 )
 
+// FIXME(rk): experimentName does nothing.
+
 // SnapshotMapper returns a hadoop streaming mapper function. Emits (arm,
 // reward) tuples onto the given writer, for the specified experiment only.
 func SnapshotMapper(experimentName string, s *Statistics, r io.Reader, w io.Writer) func() {
