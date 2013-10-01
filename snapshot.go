@@ -49,7 +49,7 @@ func SnapshotReducer(experimentName string, s *Statistics, r io.Reader, w io.Wri
 	}
 }
 
-// SnapshotCollect
+// SnapshotCollect aggregates outputs of reducers
 func SnapshotCollect(s *Statistics, r io.Reader, w io.Writer) func() {
 	return func() {
 		scanner := bufio.NewScanner(r)

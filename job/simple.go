@@ -24,7 +24,7 @@ func simple(experimentName string, s *bandit.Statistics, logFile, snapshotFile s
 		for _ = range t.C {
 			file, err := opener.Open()
 			if err != nil {
-				log.Println("error opening log: %s", err.Error())
+				log.Printf("error opening log: %s", err.Error())
 			}
 
 			r, w := file, new(bytes.Buffer)

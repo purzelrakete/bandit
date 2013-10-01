@@ -165,7 +165,7 @@ func (u *uCB1) SelectArm() int {
 }
 
 // Version returns information on this bandit
-func (s *uCB1) Version() string {
+func (u *uCB1) Version() string {
 	return fmt.Sprintf("UCB1")
 }
 

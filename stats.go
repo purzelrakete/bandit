@@ -7,11 +7,13 @@ import (
 	"strings"
 )
 
+// Statistics contains all stats which should be computed
 type Statistics struct {
 	experimentName string
 	stats          []Stats
 }
 
+// NewStatistics creates a new object with default statistics
 func NewStatistics(experimentName string) *Statistics {
 	return &Statistics{
 		experimentName: experimentName,
@@ -29,7 +31,7 @@ func (s *Statistics) getCounters() Counters {
 				log.Fatalf("rewards and selects do not have same number of arms: %d : %d", len(selects), len(rewards))
 			}
 			counters := NewCounters(len(selects))
-			for key, _ := range rewards {
+			for key := range rewards {
 				index := key - 1
 				counters.counts[index] = int(selects[key])
 				counters.values[index] = rewards[key] / selects[key]
