@@ -29,7 +29,7 @@ func main() {
 	case "collect":
 		bandit.SnapshotCollect(stats, os.Stdin, os.Stdout)()
 	case "poll":
-		if err := simple(*jobExperimentName, stats, *jobLogfile, *jobExperimentName+".dsv", *jobLogPoll); err != nil {
+		if err := simple(*jobExperimentName, stats, *jobLogfile, *jobExperimentName+".tsv", *jobLogPoll); err != nil {
 			log.Fatalf("could not start polling job: %s", err.Error())
 		}
 	case "":

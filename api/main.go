@@ -15,7 +15,7 @@ import (
 var (
 	apiExperiments = flag.String("experiments", "experiments.tsv", "experiments tsv filename")
 	apiBind        = flag.String("port", ":8080", "interface / port to bind to")
-	apiSnapshot    = flag.String("snapshot", "snapshot.dsv", "campaign snapshot file")
+	apiSnapshot    = flag.String("snapshot", "snapshot.tsv", "campaign snapshot file")
 	apiSnaphotPoll = flag.Duration("snapshot-poll", 1e9, "time before snapshot is loaded")
 	apiPinTTL      = flag.Duration("pin-ttl", 0, "ttl life of a pinned variant")
 )
