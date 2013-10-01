@@ -28,8 +28,9 @@ func (s *Statistics) getCounters() Counters {
 	if rewards, ok := s.stats[0].result(); ok {
 		if selects, ok := s.stats[1].result(); ok {
 			if len(selects) != len(rewards) {
-				log.Fatalf("rewards and selects do not have same number of arms: %d : %d", len(selects), len(rewards))
+				panic("rewards, selects have different arms")
 			}
+
 			counters := NewCounters(len(selects))
 			for key := range rewards {
 				index := key - 1
@@ -39,6 +40,7 @@ func (s *Statistics) getCounters() Counters {
 			return counters
 		}
 	}
+
 	return NewCounters(0)
 }
 
@@ -69,9 +71,9 @@ func (c *countSelects) getPrefix() string {
 	return c.prefix
 }
 
-// Mapper to count selects from a log file
+// mapLine to count selects from a log file
 func (c *countSelects) mapLine(line string) (string, string, bool) {
-	selection := banditSelection + " " + c.experimentName
+	selection := banditSelection + "\t" + c.experimentName
 	selectionLen := 3
 	if strings.Index(line, selection) >= 0 {
 		fields := strings.Fields(line)
@@ -87,13 +89,14 @@ func (c *countSelects) mapLine(line string) (string, string, bool) {
 
 		return fmt.Sprintf("%s_%d", c.prefix, variant), "1", true
 	}
+
 	return "", "", false
 }
 
-// Reducer to sum the selects per arm
+// reduceLine to sum the selects per arm
 func (c *countSelects) reduceLine(line string) {
 	if strings.Index(line, c.prefix) >= 0 {
-		preparedString := strings.Replace(line, "_", " ", 1)
+		preparedString := strings.Replace(line, "_", "\t", 1)
 		fields := strings.Fields(preparedString)
 		variant, err := strconv.Atoi(fields[1])
 		if err != nil {
@@ -125,7 +128,7 @@ func (c *countSelects) result() (map[int]float64, bool) {
 	return map[int]float64{}, false
 }
 
-// structure with functions to sum rewards from log lines
+// sumRewards to sum rewards from log lines
 type sumRewards struct {
 	prefix         string
 	experimentName string
@@ -144,9 +147,9 @@ func (s *sumRewards) getPrefix() string {
 	return s.prefix
 }
 
-// sumRewards mapper emmits a key, value for each Reward line in log file
+// mapLine mapper emmits a key, value for each Reward line in log file
 func (s *sumRewards) mapLine(line string) (string, string, bool) {
-	reward := banditReward + " " + s.experimentName
+	reward := banditReward + "\t" + s.experimentName
 	rewardLen := 4
 	if strings.Index(line, reward) >= 0 {
 		fields := strings.Fields(line)
@@ -165,10 +168,10 @@ func (s *sumRewards) mapLine(line string) (string, string, bool) {
 	return "", "", false
 }
 
-// sumRewards reducer sums up the incomming rewards
+// reduceLine reducer sums up the incomming rewards
 func (s *sumRewards) reduceLine(line string) {
 	if strings.Index(line, s.prefix) >= 0 {
-		preparedString := strings.Replace(line, "_", " ", 1)
+		preparedString := strings.Replace(line, "_", "\t", 1)
 		fields := strings.Fields(preparedString)
 		variant, err := strconv.Atoi(fields[1])
 		if err != nil {

@@ -22,7 +22,7 @@ func SnapshotMapper(experimentName string, s *Statistics, r io.Reader, w io.Writ
 			line := scanner.Text()
 			for _, stat := range s.stats {
 				if key, value, ok := stat.mapLine(line); ok {
-					fmt.Fprintf(w, "%s %s\n", key, value)
+					fmt.Fprintf(w, "%s	%s\n", key, value)
 				}
 			}
 		}
@@ -44,7 +44,7 @@ func SnapshotReducer(experimentName string, s *Statistics, r io.Reader, w io.Wri
 		for _, stat := range s.stats {
 			if values, ok := stat.result(); ok {
 				for key, value := range values {
-					fmt.Fprintf(w, "%s %d %f\n", stat.getPrefix(), key+1, value)
+					fmt.Fprintf(w, "%s	%d	%f\n", stat.getPrefix(), key+1, value)
 				}
 			}
 		}
@@ -76,14 +76,14 @@ func SnapshotLine(c Counters) string {
 
 	return strings.Join([]string{
 		fmt.Sprintf("%d", c.arms),
-		strings.Join(values, " "),
-	}, " ")
+		strings.Join(values, "\t"),
+	}, "\t")
 }
 
 // ParseSnapshot reads in a snapshot file. Snapshot files contain a single
 // line experiment snapshot, for example:
 //
-// 2 0.1 0.5
+// 2	0.1	0.5
 //
 // Tokens are separated by whitespace. The given example encodes an experiment
 // with two variants. First is the number of variants. This is followed by
