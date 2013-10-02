@@ -20,7 +20,7 @@ func TestSnapshotMapper(t *testing.T) {
 	stats := NewStatistics("shape-20130822")
 
 	r, w := strings.NewReader(strings.Join(log, "\n")), new(bytes.Buffer)
-	mapper := SnapshotMapper("shape-20130822", stats, r, w)
+	mapper := SnapshotMapper(stats, r, w)
 
 	mapper()
 	mapped := strings.TrimRight(w.String(), "\n ")
@@ -50,7 +50,7 @@ func TestSnapshotReducer(t *testing.T) {
 	stats := NewStatistics("shape-20130822")
 
 	r, w := strings.NewReader(strings.Join(log, "\n")), new(bytes.Buffer)
-	reducer := SnapshotReducer("shape-20130822", stats, r, w)
+	reducer := SnapshotReducer(stats, r, w)
 
 	reducer()
 	reduced := strings.TrimRight(w.String(), "\n ")
@@ -80,14 +80,14 @@ func TestSnapshotMapperReducer(t *testing.T) {
 	stats := NewStatistics("shape-20130822")
 
 	r, w := strings.NewReader(strings.Join(log, "\n")), new(bytes.Buffer)
-	mapper := SnapshotMapper("shape-20130822", stats, r, w)
+	mapper := SnapshotMapper(stats, r, w)
 
 	mapper()
 	mapped := w.String()
 
 	r, w = strings.NewReader(mapped), new(bytes.Buffer)
 
-	reducer := SnapshotReducer("shape-20130822", stats, r, w)
+	reducer := SnapshotReducer(stats, r, w)
 
 	reducer()
 	reduced := strings.TrimRight(w.String(), "\n ")

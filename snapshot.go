@@ -11,11 +11,9 @@ import (
 	"strings"
 )
 
-// FIXME(rk): experimentName does nothing.
-
 // SnapshotMapper returns a hadoop streaming mapper function. Emits (arm,
 // reward) tuples onto the given writer, for the specified experiment only.
-func SnapshotMapper(experimentName string, s *Statistics, r io.Reader, w io.Writer) func() {
+func SnapshotMapper(s *Statistics, r io.Reader, w io.Writer) func() {
 	return func() {
 		scanner := bufio.NewScanner(r)
 		for scanner.Scan() {
@@ -31,7 +29,7 @@ func SnapshotMapper(experimentName string, s *Statistics, r io.Reader, w io.Writ
 
 // SnapshotReducer returns a hadoop streaming reducer function. Emits one
 // SnapshotLine for the specificed experiment.
-func SnapshotReducer(experimentName string, s *Statistics, r io.Reader, w io.Writer) func() {
+func SnapshotReducer(s *Statistics, r io.Reader, w io.Writer) func() {
 	return func() {
 		scanner := bufio.NewScanner(r)
 		for scanner.Scan() {
