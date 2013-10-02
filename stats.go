@@ -9,14 +9,14 @@ import (
 
 // Statistics contains all stats which should be computed
 type Statistics struct {
-	experimentName string
+	ExperimentName string
 	stats          []Stats
 }
 
 // NewStatistics creates a new object with default statistics
 func NewStatistics(experimentName string) *Statistics {
 	return &Statistics{
-		experimentName: experimentName,
+		ExperimentName: experimentName,
 		stats: []Stats{
 			newSumRewards(experimentName),
 			newCountSelects(experimentName),

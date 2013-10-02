@@ -23,13 +23,13 @@ func main() {
 
 	switch *jobKind {
 	case "map":
-		bandit.SnapshotMapper(*jobExperimentName, stats, os.Stdin, os.Stdout)()
+		bandit.SnapshotMapper(stats, os.Stdin, os.Stdout)()
 	case "reduce":
-		bandit.SnapshotReducer(*jobExperimentName, stats, os.Stdin, os.Stdout)()
+		bandit.SnapshotReducer(stats, os.Stdin, os.Stdout)()
 	case "collect":
 		bandit.SnapshotCollect(stats, os.Stdin, os.Stdout)()
 	case "poll":
-		if err := simple(*jobExperimentName, stats, *jobLogfile, *jobExperimentName+".tsv", *jobLogPoll); err != nil {
+		if err := simple(stats, *jobLogfile, *jobLogPoll); err != nil {
 			log.Fatalf("could not start polling job: %s", err.Error())
 		}
 	case "":
