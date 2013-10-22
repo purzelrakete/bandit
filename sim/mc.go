@@ -32,6 +32,14 @@ func Bernoulli(μ float64) Arm {
 	}
 }
 
+// Gaussian returns an Arm function such that a ~ N(x|μ,σ)
+func Gaussian(μ, σ float64) Arm {
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	return func() float64 {
+		return r.NormFloat64()*σ + μ
+	}
+}
+
 // MonteCarlo runs a monte carlo experiment with the given bandit and arms.
 func MonteCarlo(sims, trials int, arms []Arm, b Bandit) (Simulation, error) {
 	s := Simulation{
