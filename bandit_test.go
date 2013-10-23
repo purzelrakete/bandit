@@ -4,7 +4,7 @@
 package bandit
 
 import (
-	//	"fmt"
+	//"fmt"
 	"github.com/purzelrakete/bandit/sim"
 	"math"
 	"testing"
@@ -29,7 +29,7 @@ func TestDrawCategorial(t *testing.T) {
 		distCat := categorialDistribution{bins, 1}
 		got := make([]int, len(bins))
 		for rep := 1; rep < numReps; rep++ {
-			got[catRand(distCat)-1]++ // TODO(cs): use fixed seed
+			got[CatRand(distCat)-1]++ // TODO(cs): use fixed seed
 		}
 
 		for idx, value := range bins {
@@ -41,7 +41,7 @@ func TestDrawCategorial(t *testing.T) {
 	}
 }
 
-func TestSoftMax(t *testing.T) {
+func TestSoftmaxCalc(t *testing.T) {
 	// compute simple softmax probs
 	{
 		scores := []float64{math.Log(2), math.Log(3), math.Log(1), math.Log(4)}
@@ -202,16 +202,16 @@ func TestSoftmax(t *testing.T) {
 	}
 }
 
-/*
+// TODO(cs): rethink test (suffers from conceptual weakness)
 func TestSoftmaxGaussian(t *testing.T) {
 	τ := 0.1
-	//sims := 5000
-	//trials := 300
-	//bestArmIndex := 1 // Gaussian(bestArm)
-	//bestArm := 5000.0
+	sims := 5000
+	trials := 300
+	bestArmIndex := 1 // Gaussian(bestArm)
+	bestArm := 5000.0
 	arms := []sim.Arm{
-		sim.Constant(5000), // is five times better
-		sim.Constant(1000),
+		sim.Gaussian(5000,1), // is five times better
+		sim.Gaussian(1000,1),
 	}
 
 	bandit, err := NewSoftmax(len(arms), τ)
@@ -219,68 +219,33 @@ func TestSoftmaxGaussian(t *testing.T) {
 		t.Fatalf(err.Error())
 	}
 
-	fmt.Print(bandit.SelectArm())
-	fmt.Print(bandit.SelectArm())
-	fmt.Print(bandit.SelectArm())
-	fmt.Print(bandit.SelectArm())
-	fmt.Print(bandit.SelectArm())
-	fmt.Print(bandit.SelectArm())
-	fmt.Print(bandit.SelectArm())
-	fmt.Print(bandit.SelectArm())
-	fmt.Println(bandit.SelectArm())
+	s, err := sim.MonteCarlo(sims, trials, arms, bandit)
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
 
-	bandit.Update(1, 2000)
+	expected := sims * trials
+	if got := len(s.Selected); got != expected {
+		t.Fatalf("incorrect number of trials: %d", got)
+	}
 
-	fmt.Print(bandit.SelectArm())
-	fmt.Print(bandit.SelectArm())
-	fmt.Print(bandit.SelectArm())
-	fmt.Print(bandit.SelectArm())
-	fmt.Print(bandit.SelectArm())
-	fmt.Print(bandit.SelectArm())
-	fmt.Print(bandit.SelectArm())
-	fmt.Print(bandit.SelectArm())
-	fmt.Println(bandit.SelectArm())
+	accuracies := sim.Accuracy([]int{bestArmIndex})(&s)
+	fmt.Println(s.Selected)
+	if got := accuracies[len(accuracies)-1]; got != 1.0 {
+		t.Fatalf("accuracy is only %f. %d sims, %d trials", got, sims, trials)
+	}
 
-	bandit.Init()
+	performances := sim.Performance(&s)
+	if got := performances[len(performances)-1]; math.Abs(bestArm-got) > 0.1 {
+		t.Fatalf("performance converge to %f. is %f", bestArm, got)
+	}
 
-	fmt.Print(bandit.SelectArm())
-	fmt.Print(bandit.SelectArm())
-	fmt.Print(bandit.SelectArm())
-	fmt.Print(bandit.SelectArm())
-	fmt.Print(bandit.SelectArm())
-	fmt.Print(bandit.SelectArm())
-	fmt.Print(bandit.SelectArm())
-	fmt.Print(bandit.SelectArm())
-	fmt.Println(bandit.SelectArm())
-
-	/*
-		s, err := sim.MonteCarlo(sims, trials, arms, bandit)
-		if err != nil {
-			t.Fatalf(err.Error())
-		}
-
-		expected := sims * trials
-		if got := len(s.Selected); got != expected {
-			t.Fatalf("incorrect number of trials: %d", got)
-		}
-
-		accuracies := sim.Accuracy([]int{bestArmIndex})(&s)
-		fmt.Println(s.Selected)
-		if got := accuracies[len(accuracies)-1]; got != 1.0 {
-			t.Fatalf("accuracy is only %f. %d sims, %d trials", got, sims, trials)
-		}
-
-		performances := sim.Performance(&s)
-		if got := performances[len(performances)-1]; math.Abs(bestArm-got) > 0.1 {
-			t.Fatalf("performance converge to %f. is %f", bestArm, got)
-		}
-
-		expectedCumulative := 4500.0 * float64(trials) // (mean(bestArm)-tolerance) * num trials
-		cumulatives := sim.Cumulative(&s)
-		if got := cumulatives[len(cumulatives)-1]; got < expectedCumulative {
-			t.Fatalf("cumulative performance should be > %f. is %f", expectedCumulative, got)
-		}
-}*/
+	expectedCumulative := 4500.0 * float64(trials) // (mean(bestArm)-tolerance) * num trials
+	cumulatives := sim.Cumulative(&s)
+	if got := cumulatives[len(cumulatives)-1]; got < expectedCumulative {
+		t.Fatalf("cumulative performance should be > %f. is %f", expectedCumulative, got)
+	}
+}
 
 func TestUCB1(t *testing.T) {
 	sims := 5000

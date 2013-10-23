@@ -123,7 +123,6 @@ func Accuracy(bestArms []int) Summary {
 
 			t[trial] = float64(correct) / float64(s.Sims)
 		}
-
 		return t
 	}
 }

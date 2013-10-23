@@ -113,50 +113,43 @@ func getBinId(x float64, bins []float64) int {
 }
 
 // Categorically distributed random numbers
-func catRand(dist categorialDistribution) int {
-	rand.Seed(time.Now().UTC().UnixNano())
+func CatRand(dist categorialDistribution) int {
 	return getBinId(rand.Float64()*dist.normalizer, dist.individualProbs) + 1
+}
+
+// TODO(cs): extract probability distribution stuff into separate file (catRand, Max, Sum,...)
+func Max(values []float64) (max float64, imax []int) {
+	imax, max = []int{}, -math.MaxFloat64
+	for i, value := range values {
+		if value > max {
+			max = value
+			imax = []int{i}
+		} else if value == max {
+			imax = append(imax, i)
+		}
+	}
+	return max, imax
 }
 
 // calculate soft max probs, i.e., p(x_i) = exp(score_i/tau)/(sum_j exp(score_j/tau))
 func calcSoftMax(scores []float64, tau float64) categorialDistribution {
 	probs := categorialDistribution{individualProbs: make([]float64, len(scores))}
-	// calculate maximum value of scores to avoid numerical problems
-	max := -math.MaxFloat64
-	for _, value := range scores {
-		max = math.Max(max, value)
-	}
+	max, _ := Max(scores)
 	// calculate exponentials and normalizer (numerical stable)
 	for i, value := range scores {
-		probs.individualProbs[i] = math.Exp((value - max) / tau)
+		probs.individualProbs[i] = math.Exp((value - max) / tau) // subtract maximum to avoid numerical problems
 		probs.normalizer += probs.individualProbs[i]
 	}
 	return probs
 }
 
+// TODO(cs): s.values have to be normalized (mean and variance should be realistic)
 // SelectArm returns 1 indexed arm to be tried next.
 func (s *softmax) SelectArm() int {
-	normalizer := 0.0
-	max := -math.MaxFloat64
-	for _, value := range s.values {
-		max = math.Max(max, value/s.tau)
-	}
-	for _, value := range s.values {
-		normalizer += math.Exp(value/s.tau - max)
-	}
-
-	cumulativeProb := 0.0
-	draw := len(s.values) - 1
-	z := s.rand.Float64()
-	for i, value := range s.values {
-		cumulativeProb = cumulativeProb + math.Exp(value/s.tau-max)/normalizer
-		if cumulativeProb > z {
-			draw = i
-			break
-		}
-	}
-	s.counts[draw]++
-	return draw + 1
+	dist := calcSoftMax(s.values, s.tau)
+	draw := CatRand(dist)
+	s.counts[draw-1]++
+	return draw
 }
 
 // Version returns information on this bandit
