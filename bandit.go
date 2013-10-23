@@ -94,18 +94,62 @@ func NewSoftmax(arms int, τ float64) (Bandit, error) {
 	}, nil
 }
 
+type categorialDistribution struct {
+	individualProbs []float64 // (unnormalized) probability that a given observation will be in category i
+	normalizer      float64
+}
+
+// identify bin of cumulative sum of bins which contains value
+// TODO(cs): error handling if id == len
+func getBinId(x float64, bins []float64) int {
+	id := 0
+	for cum := bins[0]; cum < x; cum += bins[id] {
+		id++
+		if id == len(bins) { // bins do not contain value x
+			return -1
+		}
+	}
+	return id
+}
+
+// Categorically distributed random numbers
+func catRand(dist categorialDistribution) int {
+	rand.Seed(time.Now().UTC().UnixNano())
+	return getBinId(rand.Float64()*dist.normalizer, dist.individualProbs) + 1
+}
+
+// calculate soft max probs, i.e., p(x_i) = exp(score_i/tau)/(sum_j exp(score_j/tau))
+func calcSoftMax(scores []float64, tau float64) categorialDistribution {
+	probs := categorialDistribution{individualProbs: make([]float64, len(scores))}
+	// calculate maximum value of scores to avoid numerical problems
+	max := -math.MaxFloat64
+	for _, value := range scores {
+		max = math.Max(max, value)
+	}
+	// calculate exponentials and normalizer (numerical stable)
+	for i, value := range scores {
+		probs.individualProbs[i] = math.Exp((value - max) / tau)
+		probs.normalizer += probs.individualProbs[i]
+	}
+	return probs
+}
+
 // SelectArm returns 1 indexed arm to be tried next.
 func (s *softmax) SelectArm() int {
 	normalizer := 0.0
+	max := -math.MaxFloat64
 	for _, value := range s.values {
-		normalizer += math.Exp(value / s.tau)
+		max = math.Max(max, value/s.tau)
+	}
+	for _, value := range s.values {
+		normalizer += math.Exp(value/s.tau - max)
 	}
 
 	cumulativeProb := 0.0
 	draw := len(s.values) - 1
 	z := s.rand.Float64()
 	for i, value := range s.values {
-		cumulativeProb = cumulativeProb + math.Exp(value/s.tau)/normalizer
+		cumulativeProb = cumulativeProb + math.Exp(value/s.tau-max)/normalizer
 		if cumulativeProb > z {
 			draw = i
 			break
@@ -225,5 +269,7 @@ func (c *Counters) Init() {
 	c.Lock()
 	defer c.Unlock()
 
+	// TODO(cs): error handling
+	// TODO(cs): will mostly fail since number of arms are typically non-zero
 	c.Reset(&Counters{})
 }

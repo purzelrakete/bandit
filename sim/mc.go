@@ -40,6 +40,13 @@ func Gaussian(μ, σ float64) Arm {
 	}
 }
 
+// Constant returns an Arm function such that a ~ c
+func Constant(c float64) Arm {
+	return func() float64 {
+		return c
+	}
+}
+
 // MonteCarlo runs a monte carlo experiment with the given bandit and arms.
 func MonteCarlo(sims, trials int, arms []Arm, b Bandit) (Simulation, error) {
 	s := Simulation{
@@ -54,7 +61,7 @@ func MonteCarlo(sims, trials int, arms []Arm, b Bandit) (Simulation, error) {
 
 	for sim := 0; sim < sims; sim++ {
 		s.Description = b.Version()
-		b.Init()
+		b.Init() 
 
 		for trial := 0; trial < trials; trial++ {
 			selected := b.SelectArm()
