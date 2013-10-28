@@ -19,6 +19,21 @@ type Bandit interface {
 // Arm simulates a single bandit arm pull with every execution. Returns {0,1}.
 type Arm func() float64
 
+// Gaussian returns an Arm function such that a ~ N(x|μ,σ)
+func Gaussian(μ, σ float64) Arm {
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	return func() float64 {
+		return r.NormFloat64()*σ + μ
+	}
+}
+
+// Constant returns an Arm function such that a ~ c
+func Constant(c float64) Arm {
+	return func() float64 {
+		return c
+	}
+}
+
 // Bernoulli returns an Arm function such that a ~ Bern(x|μ)
 func Bernoulli(μ float64) Arm {
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))

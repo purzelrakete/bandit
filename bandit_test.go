@@ -99,6 +99,50 @@ func TestSoftmax(t *testing.T) {
 	}
 }
 
+// TODO(cs): rethink test (suffers from conceptual weakness)
+func TestSoftmaxGaussian(t *testing.T) {
+	τ := 0.1
+	sims := 5000
+	trials := 300
+	bestArmIndex := 1 // Gaussian(bestArm)
+	bestArm := 5000.0
+	arms := []sim.Arm{
+		sim.Gaussian(5000, 1), // is five times better
+		sim.Gaussian(0, 1),
+	}
+
+	bandit, err := NewSoftmax(len(arms), τ)
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
+
+	s, err := sim.MonteCarlo(sims, trials, arms, bandit)
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
+
+	expected := sims * trials
+	if got := len(s.Selected); got != expected {
+		t.Fatalf("incorrect number of trials: %d", got)
+	}
+
+	accuracies := sim.Accuracy([]int{bestArmIndex})(&s)
+	if got := accuracies[len(accuracies)-1]; got != 1.0 {
+		t.Fatalf("accuracy is only %f. %d sims, %d trials", got, sims, trials)
+	}
+
+	performances := sim.Performance(&s)
+	if got := performances[len(performances)-1]; math.Abs(bestArm-got) > 0.1 {
+		t.Fatalf("performance converge to %f. is %f", bestArm, got)
+	}
+
+	expectedCumulative := 4500.0 * float64(trials) // (mean(bestArm)-tolerance) * num trials
+	cumulatives := sim.Cumulative(&s)
+	if got := cumulatives[len(cumulatives)-1]; got < expectedCumulative {
+		t.Fatalf("cumulative performance should be > %f. is %f", expectedCumulative, got)
+	}
+}
+
 func TestUCB1(t *testing.T) {
 	sims := 5000
 	trials := 300

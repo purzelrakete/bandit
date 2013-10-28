@@ -96,16 +96,25 @@ func NewSoftmax(arms int, τ float64) (Bandit, error) {
 
 // SelectArm returns 1 indexed arm to be tried next.
 func (s *softmax) SelectArm() int {
+	max := -math.MaxFloat64
+	for _, value := range s.values {
+		max = math.Max(max, value)
+	}
+
 	normalizer := 0.0
 	for _, value := range s.values {
-		normalizer += math.Exp(value / s.tau)
+		normalizer += math.Exp((value - max) / s.tau)
+	}
+
+	if math.IsInf(normalizer, 0) {
+		panic("normalizer in softmax too large")
 	}
 
 	cumulativeProb := 0.0
 	draw := len(s.values) - 1
 	z := s.rand.Float64()
 	for i, value := range s.values {
-		cumulativeProb = cumulativeProb + math.Exp(value/s.tau)/normalizer
+		cumulativeProb = cumulativeProb + math.Exp((value-max)/s.tau)/normalizer
 		if cumulativeProb > z {
 			draw = i
 			break
