@@ -43,7 +43,6 @@ func MonteCarlo(sims, trials int, arms []Arm, b Bandit) (Simulation, error) {
 		Reward:     make([]float64, sims*trials),
 		Cumulative: make([]float64, sims*trials),
 	}
-
 	for sim := 0; sim < sims; sim++ {
 		s.Description = b.Version()
 		b.Init()

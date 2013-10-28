@@ -222,8 +222,6 @@ func (c *Counters) Reset(snapshot *Counters) error {
 
 // Init reset the bandit to initial state.
 func (c *Counters) Init() {
-	c.Lock()
-	defer c.Unlock()
-
-	c.Reset(&Counters{})
+	c.counts = make([]int, c.arms)
+	c.values = make([]float64, c.arms)
 }
