@@ -198,6 +198,7 @@ Developed by
 
 - Rany Keddo (@purzelrakete)
 - Ozgür Demir (@ozgurdemir)
+- Christoph Sawade
 
 Thanks to for advice and opinions to
 
