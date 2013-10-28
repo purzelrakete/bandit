@@ -13,7 +13,7 @@ type Bandit interface {
 	SelectArm() int
 	Update(arm int, reward float64)
 	Version() string
-	Init()
+	Reset()
 }
 
 // Arm simulates a single bandit arm pull with every execution. Returns {0,1}.
@@ -45,7 +45,7 @@ func MonteCarlo(sims, trials int, arms []Arm, b Bandit) (Simulation, error) {
 	}
 	for sim := 0; sim < sims; sim++ {
 		s.Description = b.Version()
-		b.Init()
+		b.Reset()
 
 		for trial := 0; trial < trials; trial++ {
 			selected := b.SelectArm()

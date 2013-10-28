@@ -16,7 +16,7 @@ func NewDelayedBandit(b Bandit, updates chan Counters) (Bandit, error) {
 
 	go func() {
 		for counters := range updates {
-			b.Reset(&counters)
+			b.Init(&counters)
 		}
 	}()
 
@@ -44,10 +44,10 @@ func (b *delayedBandit) Version() string {
 
 // DelayedUpdate updates the internal counters of a bandit with the provided
 // counters.
-func (b *delayedBandit) Reset(c *Counters) error {
+func (b *delayedBandit) Init(c *Counters) error {
 	b.Lock()
 	defer b.Unlock()
-	return b.bandit.Reset(c)
+	return b.bandit.Init(c)
 }
 
 // Update is a NOP. Delayed bandit is updated with Reset(counter) instead
@@ -136,7 +136,7 @@ func (b *simulatedDelayedBandit) Update(arm int, reward float64) {
 
 	b.updates++
 	if b.updates >= b.limit {
-		b.bandit.Reset(&b.Counters)
+		b.bandit.Init(&b.Counters)
 		b.updates = 0
 	}
 }

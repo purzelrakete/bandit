@@ -22,8 +22,8 @@ type Bandit interface {
 	SelectArm() int
 	Update(arm int, reward float64)
 	Version() string
-	Reset(*Counters) error
-	Init()
+	Init(*Counters) error
+	Reset()
 }
 
 // epsilonGreedy randomly selects arms with a probability of ε. The rest of
@@ -199,9 +199,8 @@ func (c *Counters) Update(arm int, reward float64) {
 	c.values[arm] = ((c.values[arm] * float64(count-1)) + reward) / float64(count)
 }
 
-// Reset the bandit to a new counter state. Pass in Counters{} to reset to
-// initial state.
-func (c *Counters) Reset(snapshot *Counters) error {
+// Init the bandit to a new counter state.
+func (c *Counters) Init(snapshot *Counters) error {
 	if c.arms != snapshot.arms {
 		return fmt.Errorf("cannot %d arms with %d arms", c.arms, snapshot.arms)
 	}
@@ -220,8 +219,8 @@ func (c *Counters) Reset(snapshot *Counters) error {
 	return nil
 }
 
-// Init reset the bandit to initial state.
-func (c *Counters) Init() {
+// Reset the bandit to initial state.
+func (c *Counters) Reset() {
 	c.counts = make([]int, c.arms)
 	c.values = make([]float64, c.arms)
 }
