@@ -15,6 +15,27 @@ import (
 // graph is labelled plot lines
 type graph map[string][]float64
 
+func rgb(r, g, b uint8) color.RGBA {
+	return color.RGBA{r, g, b, 255}
+}
+
+func getColor(i int) color.Color {
+	defaultColors := []color.Color{
+		rgb(241, 90, 96),
+		rgb(122, 195, 106),
+		rgb(90, 155, 212),
+		rgb(250, 167, 91),
+		rgb(158, 103, 171),
+		rgb(206, 112, 88),
+		rgb(215, 127, 180),
+	}
+	if i > 0 && i <= len(defaultColors) {
+		return defaultColors[i]
+	} else {
+		return rgb(0, 0, 0)
+	}
+}
+
 // draw is a generic plotter of labelled lines.
 func draw(lines graph, title, xLabel, yLabel string) error {
 	p, err := plot.New()
@@ -36,7 +57,7 @@ func draw(lines graph, title, xLabel, yLabel string) error {
 
 		p.Add(l)
 		p.Legend.Add(legend, l)
-		l.LineStyle.Color = color.Gray{uint8(48 * float64(i))}
+		l.LineStyle.Color = getColor(i)
 	}
 
 	if err != nil {

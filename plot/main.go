@@ -139,7 +139,7 @@ func main() {
 		}
 
 		graph = summarize(s, sim.Performance)
-		draw(graph, group.name+" Performance", "Time", "P(selecting best arm)")
+		draw(graph, group.name+" Performance", "Time", "Average Reward")
 
 		s, err = simulate(group.bandits, arms, *mcSims, *mcHorizon)
 		if err != nil {
@@ -147,7 +147,7 @@ func main() {
 		}
 
 		graph = summarize(s, sim.Cumulative)
-		draw(graph, group.name+" Cumulative", "Time", "P(selecting best arm)")
+		draw(graph, group.name+" Cumulative", "Time", "Cumulative Reward")
 	}
 }
 
