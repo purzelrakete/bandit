@@ -26,7 +26,7 @@ test: check
 	go test -v $(PKGS)
 
 # lint and vet both return success (0) on error. make them error and report
-check:
+check: deps
 	go tool vet . 2>&1 | wc -l | { grep 0 || { go tool vet . && false; }; }
 	if find . -name '*.go' | xargs golint | grep ":"; then false; else true; fi
 
