@@ -17,13 +17,13 @@ func TestExperiment(t *testing.T) {
 	}
 
 	expected := 2
-	if got := len(e.Variants); got != expected {
-		t.Fatalf("expected %d variants, got %d", expected, got)
+	if got := len(e.Variations); got != expected {
+		t.Fatalf("expected %d variations, got %d", expected, got)
 	}
 
 	expectedTag := "shape-20130822:1"
-	if got := e.Variants[0].Tag; got != expectedTag {
-		t.Fatalf("expected variant tag %s, got %s", expectedTag, got)
+	if got := e.Variations[0].Tag; got != expectedTag {
+		t.Fatalf("expected variation tag %s, got %s", expectedTag, got)
 	}
 }
 

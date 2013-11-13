@@ -84,7 +84,7 @@ func SnapshotLine(c Counters) string {
 // 2	0.1	0.5
 //
 // Tokens are separated by whitespace. The given example encodes an experiment
-// with two variants. First is the number of variants. This is followed by
+// with two variations. First is the number of variations. This is followed by
 // rewards (mean reward for each arm).
 func ParseSnapshot(s io.Reader) (Counters, error) {
 	lines := 0

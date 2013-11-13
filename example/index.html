@@ -34,21 +34,21 @@
   <script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
   <script type="text/javascript">
     $(function() {
-      function render(variant) {
+      function render(variation) {
         var diameter = Math.random() * 300;
         $('#canvas')
           .removeClass('circle square')
           .css('background-color', color(200))
           .css('border-color', color(100))
           .width(diameter).height(diameter)
-          .addClass(variant.shape);
+          .addClass(variation.shape);
       }
 
       function color(h) { return 'hsl(' + Math.random() * h + ', 80%, 90%)'; }
       function select(tag) { $.ajax({ url: "/es/shape-20130822", data: { tag: tag } }).done(update); }
-      function update(variant) {
-        $.ajax({ url: variant.url, dataType: 'jsonp' }).done(render);
-        $('.feedback').data('tag', variant.tag);
+      function update(variation) {
+        $.ajax({ url: variation.url, dataType: 'jsonp' }).done(render);
+        $('.feedback').data('tag', variation.tag);
       }
 
       $('.feedback').click(function() {

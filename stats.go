@@ -82,12 +82,12 @@ func (c *countSelects) mapLine(line string) (string, string, bool) {
 		}
 
 		splittedString := strings.Split(fields[2], ":")
-		variant, err := strconv.ParseInt(splittedString[1], 10, 0)
+		variation, err := strconv.ParseInt(splittedString[1], 10, 0)
 		if err != nil {
-			log.Fatalf("invalid variant in line '%s': %s", line, err.Error())
+			log.Fatalf("invalid variation in line '%s': %s", line, err.Error())
 		}
 
-		return fmt.Sprintf("%s_%d", c.prefix, variant), "1", true
+		return fmt.Sprintf("%s_%d", c.prefix, variation), "1", true
 	}
 
 	return "", "", false
@@ -98,18 +98,18 @@ func (c *countSelects) reduceLine(line string) {
 	if strings.Index(line, c.prefix) >= 0 {
 		preparedString := strings.Replace(line, "_", "\t", 1)
 		fields := strings.Fields(preparedString)
-		variant, err := strconv.Atoi(fields[1])
+		variation, err := strconv.Atoi(fields[1])
 		if err != nil {
 			log.Fatalf("non-integral arm on line '%s': %s", line, err.Error())
 		}
-		c.selects[variant-1]++
+		c.selects[variation-1]++
 	}
 }
 
 func (c *countSelects) collect(line string) {
 	if strings.Index(line, c.prefix) >= 0 {
 		fields := strings.Fields(line)
-		variant, err := strconv.Atoi(fields[1])
+		variation, err := strconv.Atoi(fields[1])
 		if err != nil {
 			log.Fatalf("non-integral arm on line '%s': %s", line, err.Error())
 		}
@@ -117,7 +117,7 @@ func (c *countSelects) collect(line string) {
 		if err != nil {
 			log.Fatalf("non-float selects on line '%s': %s", line, err.Error())
 		}
-		c.selects[variant] = selects
+		c.selects[variation] = selects
 	}
 }
 
@@ -158,12 +158,12 @@ func (s *sumRewards) mapLine(line string) (string, string, bool) {
 		}
 
 		splittedString := strings.Split(fields[2], ":")
-		variant, err := strconv.ParseInt(splittedString[1], 10, 0)
+		variation, err := strconv.ParseInt(splittedString[1], 10, 0)
 		if err != nil {
-			log.Fatalf("invalid variant on line '%s': %s", line, err.Error())
+			log.Fatalf("invalid variation on line '%s': %s", line, err.Error())
 		}
 
-		return fmt.Sprintf("%s_%d", s.prefix, variant), fields[3], true
+		return fmt.Sprintf("%s_%d", s.prefix, variation), fields[3], true
 	}
 	return "", "", false
 }
@@ -173,7 +173,7 @@ func (s *sumRewards) reduceLine(line string) {
 	if strings.Index(line, s.prefix) >= 0 {
 		preparedString := strings.Replace(line, "_", "\t", 1)
 		fields := strings.Fields(preparedString)
-		variant, err := strconv.Atoi(fields[1])
+		variation, err := strconv.Atoi(fields[1])
 		if err != nil {
 			log.Fatalf("non-integral arm on line '%s': %s", line, err.Error())
 		}
@@ -183,7 +183,7 @@ func (s *sumRewards) reduceLine(line string) {
 			log.Fatalf("non-float reward on line '%s': %s", line, err.Error())
 		}
 
-		s.rewards[variant-1] += reward
+		s.rewards[variation-1] += reward
 	}
 }
 
@@ -197,7 +197,7 @@ func (s *sumRewards) result() (map[int]float64, bool) {
 func (s *sumRewards) collect(line string) {
 	if strings.Index(line, s.prefix) >= 0 {
 		fields := strings.Fields(line)
-		variant, err := strconv.Atoi(fields[1])
+		variation, err := strconv.Atoi(fields[1])
 		if err != nil {
 			log.Fatalf("non-integral arm on line '%s': %s", line, err.Error())
 		}
@@ -205,6 +205,6 @@ func (s *sumRewards) collect(line string) {
 		if err != nil {
 			log.Fatalf("non-float reward on line '%s': %s", line, err.Error())
 		}
-		s.rewards[variant] = reward
+		s.rewards[variation] = reward
 	}
 }

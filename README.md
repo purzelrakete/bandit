@@ -15,11 +15,11 @@ Build bandit with `make`. You need go >= 1.1.1..
 ## Data Flow
 
 A bandit instance is embedded into e.g. an HTTP server. Incoming requests select
-a variant from an experiment, and then log that selection. Subsequent positive
+a variation from an experiment, and then log that selection. Subsequent positive
 feedback from that selection, e.g. a click, is also logged.
 
 Periodically, `bandit-job` aggregates selections and rewards from the logs, re-
-calculates variant distribution, and emits a snapshot file to some  shared
+calculates variation distribution, and emits a snapshot file to some  shared
 storage. The bandit polls for updates to that snapshot file and hot-reloads the
 distribution on change.
 
@@ -41,7 +41,7 @@ distribution on change.
 1379257987 BanditReward shape-20130822:1 0.000000
 ```
 
-Notice that the reward line includes the variant tag. It is up to you to
+Notice that the reward line includes the variation tag. It is up to you to
 transport this tag through your system.
 
 ## Types
@@ -57,7 +57,7 @@ type Bandit interface {
 
 You will probably not use bandits directly. Instead, a Bandit is put to work
 inside an Experiment. You set up experiments (e.g. signup form buttons) with as
-many variants as you like (e.g. blue button, red button):
+many variations as you like (e.g. blue button, red button):
 
 ```
   +--------+            +---------------+      periodic job
@@ -68,7 +68,7 @@ many variants as you like (e.g. blue button, red button):
       |
       1
 +------------+         +---------+
-| Experiment | 1 --> * | Variant |
+| Experiment | 1 --> * | Variation |
 |------------|         |---------|
 | name       |         | tag     |
 +------------+         | url     |
@@ -77,7 +77,7 @@ many variants as you like (e.g. blue button, red button):
 
 ## Integrating and running experiments
 
-To use a bandit, you first have to define an experiment and its variants. This
+To use a bandit, you first have to define an experiment and its variations. This
 is currently configured as a TSV with a name, URL, and tag. See experiments.tsv
 for an example.
 
@@ -109,11 +109,11 @@ Javascript   Select   Reward   Your API
      |<-----------------|
 ```
 
-Get a variant from the HTTP API first:
+Get a variation from the HTTP API first:
 
     GET https://api/experiements/widgets?uid=11 HTTP/1.0
 
-The API responds with a variant:
+The API responds with a variation:
 
     HTTP/1.0 200 OK
     Content-Type: text/json
@@ -134,7 +134,7 @@ See the exampe binary and example/index.html for a running example.
 ### Integration in another language using the HTTP API
 
 Launch the HTTP API as above. When you get a request to your endpoint, make
-a backend request to the HTTP API. Use the returned variant to vary.
+a backend request to the HTTP API. Use the returned variation to vary.
 
 ### Integration with Go projects
 
@@ -153,11 +153,11 @@ if err := e.InitDelayedBandit(snapshot, 3 * time.Hours); err != nil {
   log.Fatalf("could initialize bandits: %s", err.Error())
 }
 
-fmt.Println(e.Variants)
+fmt.Println(e.Variations)
 ```
 
-Initialize your own variant code if necessary. Then, serve. In each request,
-select a variant via the experiment and serve it. Be sure to include the tag
+Initialize your own variation code if necessary. Then, serve. In each request,
+select a variation via the experiment and serve it. Be sure to include the tag
 in the response, so your clients can pass it back with rewards.
 
 # Miscellaneous information

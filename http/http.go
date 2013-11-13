@@ -61,24 +61,24 @@ func SelectionHandler(es *bandit.Experiments, ttl time.Duration) http.HandlerFun
 		}
 
 		timestampedTag := r.URL.Query().Get(":tag")
-		variant, newTag, err := e.SelectTimestamped(timestampedTag, ttl)
+		variation, newTag, err := e.SelectTimestamped(timestampedTag, ttl)
 		if err != nil {
-			http.Error(w, "could not select variant", http.StatusInternalServerError)
+			http.Error(w, "could not select variation", http.StatusInternalServerError)
 			return
 		}
 
 		json, err := json.Marshal(APIResponse{
 			Experiment: e.Name,
-			URL:        variant.URL,
+			URL:        variation.URL,
 			Tag:        newTag,
 		})
 
 		if err != nil {
-			http.Error(w, "could not build variant", http.StatusInternalServerError)
+			http.Error(w, "could not build variation", http.StatusInternalServerError)
 			return
 		}
 
-		log.Println(bandit.SelectionLine(*e, variant))
+		log.Println(bandit.SelectionLine(*e, variation))
 		w.Write(json)
 	}
 }
@@ -116,16 +116,16 @@ func LogRewardHandler(es *bandit.Experiments) http.HandlerFunc {
 			return
 		}
 
-		e, variant, err := es.GetVariant(tag)
+		e, variation, err := es.GetVariation(tag)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
 		b := (*es)[e.Name].Bandit
-		b.Update(variant.Ordinal, fReward)
+		b.Update(variation.Ordinal, fReward)
 
-		log.Println(bandit.RewardLine(e, variant, fReward))
+		log.Println(bandit.RewardLine(e, variation, fReward))
 		w.WriteHeader(http.StatusOK)
 	}
 }

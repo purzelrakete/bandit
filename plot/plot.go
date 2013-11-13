@@ -29,11 +29,12 @@ func getColor(i int) color.Color {
 		rgb(206, 112, 88),
 		rgb(215, 127, 180),
 	}
+
 	if i > 0 && i <= len(defaultColors) {
 		return defaultColors[i]
-	} else {
-		return rgb(0, 0, 0)
 	}
+
+	return rgb(0, 0, 0)
 }
 
 // draw is a generic plotter of labelled lines.

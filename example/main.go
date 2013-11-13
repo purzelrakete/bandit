@@ -16,7 +16,7 @@ import (
 var (
 	exExperiments = flag.String("experiments", "experiments.tsv", "experiments tsv filename")
 	exBind        = flag.String("bind", ":8080", "interface and port to bind to")
-	exPinTTL      = flag.Duration("pin-ttl", 0, "ttl life of a pinned variant")
+	exPinTTL      = flag.Duration("pin-ttl", 0, "ttl life of a pinned variation")
 )
 
 func init() {
