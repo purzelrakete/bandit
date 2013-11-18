@@ -38,7 +38,7 @@ func NewBandit(arms int, name string, params []float64) (Bandit, error) {
 		return NewEpsilonGreedy(arms, params[0])
 	case "uniform":
 		if len(params) != 0 {
-			return &epsilonGreedy{}, fmt.Errorf("did not expect any paramters for uniform")
+			return &epsilonGreedy{}, fmt.Errorf("uniform has no parameters")
 		}
 
 		return NewEpsilonGreedy(arms, 0)
@@ -50,7 +50,7 @@ func NewBandit(arms int, name string, params []float64) (Bandit, error) {
 		return NewSoftmax(arms, params[0])
 	case "ucb1":
 		if len(params) != 0 {
-			return &softmax{}, fmt.Errorf("did not expect any paramters for UCB1")
+			return &softmax{}, fmt.Errorf("UCB1 has no parameters")
 		}
 
 		return NewUCB1(arms), nil

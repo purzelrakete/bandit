@@ -182,7 +182,11 @@ func NewExperiments(o Opener) (*Experiments, error) {
 
 	es := Experiments{}
 	for _, e := range cfg {
-		bandit, _ := NewBandit(len(e.Variations), e.Name, e.Parameters)
+		bandit, err := NewBandit(len(e.Variations), e.Bandit, e.Parameters)
+		if err != nil {
+			return &Experiments{}, fmt.Errorf("could not make bandit: %s ", err.Error())
+		}
+
 		experiment := Experiment{
 			Name:   e.Name,
 			Bandit: bandit,
