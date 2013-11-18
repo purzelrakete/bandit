@@ -14,7 +14,7 @@ import (
 )
 
 var (
-	exExperiments = flag.String("experiments", "experiments.tsv", "experiments tsv filename")
+	exExperiments = flag.String("experiments", "experiments.json", "experiments json filename")
 	exBind        = flag.String("bind", ":8080", "interface and port to bind to")
 	exPinTTL      = flag.Duration("pin-ttl", 0, "ttl life of a pinned variation")
 )

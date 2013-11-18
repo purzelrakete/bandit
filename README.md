@@ -78,8 +78,8 @@ many variations as you like (e.g. blue button, red button):
 ## Integrating and running experiments
 
 To use a bandit, you first have to define an experiment and its variations. This
-is currently configured as a TSV with a name, URL, and tag. See experiments.tsv
-for an example.
+is currently configured in json with a name, URL, and tag. See
+experiments.json for an example.
 
 Choose the best integration for your project depending on whether you have
 a client side javascript application, a go project, or a project in some other
@@ -87,7 +87,7 @@ language.
 
 ### Integration with Javascript and the HTTP API
 
-Run `bandit-api -port 80 -apiExperiments experiments.tsv` to start the
+Run `bandit-api -port 80 -apiExperiments experiments.json` to start the
 endpoint with the provided test experiments.
 
 In this scenario, the application makes a request to the API endpoint and
@@ -142,7 +142,7 @@ First, load an experiment.
 
 ```go
 
-experiments := bandit.NewFileOpener("experiments.tsv")
+experiments := bandit.NewFileOpener("experiments.json")
 e, err := bandit.NewExperiment(experiments, "shape-20130822")
 if err != nil {
   log.Fatalf("could not construct experiment: %s", err.Error())

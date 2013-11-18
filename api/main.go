@@ -13,7 +13,7 @@ import (
 )
 
 var (
-	apiExperiments = flag.String("experiments", "experiments.tsv", "experiments tsv filename")
+	apiExperiments = flag.String("experiments", "experiments.json", "experiments json filename")
 	apiBind        = flag.String("port", ":8080", "interface / port to bind to")
 	apiSnapshot    = flag.String("snapshot", "snapshot.tsv", "campaign snapshot file")
 	apiSnaphotPoll = flag.Duration("snapshot-poll", 1e9, "time before snapshot is loaded")
