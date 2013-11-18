@@ -4,8 +4,9 @@
 package bandit
 
 import (
-	"encoding/csv"
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"sort"
 	"strconv"
@@ -147,7 +148,7 @@ func (v Variations) Len() int           { return len(v) }
 func (v Variations) Less(i, j int) bool { return v[i].Ordinal < v[j].Ordinal }
 func (v Variations) Swap(i, j int)      { v[i], v[j] = v[j], v[i] }
 
-// NewExperiments reads in a tsv file and converts it to a map of experiments.
+// NewExperiments reads in a json file and converts it to a map of experiments.
 func NewExperiments(o Opener) (*Experiments, error) {
 	file, err := o.Open()
 	if err != nil {
@@ -156,63 +157,52 @@ func NewExperiments(o Opener) (*Experiments, error) {
 
 	defer file.Close()
 
-	reader := csv.NewReader(file)
-	reader.Comma = '\t'
-	records, err := reader.ReadAll()
+	jsonString, err := ioutil.ReadAll(file)
 	if err != nil {
-		return &Experiments{}, fmt.Errorf("could not read tsv: %s ", err)
+		return &Experiments{}, fmt.Errorf("could not read jsony: %s", err.Error())
 	}
 
-	// intermediary data structure groups variations
-	type experimentVariations map[string]Variations
-
-	variations := make(experimentVariations)
-	for i, record := range records {
-		if l := len(record); l != 4 {
-			return &Experiments{}, fmt.Errorf("record is not %v long: %v", l, record)
-		}
-
-		ordinal, err := strconv.Atoi(record[1])
-		if err != nil {
-			return &Experiments{}, fmt.Errorf("invalid ordinal on line %d: %s", i, err)
-		}
-
-		name := record[0]
-		if words := strings.Fields(name); len(words) != 1 {
-			return &Experiments{}, fmt.Errorf("experiment has whitespace: %s", name)
-		}
-
-		description := record[3]
-		variations[name] = append(variations[name], Variation{
-			Ordinal:     ordinal,
-			URL:         record[2],
-			Tag:         fmt.Sprintf("%s:%s", name, record[1]),
-			Description: description,
-		})
+	type variationConfig struct {
+		URL         string `json:"url"`
+		Description string `json:"description"`
+		Ordinal     int    `json:"ordinal"`
 	}
 
-	// sorted experiment variations
-	experiments := make(Experiments)
-	for name, variations := range variations {
-		sort.Sort(variations)
-		b, _ := NewSoftmax(len(variations), 0.1) // default to softmax.
-		experiments[name] = &Experiment{
-			Bandit:     b,
-			Name:       name,
-			Variations: variations,
-		}
+	type experimentsConfig struct {
+		Name       string            `json:"experiment_name"`
+		Bandit     string            `json:"bandit"`
+		Parameters []float64         `json:"parameters"`
+		Variations []variationConfig `json:"variations"`
 	}
 
-	// fail if ordinals are non-contiguous or do not start with 1
-	for name, variations := range variations {
-		for i := 0; i < len(variations); i++ {
-			if ord := variations[i].Ordinal; ord != i+1 {
-				return &Experiments{}, fmt.Errorf("%s: variation %d noncontiguous", name, ord)
-			}
-		}
+	var cfg []experimentsConfig
+	if err := json.Unmarshal(jsonString, &cfg); err != nil {
+		return &Experiments{}, fmt.Errorf("could not marshal json: %s ", err)
 	}
 
-	return &experiments, nil
+	es := Experiments{}
+	for _, e := range cfg {
+		bandit, _ := NewSoftmax(len(e.Variations), float64(0.1))
+		experiment := Experiment{
+			Name:   e.Name,
+			Bandit: bandit,
+		}
+
+		es[e.Name] = &experiment
+
+		for _, v := range e.Variations {
+			experiment.Variations = append(experiment.Variations, Variation{
+				Ordinal:     v.Ordinal,
+				URL:         v.URL,
+				Tag:         fmt.Sprintf("%s:%d", e.Name, v.Ordinal),
+				Description: v.Description,
+			})
+		}
+
+		sort.Sort(experiment.Variations)
+	}
+
+	return &es, nil
 }
 
 // Experiments is an index of names to experiment

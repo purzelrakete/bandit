@@ -1,0 +1,19 @@
+[
+  {
+    "experiment_name": "shape-20130822",
+    "bandit": "softmax",
+    "parameters": [0.1],
+    "variations": [
+      {
+        "url": "http://localhost:8080/widget?shape=circle",
+        "description": "Everybody likes circles.",
+        "ordinal": 1
+      },
+      {
+        "url": "http://localhost:8080/widget?shape=square",
+        "description": "Everybody likes squares.",
+        "ordinal": 2
+      }
+    ]
+  }
+]
