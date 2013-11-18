@@ -104,7 +104,7 @@ func makeTimestampedTag(v Variation, now int64) string {
 	return fmt.Sprintf("%s:%s", v.Tag, strconv.FormatInt(now, 10))
 }
 
-// InitDelayedBandit adds a delayed bandit to this experiment.
+// InitDelayedBandit delays the bandit attached to this experiment.
 func (e *Experiment) InitDelayedBandit(o Opener, poll time.Duration) error {
 	if _, err := GetSnapshot(o); err != nil { // try once
 		fmt.Errorf("could not get snapshot: %s", err.Error())
@@ -123,8 +123,7 @@ func (e *Experiment) InitDelayedBandit(o Opener, poll time.Duration) error {
 		}
 	}()
 
-	b, _ := NewSoftmax(len(e.Variations), 0.1) // 0.1 cannot return an error
-	d, err := NewDelayedBandit(b, c)
+	d, err := NewDelayedBandit(e.Bandit, c)
 	if err != nil {
 		return err
 	}
