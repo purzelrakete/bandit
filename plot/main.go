@@ -105,16 +105,6 @@ func main() {
 
 	mixed = append(mixed, softmax)
 
-	inner, err := bandit.NewSoftmax(len(μs), 0.1)
-	if err != nil {
-		log.Fatal(err.Error())
-	}
-
-	flushAfter := 100
-	delayed := bandit.NewSimulatedDelayedBandit(inner, len(μs), flushAfter)
-
-	mixed = append(mixed, delayed)
-
 	// ucb1 into mixed
 	mixed = append(mixed, bandit.NewUCB1(len(μs)))
 
