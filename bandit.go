@@ -26,6 +26,39 @@ type Bandit interface {
 	Reset()
 }
 
+// NewBandit returns an initialized bandit given a string name such as
+// 'softmax'.
+func NewBandit(arms int, name string, params []float64) (Bandit, error) {
+	switch name {
+	case "epsilonGreedy":
+		if len(params) != 1 {
+			return &epsilonGreedy{}, fmt.Errorf("missing ε")
+		}
+
+		return NewEpsilonGreedy(arms, params[0])
+	case "uniform":
+		if len(params) != 0 {
+			return &epsilonGreedy{}, fmt.Errorf("did not expect any paramters for uniform")
+		}
+
+		return NewEpsilonGreedy(arms, 0)
+	case "softmax":
+		if len(params) != 1 {
+			return &softmax{}, fmt.Errorf("missing τ")
+		}
+
+		return NewSoftmax(arms, params[0])
+	case "ucb1":
+		if len(params) != 0 {
+			return &softmax{}, fmt.Errorf("did not expect any paramters for UCB1")
+		}
+
+		return NewUCB1(arms), nil
+	}
+
+	return &epsilonGreedy{}, fmt.Errorf("'%s' unknown bandit", name)
+}
+
 // epsilonGreedy randomly selects arms with a probability of ε. The rest of
 // the time, epsilonGreedy selects the currently best known arm.
 type epsilonGreedy struct {

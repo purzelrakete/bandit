@@ -182,7 +182,7 @@ func NewExperiments(o Opener) (*Experiments, error) {
 
 	es := Experiments{}
 	for _, e := range cfg {
-		bandit, _ := NewSoftmax(len(e.Variations), float64(0.1))
+		bandit, _ := NewBandit(len(e.Variations), e.Name, e.Parameters)
 		experiment := Experiment{
 			Name:   e.Name,
 			Bandit: bandit,
