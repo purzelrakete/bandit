@@ -37,8 +37,8 @@ distribution on change.
 `bandit-job` expects log lines in the following format:
 
 ```
-1379257984 BanditSelection shape-20130822:1
-1379257987 BanditReward shape-20130822:1 0.000000
+1379257984 BanditSelection shape-20130822:1:8932478932
+1379257987 BanditReward shape-20130822:1:8932478932 0.000000
 ```
 
 Notice that the reward line includes the variation tag. It is up to you to

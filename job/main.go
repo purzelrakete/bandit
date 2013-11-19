@@ -1,3 +1,17 @@
+// Package main contains bandit-job, which takes as input a log of selects and
+// rewards of the following format:
+//
+// 1379257984 BanditSelection shape-20130822:1:8932478932
+// 1379257987 BanditReward shape-20130822:1:8932478932 0.000000
+//
+// Fields are interpreted as follows:
+//
+// (logline-timestamp, kind, tag, reward)
+//
+// Tags are interpreted as:
+//
+// experiment-name:variation-ordinal:pinning-time
+//
 package main
 
 import (

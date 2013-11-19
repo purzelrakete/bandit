@@ -8,13 +8,13 @@ import (
 
 func TestSnapshotMapper(t *testing.T) {
 	log := []string{
-		"1379069548	BanditSelection	shape-20130822:2",
-		"1379069749	BanditSelection	shape-20130822:2",
-		"1379069948	BanditSelection	plants-20121111:1",
-		"1379069648	BanditReward	shape-20130822:2 1.0",
-		"1379069848	BanditReward	shape-20130822:2 0.0",
-		"1379069158	BanditReward	plants-20121111:1 1.0",
-		"1379069258	BanditReward	plants-20121111:1 1.0",
+		"1379069548	BanditSelection	shape-20130822:2:1",
+		"1379069749	BanditSelection	shape-20130822:2:1",
+		"1379069948	BanditSelection	plants-20121111:1:2",
+		"1379069648	BanditReward	shape-20130822:2:1 1.0",
+		"1379069848	BanditReward	shape-20130822:2:1 0.0",
+		"1379069158	BanditReward	plants-20121111:1:2 1.0",
+		"1379069258	BanditReward	plants-20121111:1:2 1.0",
 	}
 
 	stats := NewStatistics("shape-20130822")
@@ -68,13 +68,13 @@ func TestSnapshotReducer(t *testing.T) {
 
 func TestSnapshotMapperReducer(t *testing.T) {
 	log := []string{
-		"1379069548	BanditSelection	shape-20130822:2",
-		"1379069749	BanditSelection	shape-20130822:2",
-		"1379069948	BanditSelection	plants-20121111:1",
-		"1379069648	BanditReward	shape-20130822:2	1.0",
-		"1379069848	BanditReward	shape-20130822:2	0.0",
-		"1379069158	BanditReward	plants-20121111:1	1.0",
-		"1379069258	BanditReward	plants-20121111:1	1.0",
+		"1379069548	BanditSelection	shape-20130822:2:1",
+		"1379069749	BanditSelection	shape-20130822:2:2",
+		"1379069948	BanditSelection	plants-20121111:1:3",
+		"1379069648	BanditReward	shape-20130822:2:1	1.0",
+		"1379069848	BanditReward	shape-20130822:2:2	0.0",
+		"1379069158	BanditReward	plants-20121111:1:3	1.0",
+		"1379069258	BanditReward	plants-20121111:1:3	1.0",
 	}
 
 	stats := NewStatistics("shape-20130822")
