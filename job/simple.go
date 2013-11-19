@@ -13,7 +13,7 @@ import (
 // Simple produces a snapshot every `poll` duration. FIXME: O(N) memory
 func simple(s *bandit.Statistics, logFile string, poll time.Duration) error {
 	snapshotFile := s.ExperimentName + ".tsv"
-	opener := bandit.NewFileOpener(logFile)
+	opener := bandit.NewOpener(logFile)
 	file, err := opener.Open()
 	if err != nil {
 		return fmt.Errorf("could not open logs: %s", err.Error())

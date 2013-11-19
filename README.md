@@ -148,11 +148,6 @@ if err != nil {
   log.Fatalf("could not construct experiment: %s", err.Error())
 }
 
-snapshot := bandit.NewFileOpener("shape-20130822.tsv")
-if err := e.InitDelayedBandit(snapshot, 3 * time.Hours); err != nil {
-  log.Fatalf("could initialize bandits: %s", err.Error())
-}
-
 fmt.Println(e.Variations)
 ```
 
@@ -173,6 +168,33 @@ and `bandit-job -kind reduce`. You can also run over the logs wiht `bandit-job
 
 You can currently choose between Epsilon Greedy, UCB1, Softmax, and Thompson ([see, e.g., Chapelle & Li, 2011 ](http://books.nips.cc/papers/files/nips24/NIPS2011_1232.pdf)). See the
 godoc for detailed information.
+
+## Snapshots and delayed bandits
+
+You can configure your bandit to get it's internal state from a snapshot like
+this:
+
+[
+  {
+    "experiment_name": "shape-20130822",
+    "bandit": "softmax",
+    "parameters": [0.1],
+    "snapshot": "snapshot.tsv",
+    "snapshot-poll-seconds": 60,
+    "variations": [
+      {
+        "url": "http://localhost:8080/widget?shape=circle",
+        "description": "Everybody likes circles.",
+        "ordinal": 1
+      },
+      {
+        "url": "http://localhost:8080/widget?shape=square",
+        "description": "Everybody likes squares.",
+        "ordinal": 2
+      }
+    ]
+  }
+]
 
 ## Simulation
 

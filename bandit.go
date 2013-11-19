@@ -12,6 +12,7 @@ package bandit
 import (
 	"fmt"
 	bmath "github.com/purzelrakete/bandit/math"
+	"log"
 	"math"
 	"math/rand"
 	"sync"
@@ -196,15 +197,34 @@ func (u *uCB1) Version() string {
 	return fmt.Sprintf("UCB1")
 }
 
-// NewDelayedBandit wraps the given bandit.
-func NewDelayedBandit(b Bandit, updates chan Counters) (Bandit, error) {
+// NewDelayedBandit wraps a bandit and updates internal counters from
+// a snapshot at `poll` interval.
+func NewDelayedBandit(b Bandit, o Opener, poll time.Duration) (Bandit, error) {
+	// fail once
+	if _, err := GetSnapshot(o); err != nil {
+		return &delayedBandit{}, fmt.Errorf("could not get snapshot: %s", err.Error())
+	}
+
+	c := make(chan Counters)
+	go func() {
+		t := time.NewTicker(poll)
+		for _ = range t.C {
+			counters, err := GetSnapshot(o)
+			if err != nil {
+				log.Printf("BanditError: could not get snapshot: %s", err.Error())
+			}
+
+			c <- counters
+		}
+	}()
+
 	bandit := delayedBandit{
 		bandit:  b,
-		updates: updates,
+		updates: c,
 	}
 
 	go func() {
-		for counters := range updates {
+		for counters := range c {
 			b.Init(&counters)
 		}
 	}()

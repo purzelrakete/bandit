@@ -5,11 +5,24 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"strings"
 )
 
 // Opener can be used to reopen underlying file descriptors.
 type Opener interface {
 	Open() (io.ReadCloser, error)
+}
+
+// NewOpener returns an http opener or a file opener depending on `ref`.
+func NewOpener(ref string) Opener {
+	var opener Opener
+	if strings.Index(ref, "http://") > 0 {
+		opener = NewHTTPOpener(ref)
+	} else {
+		opener = NewFileOpener(ref)
+	}
+
+	return opener
 }
 
 // NewHTTPOpener returns an opener using an underlying URL.

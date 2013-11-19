@@ -114,34 +114,6 @@ func makeTimestampedTag(v Variation, now int64) string {
 	return fmt.Sprintf("%s:%s", v.Tag, strconv.FormatInt(now, 10))
 }
 
-// InitDelayedBandit delays the bandit attached to this experiment.
-func (e *Experiment) InitDelayedBandit(o Opener, poll time.Duration) error {
-	if _, err := GetSnapshot(o); err != nil { // try once
-		fmt.Errorf("could not get snapshot: %s", err.Error())
-	}
-
-	c := make(chan Counters)
-	go func() {
-		t := time.NewTicker(poll)
-		for _ = range t.C {
-			counters, err := GetSnapshot(o)
-			if err != nil {
-				log.Printf("BanditError: could not get snapshot: %s", err.Error())
-			}
-
-			c <- counters
-		}
-	}()
-
-	d, err := NewDelayedBandit(e.Bandit, c)
-	if err != nil {
-		return err
-	}
-
-	e.Bandit = d
-	return nil
-}
-
 // Variation describes endpoints which are mapped onto bandit arms.
 type Variation struct {
 	Ordinal     int    // 1 indexed arm ordinal
@@ -178,15 +150,24 @@ func NewExperiments(o Opener) (*Experiments, error) {
 	}
 
 	type experimentsConfig struct {
-		Name       string            `json:"experiment_name"`
-		Bandit     string            `json:"bandit"`
-		Parameters []float64         `json:"parameters"`
-		Variations []variationConfig `json:"variations"`
+		Name         string            `json:"experiment_name"`
+		Bandit       string            `json:"bandit"`
+		Snapshot     string            `json:"snapshot"`
+		SnapshotPoll int               `json:"snapshot-poll-seconds"`
+		Parameters   []float64         `json:"parameters"`
+		Variations   []variationConfig `json:"variations"`
 	}
 
 	var cfg []experimentsConfig
 	if err := json.Unmarshal(jsonString, &cfg); err != nil {
-		return &Experiments{}, fmt.Errorf("could not marshal json: %s ", err)
+		return &Experiments{}, fmt.Errorf("could not marshal json: %s ", err.Error())
+	}
+
+	// have to specify poll duration along with snapshot location
+	for _, c := range cfg {
+		if c.Snapshot != "" && c.SnapshotPoll == 0 {
+			return &Experiments{}, fmt.Errorf("%s is missing snapshot-poll-seconds", c.Name)
+		}
 	}
 
 	es := Experiments{}
@@ -194,6 +175,16 @@ func NewExperiments(o Opener) (*Experiments, error) {
 		bandit, err := NewBandit(len(e.Variations), e.Bandit, e.Parameters)
 		if err != nil {
 			return &Experiments{}, fmt.Errorf("could not make bandit: %s ", err.Error())
+		}
+
+		// this is a delayed bandit; gets it's internal state from a snapshot
+		if e.Snapshot != "" {
+			opener := NewOpener(e.Snapshot)
+			duration := time.Duration(e.SnapshotPoll) * time.Second
+			bandit, err = NewDelayedBandit(bandit, opener, duration)
+			if err != nil {
+				return &Experiments{}, fmt.Errorf("could not delay bandit: %s ", err.Error())
+			}
 		}
 
 		experiment := Experiment{
@@ -232,17 +223,6 @@ func (e *Experiments) GetVariation(tag string) (Experiment, Variation, error) {
 	}
 
 	return Experiment{}, Variation{}, fmt.Errorf("could not find variation '%s'", tag)
-}
-
-// InitDelayedBandit initializes all bandits with delayed Softmax(0.1).
-func (e *Experiments) InitDelayedBandit(o Opener, poll time.Duration) error {
-	for _, e := range *e {
-		if err := e.InitDelayedBandit(o, poll); err != nil {
-			return fmt.Errorf("delayed bandit setup failed: %s", err.Error())
-		}
-	}
-
-	return nil
 }
 
 // TimestampedTagToTag docodes a timestamped tag in the form <tag>:<timestamp> into

@@ -13,10 +13,8 @@ import (
 )
 
 var (
-	apiExperiments = flag.String("experiments", "experiments.json", "experiments json filename")
+	apiExperiments = flag.String("experiments", "experiments.json", "local file or http endpoint")
 	apiBind        = flag.String("port", ":8080", "interface / port to bind to")
-	apiSnapshot    = flag.String("snapshot", "snapshot.tsv", "campaign snapshot file")
-	apiSnaphotPoll = flag.Duration("snapshot-poll", 1e9, "time before snapshot is loaded")
 	apiPinTTL      = flag.Duration("pin-ttl", 0, "ttl life of a pinned variation")
 )
 
@@ -25,14 +23,9 @@ func init() {
 }
 
 func main() {
-	es, err := bandit.NewExperiments(bandit.NewFileOpener(*apiExperiments))
+	es, err := bandit.NewExperiments(bandit.NewOpener(*apiExperiments))
 	if err != nil {
-		log.Fatalf("could not construct experiments: %s", err.Error())
-	}
-
-	opener := bandit.NewFileOpener(*apiSnapshot)
-	if err := es.InitDelayedBandit(opener, *apiSnaphotPoll); err != nil {
-		log.Fatalf("could initialize bandits: %s", err.Error())
+		log.Fatalf("couldi not init experiments: %s", err.Error())
 	}
 
 	m := pat.New()
