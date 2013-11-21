@@ -72,6 +72,16 @@ func (e *Experiment) SelectTimestamped(
 	// return the given timestamped tag
 	if ttl > time.Since(time.Unix(ts, 0)) {
 		v, err := e.GetTaggedVariation(tag)
+
+		// could not get tagged variation. this can occurr when switching between
+		// experiments. users still pinned to the previous experiment will see
+		// failures because the old experiment name is unknown.
+		if err != nil {
+			log.Printf("repinned after error: %s", err.Error())
+			selected := e.Select()
+			return selected, makeTimestampedTag(selected, now), nil
+		}
+
 		return v, makeTimestampedTag(v, ts), err
 	}
 

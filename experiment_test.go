@@ -3,7 +3,12 @@
 
 package bandit
 
-import "testing"
+import (
+	"fmt"
+	"strings"
+	"testing"
+	"time"
+)
 
 func TestExperiment(t *testing.T) {
 	es, err := NewExperiments(NewFileOpener("experiments.json"))
@@ -39,5 +44,27 @@ func TestTimestampedTagToTag(t *testing.T) {
 
 	if expected := int64(1378823906); ts != expected {
 		t.Fatalf("expected %d but got %d", expected, ts)
+	}
+}
+
+func TestExperimentCutoverUnexpiredTag(t *testing.T) {
+	es, err := NewExperiments(NewFileOpener("experiments.json"))
+	if err != nil {
+		t.Fatalf("while reading experiment fixture: %s", err.Error())
+	}
+
+	e, ok := (*es)["shape-20130822"]
+	if !ok {
+		t.Fatalf("could not find test campaign")
+	}
+
+	oldTag := fmt.Sprintf("color-20130101:1:%d", time.Now().Unix())
+	_, tag, err := e.SelectTimestamped(oldTag, time.Duration(24)*time.Hour)
+	if err != nil {
+		t.Fatalf("failed to select timstamped: %s", err.Error())
+	}
+
+	if strings.Index(tag, "shape-20130822:") != 0 {
+		t.Fatalf("did not get repinned to shape.")
 	}
 }
