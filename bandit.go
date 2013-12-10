@@ -118,7 +118,7 @@ type softmax struct {
 // to their estimated values.
 func NewSoftmax(arms int, τ float64) (Bandit, error) {
 	if !(τ >= 0.0) {
-		return &softmax{}, fmt.Errorf("τ not in [0, ∞]")
+		return &softmax{}, fmt.Errorf("τ not in [0, ∞)")
 	}
 
 	return &softmax{
@@ -256,6 +256,85 @@ func (b *delayedBandit) Init(c *Counters) error {
 
 // Update is a NOP. Delayed bandit is updated with Reset(counter) instead
 func (b *delayedBandit) Update(arm int, reward float64) {}
+
+// Thompson sampling (for Bernoulli bandits) explores arms by sampling
+// according to the probability that it maximizes the expected reward.
+type thompson struct {
+	Counters
+	betaRnd func(a, b float64) float64
+	alpha   float64 // strength of prior distribution for each bandit (beta with homogeneous prior)
+}
+
+// BetaRnd returns beta distributed random variables
+// implementation follows R.C.H. Cheng: Generating Beta Variates with Nonintegral Shape Parameters
+// TODO(cs): check implementation
+func BetaRnd() func(α, β float64) float64 {
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	log4 := math.Log(4)
+	return func(α, β float64) float64 {
+		// initialization
+		a := α + β
+		b := math.NaN()
+		if math.Min(α, β) <= 1 {
+			b = math.Max(1/α, 1/β)
+		} else {
+			b = math.Sqrt((a - 2) / (2*α*β - a))
+		}
+		c := α + 1/b
+
+		// start rejection sampling
+		W := math.NaN()
+		for reject := true; reject; {
+			U1 := r.Float64()
+			U2 := r.Float64()
+			V := b * math.Log(U1/(1-U1))
+			W = α * math.Exp(V)
+
+			reject = (a*math.Log(a/(β+W)) + c*V - log4) < math.Log(U1*U1*U2)
+		}
+		return (W / (β + W))
+	}
+}
+
+// NewThompson constructs a thompson sampling strategy.
+func NewThompson(arms int, α float64) (Bandit, error) {
+	if !(α > 0.0) {
+		return &thompson{}, fmt.Errorf("α not in (0, ∞]")
+	}
+
+	return &thompson{
+		Counters: NewCounters(arms),
+		alpha:    α,
+		betaRnd:  BetaRnd(),
+	}, nil
+}
+
+// SelectArm returns 1 indexed arm to be tried next.
+func (t *thompson) SelectArm() int {
+	var thetas = make([]float64, t.arms)
+	for i := 0; i < t.arms; i++ {
+		si := t.values[i] * float64(t.counts[i])
+		fi := float64(t.counts[i]) - si
+		thetas[i] = t.betaRnd(si+t.alpha, fi+t.alpha)
+	}
+
+	max := -math.MaxFloat64
+	var arm int
+	for i, val := range thetas {
+		if max < val {
+			arm = i
+			max = val
+		}
+	}
+
+	t.counts[arm]++
+	return arm + 1
+}
+
+// Version returns information on this bandit
+func (t *thompson) Version() string {
+	return fmt.Sprintf("Thompson(alpha=%.2f)", t.alpha)
+}
 
 // Counters maintain internal bandit state
 type Counters struct {

@@ -89,6 +89,22 @@ func main() {
 		bandits: ucb1s,
 	})
 
+	// thompson sampling
+	thompsons := bandits{}
+	for _, α := range []float64{1, 2, 10, 20, 100} {
+		bandit, err := bandit.NewThompson(len(μs), α)
+		if err != nil {
+			log.Fatal(err.Error())
+		}
+
+		thompsons = append(thompsons, bandit)
+	}
+
+	groups = append(groups, group{
+		name:    "Thompson Sampling",
+		bandits: thompsons,
+	})
+
 	// mixed
 	mixed := bandits{}
 	greedy, err := bandit.NewEpsilonGreedy(len(μs), 0.1)
@@ -107,6 +123,19 @@ func main() {
 
 	// ucb1 into mixed
 	mixed = append(mixed, bandit.NewUCB1(len(μs)))
+
+	groups = append(groups, group{
+		name:    "Comparative",
+		bandits: mixed,
+	})
+
+	// thompson into mixed
+	thompson, err := bandit.NewThompson(len(μs), 10.0)
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+
+	mixed = append(mixed, thompson)
 
 	groups = append(groups, group{
 		name:    "Comparative",

@@ -42,7 +42,6 @@ func Bernoulli(μ float64) Arm {
 		if r.Float64() <= μ {
 			res = 1.0
 		}
-
 		return res
 	}
 }
