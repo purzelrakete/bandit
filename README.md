@@ -171,7 +171,7 @@ and `bandit-job -kind reduce`. You can also run over the logs wiht `bandit-job
 
 ## Bandit Algorithms
 
-You can currently choose between Epsilon Greedy, UCB1 and Softmax. See the
+You can currently choose between Epsilon Greedy, UCB1, Softmax, and Thompson ([see, e.g., Chapelle & Li, 2011 ](http://books.nips.cc/papers/files/nips24/NIPS2011_1232.pdf)). See the
 godoc for detailed information.
 
 ## Simulation
@@ -190,7 +190,8 @@ The API is currently *not stable* and is subject to change at any time.
 ## TODO
 
 - UCB with extensions for delayed rewards
-- Sticky assignements
+- Sticky assignments
+- Extend Thompson sampling for different reward distributions
 
 # Credits
 
