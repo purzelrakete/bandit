@@ -7,6 +7,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/purzelrakete/bandit"
+	"github.com/purzelrakete/bandit/math"
 	"github.com/purzelrakete/bandit/sim"
 	"log"
 	"strconv"
@@ -41,7 +42,7 @@ func main() {
 	// bernoulli arms. this is the hidden distribution.
 	arms := arms{}
 	for _, μ := range μs {
-		arms = append(arms, sim.Bernoulli(μ))
+		arms = append(arms, math.BernRnd(μ))
 	}
 
 	// groups of graphs to draw

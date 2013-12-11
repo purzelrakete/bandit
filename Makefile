@@ -2,7 +2,8 @@
 
 LIBS := \
 github.com/purzelrakete/bandit \
-github.com/purzelrakete/bandit/http
+github.com/purzelrakete/bandit/http \
+github.com/purzelrakete/bandit/math
 
 BINS := \
 github.com/purzelrakete/bandit/api \

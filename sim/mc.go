@@ -3,11 +3,6 @@
 
 package sim
 
-import (
-	"math/rand"
-	"time"
-)
-
 // Bandit can select arm or update information
 type Bandit interface {
 	SelectArm() int
@@ -18,33 +13,6 @@ type Bandit interface {
 
 // Arm simulates a single bandit arm pull with every execution. Returns {0,1}.
 type Arm func() float64
-
-// Gaussian returns an Arm function such that a ~ N(x|μ,σ)
-func Gaussian(μ, σ float64) Arm {
-	r := rand.New(rand.NewSource(time.Now().UnixNano()))
-	return func() float64 {
-		return r.NormFloat64()*σ + μ
-	}
-}
-
-// Constant returns an Arm function such that a ~ c
-func Constant(c float64) Arm {
-	return func() float64 {
-		return c
-	}
-}
-
-// Bernoulli returns an Arm function such that a ~ Bern(x|μ)
-func Bernoulli(μ float64) Arm {
-	r := rand.New(rand.NewSource(time.Now().UnixNano()))
-	return func() float64 {
-		res := 0.0
-		if r.Float64() <= μ {
-			res = 1.0
-		}
-		return res
-	}
-}
 
 // MonteCarlo runs a monte carlo experiment with the given bandit and arms.
 func MonteCarlo(sims, trials int, arms []Arm, b Bandit) (Simulation, error) {

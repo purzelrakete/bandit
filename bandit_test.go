@@ -4,6 +4,7 @@
 package bandit
 
 import (
+	bmath "github.com/purzelrakete/bandit/math"
 	"github.com/purzelrakete/bandit/sim"
 	"math"
 	"testing"
@@ -16,10 +17,10 @@ func TestEpsilonGreedy(t *testing.T) {
 	bestArmIndex := 4 // Bernoulli(bestArm)
 	bestArm := 0.8
 	arms := []sim.Arm{
-		sim.Bernoulli(0.1),
-		sim.Bernoulli(0.3),
-		sim.Bernoulli(0.2),
-		sim.Bernoulli(bestArm),
+		bmath.BernRnd(0.1),
+		bmath.BernRnd(0.3),
+		bmath.BernRnd(0.2),
+		bmath.BernRnd(bestArm),
 	}
 
 	bandit, err := NewEpsilonGreedy(len(arms), ε)
@@ -61,10 +62,10 @@ func TestSoftmax(t *testing.T) {
 	bestArmIndex := 4 // Bernoulli(bestArm)
 	bestArm := 0.8
 	arms := []sim.Arm{
-		sim.Bernoulli(0.1),
-		sim.Bernoulli(0.3),
-		sim.Bernoulli(0.2),
-		sim.Bernoulli(0.8),
+		bmath.BernRnd(0.1),
+		bmath.BernRnd(0.3),
+		bmath.BernRnd(0.2),
+		bmath.BernRnd(0.8),
 	}
 
 	bandit, err := NewSoftmax(len(arms), τ)
@@ -99,7 +100,6 @@ func TestSoftmax(t *testing.T) {
 	}
 }
 
-// TODO(cs): rethink test (suffers from conceptual weakness)
 func TestSoftmaxGaussian(t *testing.T) {
 	τ := 0.1
 	sims := 5000
@@ -107,8 +107,8 @@ func TestSoftmaxGaussian(t *testing.T) {
 	bestArmIndex := 1 // Gaussian(bestArm)
 	bestArm := 5000.0
 	arms := []sim.Arm{
-		sim.Gaussian(5000, 1), // is five times better
-		sim.Gaussian(0, 1),
+		bmath.NormRnd(5000, 1), // is five times better
+		bmath.NormRnd(0, 1),
 	}
 
 	bandit, err := NewSoftmax(len(arms), τ)
@@ -149,10 +149,10 @@ func TestUCB1(t *testing.T) {
 	bestArmIndex := 4 // Bernoulli(bestArm)
 	bestArm := 0.8
 	arms := []sim.Arm{
-		sim.Bernoulli(0.1),
-		sim.Bernoulli(0.3),
-		sim.Bernoulli(0.2),
-		sim.Bernoulli(0.8),
+		bmath.BernRnd(0.1),
+		bmath.BernRnd(0.3),
+		bmath.BernRnd(0.2),
+		bmath.BernRnd(0.8),
 	}
 
 	s, err := sim.MonteCarlo(sims, trials, arms, NewUCB1(len(arms)))
@@ -190,10 +190,10 @@ func TestDelayedBandit(t *testing.T) {
 	bestArmIndex := 4 // Bernoulli(bestArm)
 	bestArm := 0.8
 	arms := []sim.Arm{
-		sim.Bernoulli(0.1),
-		sim.Bernoulli(0.3),
-		sim.Bernoulli(0.2),
-		sim.Bernoulli(0.8),
+		bmath.BernRnd(0.1),
+		bmath.BernRnd(0.3),
+		bmath.BernRnd(0.2),
+		bmath.BernRnd(0.8),
 	}
 
 	b, err := NewSoftmax(len(arms), τ)
@@ -225,6 +225,7 @@ func TestDelayedBandit(t *testing.T) {
 	}
 }
 
+
 func TestThompson(t *testing.T) {
 	α := 10.0
 	sims := 5000
@@ -232,10 +233,10 @@ func TestThompson(t *testing.T) {
 	bestArmIndex := 4 // Bernoulli(bestArm)
 	bestArm := 0.8
 	arms := []sim.Arm{
-		sim.Bernoulli(0.1),
-		sim.Bernoulli(0.3),
-		sim.Bernoulli(0.2),
-		sim.Bernoulli(0.8),
+		bmath.BernRnd(0.1),
+		bmath.BernRnd(0.3),
+		bmath.BernRnd(0.2),
+		bmath.BernRnd(0.8),
 	}
 
 	bandit, err := NewThompson(len(arms), α)

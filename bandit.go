@@ -11,6 +11,7 @@ package bandit
 
 import (
 	"fmt"
+	bmath "github.com/purzelrakete/bandit/math"
 	"math"
 	"math/rand"
 	"sync"
@@ -82,16 +83,7 @@ func NewEpsilonGreedy(arms int, epsilon float64) (Bandit, error) {
 func (e *epsilonGreedy) SelectArm() int {
 	arm := 0
 	if z := e.rand.Float64(); z > e.epsilon {
-		imax, max := []int{}, 0.0
-		for i, value := range e.values {
-			if value > max {
-				max = value
-				imax = []int{i}
-			} else if value == max {
-				imax = append(imax, i)
-			}
-		}
-
+		_, imax := max(e.values)
 		// best arm. randomly pick because there may be equally best arms.
 		arm = imax[e.rand.Intn(len(imax))]
 	} else {
@@ -129,10 +121,7 @@ func NewSoftmax(arms int, τ float64) (Bandit, error) {
 
 // SelectArm returns 1 indexed arm to be tried next.
 func (s *softmax) SelectArm() int {
-	max := -math.MaxFloat64
-	for _, value := range s.values {
-		max = math.Max(max, value)
-	}
+	max, _ := max(s.values)
 
 	normalizer := 0.0
 	for _, value := range s.values {
@@ -194,14 +183,10 @@ func (u *uCB1) SelectArm() int {
 		ucbValues[i] = u.values[i] + bonus
 	}
 
-	var arm int
-	var max float64
-	for i, val := range ucbValues {
-		if max < val {
-			arm = i
-			max = val
-		}
-	}
+	_, imax := max(ucbValues)
+	// best arm. randomly pick because there may be equally best arms.
+	arm := imax[u.rand.Intn(len(imax))]
+
 	u.counts[arm]++
 	return arm + 1
 }
@@ -265,37 +250,6 @@ type thompson struct {
 	alpha   float64 // strength of prior distribution for each bandit (beta with homogeneous prior)
 }
 
-// BetaRnd returns beta distributed random variables
-// implementation follows R.C.H. Cheng: Generating Beta Variates with Nonintegral Shape Parameters
-// TODO(cs): check implementation
-func BetaRnd() func(α, β float64) float64 {
-	r := rand.New(rand.NewSource(time.Now().UnixNano()))
-	log4 := math.Log(4)
-	return func(α, β float64) float64 {
-		// initialization
-		a := α + β
-		b := math.NaN()
-		if math.Min(α, β) <= 1 {
-			b = math.Max(1/α, 1/β)
-		} else {
-			b = math.Sqrt((a - 2) / (2*α*β - a))
-		}
-		c := α + 1/b
-
-		// start rejection sampling
-		W := math.NaN()
-		for reject := true; reject; {
-			U1 := r.Float64()
-			U2 := r.Float64()
-			V := b * math.Log(U1/(1-U1))
-			W = α * math.Exp(V)
-
-			reject = (a*math.Log(a/(β+W)) + c*V - log4) < math.Log(U1*U1*U2)
-		}
-		return (W / (β + W))
-	}
-}
-
 // NewThompson constructs a thompson sampling strategy.
 func NewThompson(arms int, α float64) (Bandit, error) {
 	if !(α > 0.0) {
@@ -305,7 +259,7 @@ func NewThompson(arms int, α float64) (Bandit, error) {
 	return &thompson{
 		Counters: NewCounters(arms),
 		alpha:    α,
-		betaRnd:  BetaRnd(),
+		betaRnd:  bmath.BetaRnd(),
 	}, nil
 }
 
@@ -318,14 +272,9 @@ func (t *thompson) SelectArm() int {
 		thetas[i] = t.betaRnd(si+t.alpha, fi+t.alpha)
 	}
 
-	max := -math.MaxFloat64
-	var arm int
-	for i, val := range thetas {
-		if max < val {
-			arm = i
-			max = val
-		}
-	}
+	_, imax := max(thetas)
+	// best arm. randomly pick because there may be equally best arms.
+	arm := imax[t.rand.Intn(len(imax))]
 
 	t.counts[arm]++
 	return arm + 1
@@ -390,4 +339,20 @@ func (c *Counters) Init(snapshot *Counters) error {
 func (c *Counters) Reset() {
 	c.counts = make([]int, c.arms)
 	c.values = make([]float64, c.arms)
+}
+
+// helpers
+
+// max returns maximal value and its indices of a slice
+func max(array []float64) (float64, []int) {
+	max, imax := -math.MaxFloat64, []int{}
+	for idx, value := range array {
+		if max < value {
+			imax = []int{idx}
+			max = value
+		} else if value == max {
+			imax = append(imax, idx)
+		}
+	}
+	return max, imax
 }
