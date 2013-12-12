@@ -56,6 +56,12 @@ func NewBandit(arms int, name string, params []float64) (Bandit, error) {
 		}
 
 		return NewUCB1(arms), nil
+	case "thompson":
+		if len(params) != 1 {
+			return &thompson{}, fmt.Errorf("missing α")
+		}
+
+		return NewThompson(arms, params[0])
 	}
 
 	return &epsilonGreedy{}, fmt.Errorf("'%s' unknown bandit", name)
