@@ -272,8 +272,8 @@ func (b *delayedBandit) Update(arm int, reward float64) {}
 // according to the probability that it maximizes the expected reward.
 type thompson struct {
 	Counters
-	betaRnd func(a, b float64) float64
-	alpha   float64 // strength of prior distribution for each bandit (beta with homogeneous prior)
+	betaRand *bmath.BetaRand // seeded random beta number generator
+	alpha    float64         // strength of prior distribution for each bandit (beta with homogeneous prior)
 }
 
 // NewThompson constructs a thompson sampling strategy.
@@ -285,7 +285,7 @@ func NewThompson(arms int, α float64) (Bandit, error) {
 	return &thompson{
 		Counters: NewCounters(arms),
 		alpha:    α,
-		betaRnd:  bmath.BetaRnd(),
+		betaRand: bmath.NewBetaRand(time.Now().UnixNano()),
 	}, nil
 }
 
@@ -295,7 +295,7 @@ func (t *thompson) SelectArm() int {
 	for i := 0; i < t.arms; i++ {
 		si := t.values[i] * float64(t.counts[i])
 		fi := float64(t.counts[i]) - si
-		thetas[i] = t.betaRnd(si+t.alpha, fi+t.alpha)
+		thetas[i] = t.betaRand.NextBeta(si+t.alpha, fi+t.alpha)
 	}
 
 	_, imax := max(thetas)

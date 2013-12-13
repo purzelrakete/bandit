@@ -17,10 +17,10 @@ func TestEpsilonGreedy(t *testing.T) {
 	bestArmIndex := 4 // Bernoulli(bestArm)
 	bestArm := 0.8
 	arms := []sim.Arm{
-		bmath.BernRnd(0.1),
-		bmath.BernRnd(0.3),
-		bmath.BernRnd(0.2),
-		bmath.BernRnd(bestArm),
+		bmath.BernRand(0.1),
+		bmath.BernRand(0.3),
+		bmath.BernRand(0.2),
+		bmath.BernRand(bestArm),
 	}
 
 	bandit, err := NewEpsilonGreedy(len(arms), ε)
@@ -62,10 +62,10 @@ func TestSoftmax(t *testing.T) {
 	bestArmIndex := 4 // Bernoulli(bestArm)
 	bestArm := 0.8
 	arms := []sim.Arm{
-		bmath.BernRnd(0.1),
-		bmath.BernRnd(0.3),
-		bmath.BernRnd(0.2),
-		bmath.BernRnd(0.8),
+		bmath.BernRand(0.1),
+		bmath.BernRand(0.3),
+		bmath.BernRand(0.2),
+		bmath.BernRand(0.8),
 	}
 
 	bandit, err := NewSoftmax(len(arms), τ)
@@ -107,8 +107,8 @@ func TestSoftmaxGaussian(t *testing.T) {
 	bestArmIndex := 1 // Gaussian(bestArm)
 	bestArm := 5000.0
 	arms := []sim.Arm{
-		bmath.NormRnd(5000, 1), // is five times better
-		bmath.NormRnd(0, 1),
+		bmath.NormRand(5000, 1), // is five times better
+		bmath.NormRand(0, 1),
 	}
 
 	bandit, err := NewSoftmax(len(arms), τ)
@@ -149,10 +149,10 @@ func TestUCB1(t *testing.T) {
 	bestArmIndex := 4 // Bernoulli(bestArm)
 	bestArm := 0.8
 	arms := []sim.Arm{
-		bmath.BernRnd(0.1),
-		bmath.BernRnd(0.3),
-		bmath.BernRnd(0.2),
-		bmath.BernRnd(0.8),
+		bmath.BernRand(0.1),
+		bmath.BernRand(0.3),
+		bmath.BernRand(0.2),
+		bmath.BernRand(0.8),
 	}
 
 	s, err := sim.MonteCarlo(sims, trials, arms, NewUCB1(len(arms)))
@@ -190,10 +190,10 @@ func TestDelayedBandit(t *testing.T) {
 	bestArmIndex := 4 // Bernoulli(bestArm)
 	bestArm := 0.8
 	arms := []sim.Arm{
-		bmath.BernRnd(0.1),
-		bmath.BernRnd(0.3),
-		bmath.BernRnd(0.2),
-		bmath.BernRnd(0.8),
+		bmath.BernRand(0.1),
+		bmath.BernRand(0.3),
+		bmath.BernRand(0.2),
+		bmath.BernRand(0.8),
 	}
 
 	b, err := NewSoftmax(len(arms), τ)
@@ -225,7 +225,6 @@ func TestDelayedBandit(t *testing.T) {
 	}
 }
 
-
 func TestThompson(t *testing.T) {
 	α := 10.0
 	sims := 5000
@@ -233,10 +232,10 @@ func TestThompson(t *testing.T) {
 	bestArmIndex := 4 // Bernoulli(bestArm)
 	bestArm := 0.8
 	arms := []sim.Arm{
-		bmath.BernRnd(0.1),
-		bmath.BernRnd(0.3),
-		bmath.BernRnd(0.2),
-		bmath.BernRnd(0.8),
+		bmath.BernRand(0.1),
+		bmath.BernRand(0.3),
+		bmath.BernRand(0.2),
+		bmath.BernRand(0.8),
 	}
 
 	bandit, err := NewThompson(len(arms), α)

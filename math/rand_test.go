@@ -5,8 +5,9 @@ import (
 	"testing"
 )
 
-func TestBetaRnd(t *testing.T) {
-	betaRnd := BetaRnd()
+func TestBetaRand(t *testing.T) {
+	var seed int64 = 123 //time.Now().UnixNano()
+	betaRnd := NewBetaRand(seed)
 	α, β := 15.0, 4.0
 	numSamples := 1000000
 	expectation := α / (α + β)
@@ -14,7 +15,7 @@ func TestBetaRnd(t *testing.T) {
 
 	mean, mean2 := 0.0, 0.0
 	for i := 0; i < numSamples; i++ {
-		x := betaRnd(α, β)
+		x := betaRnd.NextBeta(α, β)
 		mean += x
 		mean2 += x * x
 	}
@@ -29,5 +30,16 @@ func TestBetaRnd(t *testing.T) {
 	// compare sample variance with variance
 	if got := mean2 - mean*mean; math.Abs(got-variance) > 0.001 {
 		t.Fatalf("variance converge to %f. is %f", variance, got)
+	}
+}
+
+func TestBetaSeed(t *testing.T) {
+	var seed int64 = 123 //time.Now().UnixNano()
+	betaRnd := NewBetaRand(seed)
+	α, β := 15.0, 4.0
+	expected := 0.810981
+
+	if got := betaRnd.NextBeta(α, β); math.Abs(got-expected) > 0.0000001 {
+		t.Fatalf("beta random variable should be %f, but is %f", expected, got)
 	}
 }
