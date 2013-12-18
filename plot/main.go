@@ -42,7 +42,7 @@ func main() {
 	// bernoulli arms. this is the hidden distribution.
 	arms := arms{}
 	for _, μ := range μs {
-		arms = append(arms, math.BernRnd(μ))
+		arms = append(arms, math.BernRand(μ))
 	}
 
 	// groups of graphs to draw
