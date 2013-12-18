@@ -25,7 +25,7 @@ func init() {
 func main() {
 	es, err := bandit.NewExperiments(bandit.NewOpener(*apiExperiments))
 	if err != nil {
-		log.Fatalf("couldi not init experiments: %s", err.Error())
+		log.Fatalf("could not initialize experiments: %s", err.Error())
 	}
 
 	m := pat.New()

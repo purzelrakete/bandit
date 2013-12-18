@@ -16,7 +16,7 @@ type Opener interface {
 // NewOpener returns an http opener or a file opener depending on `ref`.
 func NewOpener(ref string) Opener {
 	var opener Opener
-	if strings.Index(ref, "http://") > 0 {
+	if strings.Index(ref, "http://") >= 0 {
 		opener = NewHTTPOpener(ref)
 	} else {
 		opener = NewFileOpener(ref)
