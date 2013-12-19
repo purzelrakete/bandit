@@ -141,7 +141,6 @@ a backend request to the HTTP API. Use the returned variation to vary.
 First, load an experiment.
 
 ```go
-
 experiments := bandit.NewFileOpener("experiments.json")
 e, err := bandit.NewExperiment(experiments, "shape-20130822")
 if err != nil {
