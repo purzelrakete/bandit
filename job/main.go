@@ -32,7 +32,7 @@ func init() {
 }
 
 func main() {
-	stats := NewStatistics(*jobExperimentName)
+	stats := newStatistics(*jobExperimentName)
 
 	switch *jobKind {
 	case "map":

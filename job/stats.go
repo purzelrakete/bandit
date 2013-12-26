@@ -1,6 +1,7 @@
 package main
 
-// FIXME: try to remove almost all of this code
+// FIXME: try to remove almost all of this code. No need for interfaces and
+// general code just to produce mean rewards.
 
 import (
 	"fmt"
@@ -14,30 +15,30 @@ const (
 	banditReward    = "BanditReward"
 )
 
-// Statistics contains all stats which should be computed
-type Statistics struct {
-	ExperimentName string
-	Stats          []Stats
+// statistics contains all stats which should be computed
+type statistics struct {
+	experimentName string
+	stats          []stats
 }
 
-// NewStatistics creates a new object with default statistics
-func NewStatistics(experimentName string) *Statistics {
-	return &Statistics{
-		ExperimentName: experimentName,
-		Stats: []Stats{
+// newStatistics creates a new object with default statistics
+func newStatistics(experimentName string) *statistics {
+	return &statistics{
+		experimentName: experimentName,
+		stats: []stats{
 			newSumRewards(experimentName),
 			newCountSelects(experimentName),
 		},
 	}
 }
 
-func (s *Statistics) rewards() ([]int, []float64) {
-	rewards, ok := s.Stats[0].result()
+func (s *statistics) rewards() ([]int, []float64) {
+	rewards, ok := s.stats[0].result()
 	if !ok {
 		panic("no rewards")
 	}
 
-	selects, ok := s.Stats[1].result()
+	selects, ok := s.stats[1].result()
 	if !ok {
 		panic("no selects")
 	}
@@ -57,8 +58,8 @@ func (s *Statistics) rewards() ([]int, []float64) {
 	return rCounts, rRewards
 }
 
-// Stats aggregates statistics from line based input
-type Stats interface {
+// stats aggregates statistics from line based input
+type stats interface {
 	mapLine(string) (string, string, bool) // line -> (key, value, matches)
 	reduceLine(string)
 	result() (map[int]float64, bool)
@@ -72,7 +73,7 @@ type countSelects struct {
 	experimentName string
 }
 
-func newCountSelects(name string) Stats {
+func newCountSelects(name string) stats {
 	return &countSelects{
 		prefix:         "BanditSelection",
 		experimentName: name,
@@ -148,7 +149,7 @@ type sumRewards struct {
 	rewards        map[int]float64
 }
 
-func newSumRewards(name string) Stats {
+func newSumRewards(name string) stats {
 	return &sumRewards{
 		prefix:         "BanditReward",
 		experimentName: name,

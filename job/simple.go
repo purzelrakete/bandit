@@ -10,9 +10,9 @@ import (
 	"time"
 )
 
-// Simple produces a snapshot every `poll` duration. FIXME: O(N) memory
-func simple(s *Statistics, logFile string, poll time.Duration) error {
-	snapshotFile := s.ExperimentName + ".tsv"
+// simple produces a snapshot every `poll` duration. FIXME: O(N) memory
+func simple(s *statistics, logFile string, poll time.Duration) error {
+	snapshotFile := s.experimentName + ".tsv"
 	opener := bandit.NewOpener(logFile)
 	file, err := opener.Open()
 	if err != nil {

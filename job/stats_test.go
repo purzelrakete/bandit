@@ -17,7 +17,7 @@ func TestMapper(t *testing.T) {
 		"1379069258	BanditReward	plants-20121111:1:2 1.0",
 	}
 
-	stats := NewStatistics("shape-20130822")
+	stats := newStatistics("shape-20130822")
 
 	r, w := strings.NewReader(strings.Join(log, "\n")), new(bytes.Buffer)
 	mapper := mapper(stats, r, w)
@@ -47,7 +47,7 @@ func TestReducer(t *testing.T) {
 		"BanditReward_1	0.0",
 	}
 
-	stats := NewStatistics("shape-20130822")
+	stats := newStatistics("shape-20130822")
 
 	r, w := strings.NewReader(strings.Join(log, "\n")), new(bytes.Buffer)
 	reducer := reducer(stats, r, w)
@@ -77,7 +77,7 @@ func TestMapperReducer(t *testing.T) {
 		"1379069258	BanditReward	plants-20121111:1:3	1.0",
 	}
 
-	stats := NewStatistics("shape-20130822")
+	stats := newStatistics("shape-20130822")
 
 	r, w := strings.NewReader(strings.Join(log, "\n")), new(bytes.Buffer)
 	mapper := mapper(stats, r, w)
@@ -110,7 +110,7 @@ func TestCollect(t *testing.T) {
 		"BanditSelection	1	4.000000",
 	}
 
-	stats := NewStatistics("shape-20130822")
+	stats := newStatistics("shape-20130822")
 
 	r, w := strings.NewReader(strings.Join(log, "\n")), new(bytes.Buffer)
 	collect := collector(stats, r, w)
@@ -132,7 +132,7 @@ func TestSnapshotCounter(t *testing.T) {
 		"BanditSelection	1	4.000000",
 	}
 
-	stats := NewStatistics("shape-20130822")
+	stats := newStatistics("shape-20130822")
 	r, w := strings.NewReader(strings.Join(log, "\n")), new(bytes.Buffer)
 
 	collect := collector(stats, r, w)

@@ -9,12 +9,12 @@ import (
 
 // mapper returns a hadoop streaming mapper function. Emits (arm, reward)
 // tuples onto the given writer, for the specified experiment only.
-func mapper(s *Statistics, r io.Reader, w io.Writer) func() {
+func mapper(s *statistics, r io.Reader, w io.Writer) func() {
 	return func() {
 		scanner := bufio.NewScanner(r)
 		for scanner.Scan() {
 			line := scanner.Text()
-			for _, stat := range s.Stats {
+			for _, stat := range s.stats {
 				if key, value, ok := stat.mapLine(line); ok {
 					fmt.Fprintf(w, "%s	%s\n", key, value)
 				}
@@ -23,19 +23,19 @@ func mapper(s *Statistics, r io.Reader, w io.Writer) func() {
 	}
 }
 
-// reducer returns a hadoop streaming reducer function. Emits one SnapshotLine
-// for the specificed experiment.
-func reducer(s *Statistics, r io.Reader, w io.Writer) func() {
+// reducer returns a hadoop streaming reducer function. Emits one line for the
+// specificed experiment.
+func reducer(s *statistics, r io.Reader, w io.Writer) func() {
 	return func() {
 		scanner := bufio.NewScanner(r)
 		for scanner.Scan() {
 			line := scanner.Text()
-			for _, stat := range s.Stats {
+			for _, stat := range s.stats {
 				stat.reduceLine(line)
 			}
 		}
 
-		for _, stat := range s.Stats {
+		for _, stat := range s.stats {
 			if values, ok := stat.result(); ok {
 				for key, value := range values {
 					fmt.Fprintf(w, "%s	%d	%f\n", stat.getPrefix(), key+1, value)
@@ -46,12 +46,12 @@ func reducer(s *Statistics, r io.Reader, w io.Writer) func() {
 }
 
 // collector aggregates outputs of reducers
-func collector(s *Statistics, r io.Reader, w io.Writer) func() {
+func collector(s *statistics, r io.Reader, w io.Writer) func() {
 	return func() {
 		scanner := bufio.NewScanner(r)
 		for scanner.Scan() {
 			line := scanner.Text()
-			for _, stat := range s.Stats {
+			for _, stat := range s.stats {
 				stat.collect(line)
 			}
 		}
