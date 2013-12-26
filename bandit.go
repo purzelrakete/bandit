@@ -23,7 +23,6 @@ import (
 type Bandit interface {
 	SelectArm() int
 	Update(arm int, reward float64)
-	Version() string
 	Init(*Counters) error
 	Reset()
 }
@@ -102,8 +101,8 @@ func (e *epsilonGreedy) SelectArm() int {
 	return arm + 1
 }
 
-// Version returns information on this bandit
-func (e *epsilonGreedy) Version() string {
+// String returns information on this bandit
+func (e *epsilonGreedy) String() string {
 	return fmt.Sprintf("EpsilonGreedy(epsilon=%.2f)", e.epsilon)
 }
 
@@ -153,8 +152,8 @@ func (s *softmax) SelectArm() int {
 	return draw + 1
 }
 
-// Version returns information on this bandit
-func (s *softmax) Version() string {
+// String returns information on this bandit
+func (s *softmax) String() string {
 	return fmt.Sprintf("Softmax(tau=%.2f)", s.tau)
 }
 
@@ -198,8 +197,8 @@ func (u *uCB1) SelectArm() int {
 	return arm + 1
 }
 
-// Version returns information on this bandit
-func (u *uCB1) Version() string {
+// String returns information on this bandit
+func (u *uCB1) String() string {
 	return fmt.Sprintf("UCB1")
 }
 
@@ -252,9 +251,9 @@ func (b *delayedBandit) SelectArm() int {
 	return b.bandit.SelectArm()
 }
 
-// Version gives information about delayed bandit + the wrapped bandit.
-func (b *delayedBandit) Version() string {
-	return fmt.Sprintf("Delayed(%s)", b.bandit.Version())
+// String gives information about delayed bandit + the wrapped bandit.
+func (b *delayedBandit) String() string {
+	return fmt.Sprintf("Delayed(%b)", b.bandit)
 }
 
 // DelayedUpdate updates the internal counters of a bandit with the provided
@@ -306,8 +305,8 @@ func (t *thompson) SelectArm() int {
 	return arm + 1
 }
 
-// Version returns information on this bandit
-func (t *thompson) Version() string {
+// String returns information on this bandit
+func (t *thompson) String() string {
 	return fmt.Sprintf("Thompson(alpha=%.2f)", t.alpha)
 }
 

@@ -3,11 +3,12 @@
 
 package sim
 
+import "fmt"
+
 // Bandit can select arm or update information
 type Bandit interface {
 	SelectArm() int
 	Update(arm int, reward float64)
-	Version() string
 	Reset()
 }
 
@@ -25,8 +26,9 @@ func MonteCarlo(sims, trials int, arms []Arm, b Bandit) (Simulation, error) {
 		Reward:     make([]float64, sims*trials),
 		Cumulative: make([]float64, sims*trials),
 	}
+
 	for sim := 0; sim < sims; sim++ {
-		s.Description = b.Version()
+		s.Description = fmt.Sprintf("%b", b)
 		b.Reset()
 
 		for trial := 0; trial < trials; trial++ {
