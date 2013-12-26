@@ -1,4 +1,6 @@
-package bandit
+package main
+
+// FIXME: try to remove almost all of this code
 
 import (
 	"fmt"
@@ -7,41 +9,52 @@ import (
 	"strings"
 )
 
+const (
+	banditSelection = "BanditSelection"
+	banditReward    = "BanditReward"
+)
+
 // Statistics contains all stats which should be computed
 type Statistics struct {
 	ExperimentName string
-	stats          []Stats
+	Stats          []Stats
 }
 
 // NewStatistics creates a new object with default statistics
 func NewStatistics(experimentName string) *Statistics {
 	return &Statistics{
 		ExperimentName: experimentName,
-		stats: []Stats{
+		Stats: []Stats{
 			newSumRewards(experimentName),
 			newCountSelects(experimentName),
 		},
 	}
 }
 
-func (s *Statistics) getCounters() Counters {
-	if rewards, ok := s.stats[0].result(); ok {
-		if selects, ok := s.stats[1].result(); ok {
-			if len(selects) != len(rewards) {
-				panic("rewards, selects have different arms")
-			}
-
-			counters := NewCounters(len(selects))
-			for key := range rewards {
-				index := key - 1
-				counters.counts[index] = int(selects[key])
-				counters.values[index] = rewards[key] / selects[key]
-			}
-			return counters
-		}
+func (s *Statistics) rewards() ([]int, []float64) {
+	rewards, ok := s.Stats[0].result()
+	if !ok {
+		panic("no rewards")
 	}
 
-	return NewCounters(0)
+	selects, ok := s.Stats[1].result()
+	if !ok {
+		panic("no selects")
+	}
+
+	if len(selects) != len(rewards) {
+		panic("rewards, selects have different number of arms")
+	}
+
+	rCounts := make([]int, len(rewards))
+	rRewards := make([]float64, len(rewards))
+	for key := range rewards {
+		index := key - 1
+		rCounts[index] = int(selects[key])
+		rRewards[index] = rewards[key] / selects[key]
+	}
+
+	return rCounts, rRewards
 }
 
 // Stats aggregates statistics from line based input

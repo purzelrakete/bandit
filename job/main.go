@@ -16,7 +16,6 @@ package main
 
 import (
 	"flag"
-	"github.com/purzelrakete/bandit"
 	"log"
 	"os"
 )
@@ -33,15 +32,15 @@ func init() {
 }
 
 func main() {
-	stats := bandit.NewStatistics(*jobExperimentName)
+	stats := NewStatistics(*jobExperimentName)
 
 	switch *jobKind {
 	case "map":
-		bandit.SnapshotMapper(stats, os.Stdin, os.Stdout)()
+		mapper(stats, os.Stdin, os.Stdout)()
 	case "reduce":
-		bandit.SnapshotReducer(stats, os.Stdin, os.Stdout)()
+		reducer(stats, os.Stdin, os.Stdout)()
 	case "collect":
-		bandit.SnapshotCollect(stats, os.Stdin, os.Stdout)()
+		collector(stats, os.Stdin, os.Stdout)()
 	case "poll":
 		if err := simple(stats, *jobLogfile, *jobLogPoll); err != nil {
 			log.Fatalf("could not start polling job: %s", err.Error())

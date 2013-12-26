@@ -11,7 +11,7 @@ import (
 )
 
 // Simple produces a snapshot every `poll` duration. FIXME: O(N) memory
-func simple(s *bandit.Statistics, logFile string, poll time.Duration) error {
+func simple(s *Statistics, logFile string, poll time.Duration) error {
 	snapshotFile := s.ExperimentName + ".tsv"
 	opener := bandit.NewOpener(logFile)
 	file, err := opener.Open()
@@ -28,16 +28,17 @@ func simple(s *bandit.Statistics, logFile string, poll time.Duration) error {
 				log.Printf("error opening log: %s", err.Error())
 			}
 
-			r, w := file, new(bytes.Buffer)
-			mapper := bandit.SnapshotMapper(s, r, w)
-			mapper()
-			mapped := w.String()
+			// map
+			rM, wM := file, new(bytes.Buffer)
+			m := mapper(s, rM, wM)
+			m()
+			mapped := wM.String()
 
-			rS, w := strings.NewReader(mapped), new(bytes.Buffer)
-			reducer := bandit.SnapshotReducer(s, rS, w)
-
-			reducer()
-			reduced := strings.TrimRight(w.String(), "\n ")
+			// reduce
+			rR, wR := strings.NewReader(mapped), new(bytes.Buffer)
+			r := reducer(s, rR, wR)
+			r()
+			reduced := strings.TrimRight(wR.String(), "\n ")
 
 			snapshot, err := os.Create(snapshotFile)
 			if err != nil {

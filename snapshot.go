@@ -11,71 +11,19 @@ import (
 	"strings"
 )
 
-// SnapshotMapper returns a hadoop streaming mapper function. Emits (arm,
-// reward) tuples onto the given writer, for the specified experiment only.
-func SnapshotMapper(s *Statistics, r io.Reader, w io.Writer) func() {
-	return func() {
-		scanner := bufio.NewScanner(r)
-		for scanner.Scan() {
-			line := scanner.Text()
-			for _, stat := range s.stats {
-				if key, value, ok := stat.mapLine(line); ok {
-					fmt.Fprintf(w, "%s	%s\n", key, value)
-				}
-			}
-		}
-	}
-}
-
-// SnapshotReducer returns a hadoop streaming reducer function. Emits one
-// SnapshotLine for the specificed experiment.
-func SnapshotReducer(s *Statistics, r io.Reader, w io.Writer) func() {
-	return func() {
-		scanner := bufio.NewScanner(r)
-		for scanner.Scan() {
-			line := scanner.Text()
-			for _, stat := range s.stats {
-				stat.reduceLine(line)
-			}
-		}
-
-		for _, stat := range s.stats {
-			if values, ok := stat.result(); ok {
-				for key, value := range values {
-					fmt.Fprintf(w, "%s	%d	%f\n", stat.getPrefix(), key+1, value)
-				}
-			}
-		}
-	}
-}
-
-// SnapshotCollect aggregates outputs of reducers
-func SnapshotCollect(s *Statistics, r io.Reader, w io.Writer) func() {
-	return func() {
-		scanner := bufio.NewScanner(r)
-		for scanner.Scan() {
-			line := scanner.Text()
-			for _, stat := range s.stats {
-				stat.collect(line)
-			}
-		}
-
-		counters := s.getCounters()
-		fmt.Fprint(w, SnapshotLine(counters), "\n")
-	}
-}
-
-// SnapshotLine returns a snapshot log line
-func SnapshotLine(c Counters) string {
-	var values []string
-	for _, reward := range c.values {
-		values = append(values, fmt.Sprintf("%f", float64(reward)))
+// GetSnapshot returns Counters given a snapshot filename.
+func GetSnapshot(o Opener) (Counters, error) {
+	reader, err := o.Open()
+	if err != nil {
+		return Counters{}, fmt.Errorf("could not open: %s", err.Error())
 	}
 
-	return strings.Join([]string{
-		fmt.Sprintf("%d", c.arms),
-		strings.Join(values, "\t"),
-	}, "\t")
+	counters, err := ParseSnapshot(reader)
+	if err != nil {
+		return Counters{}, fmt.Errorf("could not parse snapshot: %s", err.Error())
+	}
+
+	return counters, nil
 }
 
 // ParseSnapshot reads in a snapshot file. Snapshot files contain a single
@@ -121,19 +69,4 @@ func ParseSnapshot(s io.Reader) (Counters, error) {
 	c.values = rewards
 
 	return c, nil
-}
-
-// GetSnapshot returns Counters given a snapshot filename.
-func GetSnapshot(o Opener) (Counters, error) {
-	reader, err := o.Open()
-	if err != nil {
-		return Counters{}, fmt.Errorf("could not open: %s", err.Error())
-	}
-
-	counters, err := ParseSnapshot(reader)
-	if err != nil {
-		return Counters{}, fmt.Errorf("could not parse snapshot: %s", err.Error())
-	}
-
-	return counters, nil
 }
