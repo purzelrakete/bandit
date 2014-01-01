@@ -15,7 +15,7 @@ const (
 )
 
 // SelectionLine captures all selected arms. This log can be used in conjunction
-// with reward logs to fully rebuild bandits.
+// with reward logs to fully rebuild strategys.
 func SelectionLine(experiment Experiment, selected Variation) string {
 	record := []string{
 		fmt.Sprintf("%d", time.Now().Unix()),
@@ -27,7 +27,7 @@ func SelectionLine(experiment Experiment, selected Variation) string {
 }
 
 // RewardLine captures all selected arms. This log can be used in conjunction
-// with reward logs to fully rebuild bandits.
+// with reward logs to fully rebuild strategys.
 func RewardLine(experiment Experiment, selected Variation, reward float64) string {
 	record := []string{
 		fmt.Sprintf("%d", time.Now().Unix()),

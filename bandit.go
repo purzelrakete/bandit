@@ -1,11 +1,11 @@
 // Copyright 2013 SoundCloud, Rany Keddo. All rights reserved.  Use of this
 // source code is governed by a license that can be found in the LICENSE file.
 
-// Package bandit implements a multiarmed bandit. Runs A/B tests while
+// Package bandit implements a multiarmed strategy. Runs A/B tests while
 // controlling the tradeoff between exploring new arms and exploiting the
 // currently best arm.
 //
-// The project is based on John Myles White's 'Bandit Algorithms for Website
+// The project is based on John Myles White's 'Strategy Algorithms for Website
 // Optimization'.
 package bandit
 
@@ -14,22 +14,19 @@ import (
 	bmath "github.com/purzelrakete/bandit/math"
 	"log"
 	"math"
-	"math/rand"
-	"sync"
 	"time"
 )
 
-// Bandit can select arm or update information
-type Bandit interface {
+// Strategy can select arm or update information
+type Strategy interface {
 	SelectArm() int
 	Update(arm int, reward float64)
 	Init(*Counters) error
 	Reset()
 }
 
-// NewBandit returns an initialized bandit given a string name such as
-// 'softmax'.
-func NewBandit(arms int, name string, params []float64) (Bandit, error) {
+// New returns an initialized stragtegy given a name like 'softmax'.
+func New(arms int, name string, params []float64) (Strategy, error) {
 	switch name {
 	case "epsilonGreedy":
 		if len(params) != 1 {
@@ -63,18 +60,11 @@ func NewBandit(arms int, name string, params []float64) (Bandit, error) {
 		return NewThompson(arms, params[0])
 	}
 
-	return &epsilonGreedy{}, fmt.Errorf("'%s' unknown bandit", name)
+	return &epsilonGreedy{}, fmt.Errorf("'%s' unknown strategy", name)
 }
 
-// epsilonGreedy randomly selects arms with a probability of ε. The rest of
-// the time, epsilonGreedy selects the currently best known arm.
-type epsilonGreedy struct {
-	Counters
-	epsilon float64 // epsilon value for this bandit
-}
-
-// NewEpsilonGreedy constructs an epsilon greedy bandit.
-func NewEpsilonGreedy(arms int, epsilon float64) (Bandit, error) {
+// NewEpsilonGreedy constructs an epsilon greedy strategy.
+func NewEpsilonGreedy(arms int, epsilon float64) (Strategy, error) {
 	if !(epsilon >= 0 && epsilon <= 1) {
 		return &epsilonGreedy{}, fmt.Errorf("epsilon not in [0, 1]")
 	}
@@ -85,11 +75,18 @@ func NewEpsilonGreedy(arms int, epsilon float64) (Bandit, error) {
 	}, nil
 }
 
+// epsilonGreedy randomly selects arms with a probability of ε. The rest of
+// the time, epsilonGreedy selects the currently best known arm.
+type epsilonGreedy struct {
+	Counters
+	epsilon float64 // epsilon value for this strategy
+}
+
 // SelectArm returns 1 indexed arm to be tried next.
 func (e *epsilonGreedy) SelectArm() int {
 	arm := 0
 	if z := e.rand.Float64(); z > e.epsilon {
-		_, imax := max(e.values)
+		_, imax := bmath.Max(e.values)
 		// best arm. randomly pick because there may be equally best arms.
 		arm = imax[e.rand.Intn(len(imax))]
 	} else {
@@ -101,20 +98,14 @@ func (e *epsilonGreedy) SelectArm() int {
 	return arm + 1
 }
 
-// String returns information on this bandit
+// String returns information on this strategy
 func (e *epsilonGreedy) String() string {
 	return fmt.Sprintf("EpsilonGreedy(epsilon=%.2f)", e.epsilon)
 }
 
-// softmax selects proportially to success
-type softmax struct {
-	Counters
-	tau float64 // tau value for this bandit
-}
-
-// NewSoftmax constructs a softmax bandit. Softmax explores arms in proportion
+// NewSoftmax constructs a softmax strategy. Softmax explores arms in proportion
 // to their estimated values.
-func NewSoftmax(arms int, τ float64) (Bandit, error) {
+func NewSoftmax(arms int, τ float64) (Strategy, error) {
 	if !(τ >= 0.0) {
 		return &softmax{}, fmt.Errorf("τ not in [0, ∞)")
 	}
@@ -125,9 +116,15 @@ func NewSoftmax(arms int, τ float64) (Bandit, error) {
 	}, nil
 }
 
+// softmax selects proportially to success
+type softmax struct {
+	Counters
+	tau float64 // tau value for this Strategy
+}
+
 // SelectArm returns 1 indexed arm to be tried next.
 func (s *softmax) SelectArm() int {
-	max, _ := max(s.values)
+	max, _ := bmath.Max(s.values)
 
 	normalizer := 0.0
 	for _, value := range s.values {
@@ -152,13 +149,13 @@ func (s *softmax) SelectArm() int {
 	return draw + 1
 }
 
-// String returns information on this bandit
+// String returns information on this Strategy
 func (s *softmax) String() string {
 	return fmt.Sprintf("Softmax(tau=%.2f)", s.tau)
 }
 
-// NewUCB1 returns a UCB1 bandit
-func NewUCB1(arms int) Bandit {
+// NewUCB1 returns a UCB1 Strategy
+func NewUCB1(arms int) Strategy {
 	return &uCB1{
 		Counters: NewCounters(arms),
 	}
@@ -189,7 +186,7 @@ func (u *uCB1) SelectArm() int {
 		ucbValues[i] = u.values[i] + bonus
 	}
 
-	_, imax := max(ucbValues)
+	_, imax := bmath.Max(ucbValues)
 	// best arm. randomly pick because there may be equally best arms.
 	arm := imax[u.rand.Intn(len(imax))]
 
@@ -197,17 +194,17 @@ func (u *uCB1) SelectArm() int {
 	return arm + 1
 }
 
-// String returns information on this bandit
+// String returns information on this Strategy
 func (u *uCB1) String() string {
 	return fmt.Sprintf("UCB1")
 }
 
-// NewDelayedBandit wraps a bandit and updates internal counters from
-// a snapshot at `poll` interval.
-func NewDelayedBandit(b Bandit, o Opener, poll time.Duration) (Bandit, error) {
+// NewDelayed wraps a strategy and updates internal counters from a snapshot at
+// `poll` interval.
+func NewDelayed(s Strategy, o Opener, poll time.Duration) (Strategy, error) {
 	// fail once
 	if _, err := GetSnapshot(o); err != nil {
-		return &delayedBandit{}, fmt.Errorf("could not get snapshot: %s", err.Error())
+		return &delayedStrategy{}, fmt.Errorf("could not get snapshot: %s", err.Error())
 	}
 
 	c := make(chan Counters)
@@ -216,67 +213,59 @@ func NewDelayedBandit(b Bandit, o Opener, poll time.Duration) (Bandit, error) {
 		for _ = range t.C {
 			counters, err := GetSnapshot(o)
 			if err != nil {
-				log.Printf("BanditError: could not get snapshot: %s", err.Error())
+				log.Printf("Error: could not get snapshot: %s", err.Error())
 			}
 
 			c <- counters
 		}
 	}()
 
-	bandit := delayedBandit{
-		bandit:  b,
-		updates: c,
+	strategy := delayedStrategy{
+		strategy: s,
+		updates:  c,
 	}
 
 	go func() {
 		for counters := range c {
-			b.Init(&counters)
+			s.Init(&counters)
 		}
 	}()
 
-	return &bandit, nil
+	return &strategy, nil
 }
 
-// delayedBandit wraps a bandit. Internal counters are stored at the
+// delayedStrategy wraps a strategy. Internal counters are stored at the
 // configured source file, which is pooled at `poll` interval. The retrieved
-// Snapshot replaces the bandit's internal counters.
-type delayedBandit struct {
+// Snapshot replaces the strategy's internal counters.
+type delayedStrategy struct {
 	Counters
-	updates chan Counters
-	bandit  Bandit
+	updates  chan Counters
+	strategy Strategy
 }
 
-// SelectArm delegates to the wrapped bandit
-func (b *delayedBandit) SelectArm() int {
-	return b.bandit.SelectArm()
+// SelectArm delegates to the wrapped strategy
+func (b *delayedStrategy) SelectArm() int {
+	return b.strategy.SelectArm()
 }
 
-// String gives information about delayed bandit + the wrapped bandit.
-func (b *delayedBandit) String() string {
-	return fmt.Sprintf("Delayed(%b)", b.bandit)
+// String gives information about delayed strategy + the wrapped strategy.
+func (b *delayedStrategy) String() string {
+	return fmt.Sprintf("Delayed(%b)", b.strategy)
 }
 
-// DelayedUpdate updates the internal counters of a bandit with the provided
+// DelayedUpdate updates the internal counters of a strategy with the provided
 // counters.
-func (b *delayedBandit) Init(c *Counters) error {
+func (b *delayedStrategy) Init(c *Counters) error {
 	b.Lock()
 	defer b.Unlock()
-	return b.bandit.Init(c)
+	return b.strategy.Init(c)
 }
 
-// Update is a NOP. Delayed bandit is updated with Reset(counter) instead
-func (b *delayedBandit) Update(arm int, reward float64) {}
-
-// Thompson sampling (for Bernoulli bandits) explores arms by sampling
-// according to the probability that it maximizes the expected reward.
-type thompson struct {
-	Counters
-	betaRand *bmath.BetaRand // seeded random beta number generator
-	alpha    float64         // strength of prior distribution for each bandit (beta with homogeneous prior)
-}
+// Update is a NOP. Delayed strategy is updated with Reset(counter) instead
+func (b *delayedStrategy) Update(arm int, reward float64) {}
 
 // NewThompson constructs a thompson sampling strategy.
-func NewThompson(arms int, α float64) (Bandit, error) {
+func NewThompson(arms int, α float64) (Strategy, error) {
 	if !(α > 0.0) {
 		return &thompson{}, fmt.Errorf("α not in (0, ∞]")
 	}
@@ -288,6 +277,14 @@ func NewThompson(arms int, α float64) (Bandit, error) {
 	}, nil
 }
 
+// Thompson sampling (for Bernoulli strategys) explores arms by sampling
+// according to the probability that it maximizes the expected reward.
+type thompson struct {
+	Counters
+	betaRand *bmath.BetaRand
+	alpha    float64 // strength of prior distributionr. beta with homogeneous prior
+}
+
 // SelectArm returns 1 indexed arm to be tried next.
 func (t *thompson) SelectArm() int {
 	var thetas = make([]float64, t.arms)
@@ -297,7 +294,7 @@ func (t *thompson) SelectArm() int {
 		thetas[i] = t.betaRand.NextBeta(si+t.alpha, fi+t.alpha)
 	}
 
-	_, imax := max(thetas)
+	_, imax := bmath.Max(thetas)
 	// best arm. randomly pick because there may be equally best arms.
 	arm := imax[t.rand.Intn(len(imax))]
 
@@ -305,79 +302,7 @@ func (t *thompson) SelectArm() int {
 	return arm + 1
 }
 
-// String returns information on this bandit
+// String returns information on this strategy
 func (t *thompson) String() string {
 	return fmt.Sprintf("Thompson(alpha=%.2f)", t.alpha)
-}
-
-// Counters maintain internal bandit state
-type Counters struct {
-	sync.Mutex
-
-	arms   int        // number of arms present in this bandit
-	counts []int      // number of pulls. len(counts) == arms.
-	rand   *rand.Rand // seeded random number generator
-	values []float64  // running average reward per arm. len(values) == arms.
-}
-
-// NewCounters constructs counters for given arms
-func NewCounters(arms int) Counters {
-	return Counters{
-		arms:   arms,
-		counts: make([]int, arms),
-		rand:   rand.New(rand.NewSource(time.Now().UnixNano())),
-		values: make([]float64, arms),
-	}
-}
-
-// Update the running average, where arm is the 1 indexed arm
-func (c *Counters) Update(arm int, reward float64) {
-	c.Lock()
-	defer c.Unlock()
-
-	arm--
-	count := c.counts[arm]
-	c.values[arm] = ((c.values[arm] * float64(count-1)) + reward) / float64(count)
-}
-
-// Init the bandit to a new counter state.
-func (c *Counters) Init(snapshot *Counters) error {
-	if c.arms != snapshot.arms {
-		return fmt.Errorf("cannot %d arms with %d arms", c.arms, snapshot.arms)
-	}
-
-	if snapshot.arms == 0 {
-		return fmt.Errorf("need at least 1 arm")
-	}
-
-	c.Lock()
-	defer c.Unlock()
-
-	c.counts = snapshot.counts
-	c.rand = snapshot.rand
-	c.values = snapshot.values
-
-	return nil
-}
-
-// Reset the bandit to initial state.
-func (c *Counters) Reset() {
-	c.counts = make([]int, c.arms)
-	c.values = make([]float64, c.arms)
-}
-
-// helpers
-
-// max returns maximal value and its indices of a slice
-func max(array []float64) (float64, []int) {
-	max, imax := -math.MaxFloat64, []int{}
-	for idx, value := range array {
-		if max < value {
-			imax = []int{idx}
-			max = value
-		} else if value == max {
-			imax = append(imax, idx)
-		}
-	}
-	return max, imax
 }

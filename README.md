@@ -46,22 +46,22 @@ transport this tag through your system.
 
 ## Types
 
-A Bandit is used to select arms and update arms with reward information:
+A Strategy is used to select arms and update arms with reward information:
 
 ```go
-type Bandit interface {
+type Strategy interface {
   SelectArm() int
   Update(arm int, reward float64)
 }
 ```
 
-You will probably not use bandits directly. Instead, a Bandit is put to work
+You will probably not use bandits directly. Instead, a Strategy is put to work
 inside an Experiment. You set up experiments (e.g. signup form buttons) with as
 many variations as you like (e.g. blue button, red button):
 
 ```
   +--------+            +---------------+      periodic job
-  | Bandit | 1 <----- 1 | Snapshot file | <--- aggregates logs
+  | Strategy | 1 <----- 1 | Snapshot file | <--- aggregates logs
   +--------+            +---------------+      into counters
       1
       ^
@@ -77,7 +77,7 @@ many variations as you like (e.g. blue button, red button):
 
 ## Integrating and running experiments
 
-To use a bandit, you first have to define an experiment and its variations. This
+To use a strategy, you first have to define an experiment and its variations. This
 is currently configured in json with a name, URL, and tag. See
 experiments.json for an example.
 
@@ -163,20 +163,20 @@ can use `bandit-job` as a streaming map reduce job with `bandit-job -kind map`
 and `bandit-job -kind reduce`. You can also run over the logs wiht `bandit-job
 -kind poll`. See `bandit-job -h` for information.
 
-## Bandit Algorithms
+## Strategy Algorithms
 
 You can currently choose between Epsilon Greedy, UCB1, Softmax, and Thompson ([see, e.g., Chapelle & Li, 2011 ](http://books.nips.cc/papers/files/nips24/NIPS2011_1232.pdf)). See the
 godoc for detailed information.
 
 ## Snapshots and delayed bandits
 
-You can configure your bandit to get it's internal state from a snapshot like
+You can configure your strategy to get it's internal state from a snapshot like
 this:
 
 [
   {
     "experiment_name": "shape-20130822",
-    "bandit": "softmax",
+    "strategy": "softmax",
     "parameters": [0.1],
     "snapshot": "snapshot.tsv",
     "snapshot-poll-seconds": 60,

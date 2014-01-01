@@ -1,7 +1,7 @@
 // Copyright 2013 SoundCloud, Rany Keddo. All rights reserved.  Use of this
 // source code is governed by a license that can be found in the LICENSE file.
 
-// Package http provides an HTTP API for bandit experiments. This can be
+// Package http provides an HTTP API for strategy experiments. This can be
 // used by a client side javascript app to determine arm selection and to
 // record rewards.
 package http
@@ -46,7 +46,7 @@ type APIResponse struct {
 //
 //     GET https://api/widget?color=blue HTTP/1.0
 //
-// This two phase approach can be collapsed by using the bandit directly
+// This two phase approach can be collapsed by using the strategy directly
 // inside a golang api endpoint.
 func SelectionHandler(es *bandit.Experiments, ttl time.Duration) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -85,7 +85,7 @@ func SelectionHandler(es *bandit.Experiments, ttl time.Duration) http.HandlerFun
 
 // LogRewardHandler logs reward lines. It's better to log rewards directly
 // through your main logging pipeline, but the handler is here in case you
-// can't do that. This handler is currently updates the supplied bandits
+// can't do that. This handler is currently updates the supplied strategys
 // directly, which makes it unsuitable for real use.
 func LogRewardHandler(es *bandit.Experiments) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -122,7 +122,7 @@ func LogRewardHandler(es *bandit.Experiments) http.HandlerFunc {
 			return
 		}
 
-		b := (*es)[e.Name].Bandit
+		b := (*es)[e.Name].Strategy
 		b.Update(variation.Ordinal, fReward)
 
 		log.Println(bandit.RewardLine(e, variation, fReward))

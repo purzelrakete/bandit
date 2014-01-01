@@ -49,65 +49,65 @@ func main() {
 	groups := []group{}
 
 	// epsilon greedy
-	greedys := bandits{}
+	greedys := strategys{}
 	for _, ε := range []float64{0.1, 0.2, 0.3, 0.4, 0.5} {
-		bandit, err := bandit.NewEpsilonGreedy(len(μs), ε)
+		strategy, err := bandit.NewEpsilonGreedy(len(μs), ε)
 		if err != nil {
 			log.Fatal(err.Error())
 		}
 
-		greedys = append(greedys, bandit)
+		greedys = append(greedys, strategy)
 	}
 
 	groups = append(groups, group{
-		name:    "Epsilon Greedy",
-		bandits: greedys,
+		name:      "Epsilon Greedy",
+		strategys: greedys,
 	})
 
 	// softmax
-	softmaxes := bandits{}
+	softmaxes := strategys{}
 	for _, τ := range []float64{0.1, 0.2, 0.3, 0.4, 0.5} {
-		bandit, err := bandit.NewSoftmax(len(μs), τ)
+		strategy, err := bandit.NewSoftmax(len(μs), τ)
 		if err != nil {
 			log.Fatal(err.Error())
 		}
 
-		softmaxes = append(softmaxes, bandit)
+		softmaxes = append(softmaxes, strategy)
 	}
 
 	groups = append(groups, group{
-		name:    "Softmax",
-		bandits: softmaxes,
+		name:      "Softmax",
+		strategys: softmaxes,
 	})
 
 	// ucb1
-	ucb1s := bandits{
+	ucb1s := strategys{
 		bandit.NewUCB1(len(μs)),
 	}
 
 	groups = append(groups, group{
-		name:    "UCB1",
-		bandits: ucb1s,
+		name:      "UCB1",
+		strategys: ucb1s,
 	})
 
 	// thompson sampling
-	thompsons := bandits{}
+	thompsons := strategys{}
 	for _, α := range []float64{1, 2, 10, 20, 100} {
-		bandit, err := bandit.NewThompson(len(μs), α)
+		strategy, err := bandit.NewThompson(len(μs), α)
 		if err != nil {
 			log.Fatal(err.Error())
 		}
 
-		thompsons = append(thompsons, bandit)
+		thompsons = append(thompsons, strategy)
 	}
 
 	groups = append(groups, group{
-		name:    "Thompson Sampling",
-		bandits: thompsons,
+		name:      "Thompson Sampling",
+		strategys: thompsons,
 	})
 
 	// mixed
-	mixed := bandits{}
+	mixed := strategys{}
 	greedy, err := bandit.NewEpsilonGreedy(len(μs), 0.1)
 	if err != nil {
 		log.Fatal(err.Error())
@@ -126,8 +126,8 @@ func main() {
 	mixed = append(mixed, bandit.NewUCB1(len(μs)))
 
 	groups = append(groups, group{
-		name:    "Comparative",
-		bandits: mixed,
+		name:      "Comparative",
+		strategys: mixed,
 	})
 
 	// thompson into mixed
@@ -139,13 +139,13 @@ func main() {
 	mixed = append(mixed, thompson)
 
 	groups = append(groups, group{
-		name:    "Comparative",
-		bandits: mixed,
+		name:      "Comparative",
+		strategys: mixed,
 	})
 
 	// draw groups
 	for _, group := range groups {
-		s, err := simulate(group.bandits, arms, *mcSims, *mcHorizon)
+		s, err := simulate(group.strategys, arms, *mcSims, *mcHorizon)
 		if err != nil {
 			log.Fatal(err.Error())
 		}
@@ -153,7 +153,7 @@ func main() {
 		graph := summarize(s, sim.Accuracy(bestArms))
 		draw(graph, group.name+" Accuracy", "Time", "P(selecting best arm)")
 
-		s, err = simulate(group.bandits, arms, *mcSims, *mcHorizon)
+		s, err = simulate(group.strategys, arms, *mcSims, *mcHorizon)
 		if err != nil {
 			log.Fatal(err.Error())
 		}
@@ -161,7 +161,7 @@ func main() {
 		graph = summarize(s, sim.Performance)
 		draw(graph, group.name+" Performance", "Time", "Average Reward")
 
-		s, err = simulate(group.bandits, arms, *mcSims, *mcHorizon)
+		s, err = simulate(group.strategys, arms, *mcSims, *mcHorizon)
 		if err != nil {
 			log.Fatal(err.Error())
 		}

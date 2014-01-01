@@ -23,12 +23,12 @@ func TestEpsilonGreedy(t *testing.T) {
 		bmath.BernRand(bestArm),
 	}
 
-	bandit, err := NewEpsilonGreedy(len(arms), ε)
+	strategy, err := NewEpsilonGreedy(len(arms), ε)
 	if err != nil {
 		t.Fatalf(err.Error())
 	}
 
-	s, err := sim.MonteCarlo(sims, trials, arms, bandit)
+	s, err := sim.MonteCarlo(sims, trials, arms, strategy)
 	if err != nil {
 		t.Fatalf(err.Error())
 	}
@@ -68,12 +68,12 @@ func TestSoftmax(t *testing.T) {
 		bmath.BernRand(0.8),
 	}
 
-	bandit, err := NewSoftmax(len(arms), τ)
+	strategy, err := NewSoftmax(len(arms), τ)
 	if err != nil {
 		t.Fatalf(err.Error())
 	}
 
-	s, err := sim.MonteCarlo(sims, trials, arms, bandit)
+	s, err := sim.MonteCarlo(sims, trials, arms, strategy)
 	if err != nil {
 		t.Fatalf(err.Error())
 	}
@@ -111,12 +111,12 @@ func TestSoftmaxGaussian(t *testing.T) {
 		bmath.NormRand(0, 1),
 	}
 
-	bandit, err := NewSoftmax(len(arms), τ)
+	strategy, err := NewSoftmax(len(arms), τ)
 	if err != nil {
 		t.Fatalf(err.Error())
 	}
 
-	s, err := sim.MonteCarlo(sims, trials, arms, bandit)
+	s, err := sim.MonteCarlo(sims, trials, arms, strategy)
 	if err != nil {
 		t.Fatalf(err.Error())
 	}
@@ -182,7 +182,7 @@ func TestUCB1(t *testing.T) {
 	}
 }
 
-func TestDelayedBandit(t *testing.T) {
+func TestDelayedStrategy(t *testing.T) {
 	τ := 0.1
 	sims := 5000
 	trials := 300
@@ -201,7 +201,7 @@ func TestDelayedBandit(t *testing.T) {
 		t.Fatalf(err.Error())
 	}
 
-	d := NewSimulatedDelayedBandit(b, len(arms), flushAfter)
+	d := NewSimulatedDelayedStrategy(b, len(arms), flushAfter)
 
 	s, err := sim.MonteCarlo(sims, trials, arms, d)
 	if err != nil {
@@ -238,12 +238,12 @@ func TestThompson(t *testing.T) {
 		bmath.BernRand(0.8),
 	}
 
-	bandit, err := NewThompson(len(arms), α)
+	strategy, err := NewThompson(len(arms), α)
 	if err != nil {
 		t.Fatalf(err.Error())
 	}
 
-	s, err := sim.MonteCarlo(sims, trials, arms, bandit)
+	s, err := sim.MonteCarlo(sims, trials, arms, strategy)
 	if err != nil {
 		t.Fatalf(err.Error())
 	}

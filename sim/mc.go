@@ -5,18 +5,18 @@ package sim
 
 import "fmt"
 
-// Bandit can select arm or update information
-type Bandit interface {
+// Strategy can select arm or update information
+type Strategy interface {
 	SelectArm() int
 	Update(arm int, reward float64)
 	Reset()
 }
 
-// Arm simulates a single bandit arm pull with every execution. Returns {0,1}.
+// Arm simulates a single strategy arm pull with every execution. Returns {0,1}.
 type Arm func() float64
 
-// MonteCarlo runs a monte carlo experiment with the given bandit and arms.
-func MonteCarlo(sims, trials int, arms []Arm, b Bandit) (Simulation, error) {
+// MonteCarlo runs a monte carlo experiment with the given strategy and arms.
+func MonteCarlo(sims, trials int, arms []Arm, b Strategy) (Simulation, error) {
 	s := Simulation{
 		Sims:       sims,
 		Trials:     trials,

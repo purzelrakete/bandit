@@ -66,7 +66,7 @@ func draw(lines graph, title, xLabel, yLabel string) error {
 	}
 
 	name := strings.Replace(strings.ToLower(title), " ", "-", -1)
-	filename := fmt.Sprintf("bandit-%s.svg", name)
+	filename := fmt.Sprintf("strategy-%s.svg", name)
 	if err := p.Save(8, 8, filename); err != nil {
 		return fmt.Errorf(err.Error())
 	}
@@ -85,8 +85,8 @@ func xys(data []float64) plotter.XYs {
 	return points
 }
 
-// bandits
-type bandits []sim.Bandit
+// strategys
+type strategys []sim.Strategy
 
 // simulations
 type simulations []sim.Simulation
@@ -94,8 +94,8 @@ type simulations []sim.Simulation
 // arms
 type arms []sim.Arm
 
-// simulate runs a Monte Carlo simulation with given arms and bandits
-func simulate(bs bandits, arms arms, sims, horizon int) (simulations, error) {
+// simulate runs a Monte Carlo simulation with given arms and strategys
+func simulate(bs strategys, arms arms, sims, horizon int) (simulations, error) {
 	ret := simulations{}
 	for _, b := range bs {
 		s, err := sim.MonteCarlo(sims, horizon, arms, b)
@@ -109,10 +109,10 @@ func simulate(bs bandits, arms arms, sims, horizon int) (simulations, error) {
 	return ret, nil
 }
 
-// group ties together n bandits over all summary functions
+// group ties together n strategys over all summary functions
 type group struct {
-	name    string
-	bandits bandits
+	name      string
+	strategys strategys
 }
 
 // summarize summarizes simulations and coverts the to graph

@@ -1,7 +1,7 @@
 [
   {
     "experiment_name": "shape-20130822",
-    "bandit": "softmax",
+    "strategy": "softmax",
     "parameters": [0.1],
     "variations": [
       {

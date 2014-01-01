@@ -33,13 +33,13 @@ func NewExperiment(o Opener, name string) (*Experiment, error) {
 // sorting, where ordinals are contiguous and start at 1.
 type Experiment struct {
 	Name       string
-	Bandit     Bandit
+	Strategy   Strategy
 	Variations Variations
 }
 
-// Select calls SelectArm on the bandit and returns the associated variation
+// Select calls SelectArm on the strategy and returns the associated variation
 func (e *Experiment) Select() Variation {
-	selected := e.Bandit.SelectArm()
+	selected := e.Strategy.SelectArm()
 	if selected > len(e.Variations) {
 		panic("selected impossible arm")
 	}
@@ -114,7 +114,7 @@ func makeTimestampedTag(v Variation, now int64) string {
 	return fmt.Sprintf("%s:%s", v.Tag, strconv.FormatInt(now, 10))
 }
 
-// Variation describes endpoints which are mapped onto bandit arms.
+// Variation describes endpoints which are mapped onto strategy arms.
 type Variation struct {
 	Ordinal     int    // 1 indexed arm ordinal
 	URL         string // the url associated with this variation, for out of band
@@ -151,7 +151,7 @@ func NewExperiments(o Opener) (*Experiments, error) {
 
 	type experimentsConfig struct {
 		Name         string            `json:"experiment_name"`
-		Bandit       string            `json:"bandit"`
+		Strategy     string            `json:"strategy"`
 		Snapshot     string            `json:"snapshot"`
 		SnapshotPoll int               `json:"snapshot-poll-seconds"`
 		Parameters   []float64         `json:"parameters"`
@@ -172,24 +172,24 @@ func NewExperiments(o Opener) (*Experiments, error) {
 
 	es := Experiments{}
 	for _, e := range cfg {
-		bandit, err := NewBandit(len(e.Variations), e.Bandit, e.Parameters)
+		strategy, err := New(len(e.Variations), e.Strategy, e.Parameters)
 		if err != nil {
-			return &Experiments{}, fmt.Errorf("could not make bandit: %s ", err.Error())
+			return &Experiments{}, fmt.Errorf("could not make strategy: %s ", err.Error())
 		}
 
-		// this is a delayed bandit; gets it's internal state from a snapshot
+		// this is a delayed strategy; gets it's internal state from a snapshot
 		if e.Snapshot != "" {
 			opener := NewOpener(e.Snapshot)
 			duration := time.Duration(e.SnapshotPoll) * time.Second
-			bandit, err = NewDelayedBandit(bandit, opener, duration)
+			strategy, err = NewDelayed(strategy, opener, duration)
 			if err != nil {
-				return &Experiments{}, fmt.Errorf("could not delay bandit: %s ", err.Error())
+				return &Experiments{}, fmt.Errorf("could not delay strategy: %s ", err.Error())
 			}
 		}
 
 		experiment := Experiment{
-			Name:   e.Name,
-			Bandit: bandit,
+			Name:     e.Name,
+			Strategy: strategy,
 		}
 
 		es[e.Name] = &experiment
