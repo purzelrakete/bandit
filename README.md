@@ -173,6 +173,7 @@ godoc for detailed information.
 You can configure your strategy to get it's internal state from a snapshot like
 this:
 
+```json
 [
   {
     "experiment_name": "shape-20130822",
@@ -194,6 +195,7 @@ this:
     ]
   }
 ]
+```
 
 ## Simulation
 
