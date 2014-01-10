@@ -39,7 +39,7 @@ func New(arms int, name string, params []float64) (Strategy, error) {
 			return &epsilonGreedy{}, fmt.Errorf("uniform has no parameters")
 		}
 
-		return NewEpsilonGreedy(arms, 0)
+		return NewEpsilonGreedy(arms, 1)
 	case "softmax":
 		if len(params) != 1 {
 			return &softmax{}, fmt.Errorf("missing τ")
