@@ -30,6 +30,11 @@ func TestExperiment(t *testing.T) {
 	if got := e.Variations[0].Tag; got != expectedTag {
 		t.Fatalf("expected variation tag %s, got %s", expectedTag, got)
 	}
+
+	expectedPreferredOrdinal := 2
+	if got := e.PreferredOrdinal; got != expectedPreferredOrdinal {
+		t.Fatalf("expected preferred ordinal %d, got %d", expectedPreferredOrdinal, got)
+	}
 }
 
 func TestTimestampedTagToTag(t *testing.T) {

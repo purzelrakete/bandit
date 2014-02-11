@@ -3,6 +3,7 @@
     "experiment_name": "shape-20130822",
     "strategy": "softmax",
     "parameters": [0.1],
+    "preferred": 2,
     "variations": [
       {
         "url": "http://localhost:8080/widget?shape=circle",

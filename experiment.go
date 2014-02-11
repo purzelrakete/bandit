@@ -32,9 +32,10 @@ func NewExperiment(o Opener, name string) (*Experiment, error) {
 // Experiment is a single experiment. Variations are in ascending ordinal
 // sorting, where ordinals are contiguous and start at 1.
 type Experiment struct {
-	Name       string
-	Strategy   Strategy
-	Variations Variations
+	Name             string
+	Strategy         Strategy
+	Variations       Variations
+	PreferredOrdinal int
 }
 
 // Select calls SelectArm on the strategy and returns the associated variation
@@ -150,12 +151,13 @@ func NewExperiments(o Opener) (*Experiments, error) {
 	}
 
 	type experimentsConfig struct {
-		Name         string            `json:"experiment_name"`
-		Strategy     string            `json:"strategy"`
-		Snapshot     string            `json:"snapshot"`
-		SnapshotPoll int               `json:"snapshot-poll-seconds"`
-		Parameters   []float64         `json:"parameters"`
-		Variations   []variationConfig `json:"variations"`
+		Name             string            `json:"experiment_name"`
+		Strategy         string            `json:"strategy"`
+		Snapshot         string            `json:"snapshot"`
+		SnapshotPoll     int               `json:"snapshot-poll-seconds"`
+		Parameters       []float64         `json:"parameters"`
+		Variations       []variationConfig `json:"variations"`
+		PreferredOrdinal int               `json:"preferred"`
 	}
 
 	var cfg []experimentsConfig
@@ -172,6 +174,10 @@ func NewExperiments(o Opener) (*Experiments, error) {
 
 	es := Experiments{}
 	for _, e := range cfg {
+		if e.PreferredOrdinal == 0 {
+			return &Experiments{}, fmt.Errorf("could not make strategy: preferred variation missing")
+		}
+
 		strategy, err := New(len(e.Variations), e.Strategy, e.Parameters)
 		if err != nil {
 			return &Experiments{}, fmt.Errorf("could not make strategy: %s ", err.Error())
@@ -195,12 +201,20 @@ func NewExperiments(o Opener) (*Experiments, error) {
 		es[e.Name] = &experiment
 
 		for _, v := range e.Variations {
+			if v.Ordinal == e.PreferredOrdinal {
+				experiment.PreferredOrdinal = v.Ordinal
+			}
+
 			experiment.Variations = append(experiment.Variations, Variation{
 				Ordinal:     v.Ordinal,
 				URL:         v.URL,
 				Tag:         fmt.Sprintf("%s:%d", e.Name, v.Ordinal),
 				Description: v.Description,
 			})
+		}
+
+		if experiment.PreferredOrdinal == 0 {
+			return &Experiments{}, fmt.Errorf("preferred variation ordinal %d not found in variations", e.PreferredOrdinal)
 		}
 
 		sort.Sort(experiment.Variations)
